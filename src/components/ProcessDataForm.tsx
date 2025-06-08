@@ -4,111 +4,61 @@ import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Settings, Calculator } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Separator } from '@/components/ui/separator';
+import { FileText, ArrowRight } from 'lucide-react';
 import { ProcessData } from '@/types';
 
-interface ProcessFormData {
-  processNumber: string;
-  processObject: string;
-  closingDate: string;
-  totalContractValue: number;
-  minimumSalary: number;
-  processType: 'licitacion' | 'concurso' | 'abreviada' | 'minima';
-  womanEntrepreneurship: number;
-  mipyme: number;
-  disabled: number;
-  qualityFactor: number;
-  environmentalQuality: number;
-  nationalIndustrySupport: number;
-  generalExperience: string;
-  specificExperience: string;
-  additionalSpecificValue: number;
-  additionalSpecificUnit: 'longitud' | 'area_cubierta' | 'area_ejecutada';
-}
+// ... keep existing code (processTypeOptions and unitOptions)
+const processTypeOptions = [
+  { value: 'licitacion', label: 'Licitación Pública' },
+  { value: 'concurso', label: 'Concurso de Méritos' },
+  { value: 'abreviada', label: 'Selección Abreviada' },
+  { value: 'minima', label: 'Mínima Cuantía' }
+];
+
+const unitOptions = [
+  { value: 'longitud', label: 'Longitud (metros)' },
+  { value: 'area_cubierta', label: 'Área cubierta (m²)' },
+  { value: 'area_ejecutada', label: 'Área ejecutada (m²)' }
+];
 
 export const ProcessDataForm: React.FC = () => {
-  const { setProcessData, setCurrentStep, processData } = useAppStore();
-
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ProcessFormData>({
-    defaultValues: processData ? {
-      processNumber: processData.processNumber,
-      processObject: processData.processObject,
-      closingDate: processData.closingDate,
-      totalContractValue: processData.totalContractValue,
-      minimumSalary: processData.minimumSalary,
-      processType: processData.processType,
-      womanEntrepreneurship: processData.scoring.womanEntrepreneurship,
-      mipyme: processData.scoring.mipyme,
-      disabled: processData.scoring.disabled,
-      qualityFactor: processData.scoring.qualityFactor,
-      environmentalQuality: processData.scoring.environmentalQuality,
-      nationalIndustrySupport: processData.scoring.nationalIndustrySupport,
-      generalExperience: processData.experience.general,
-      specificExperience: processData.experience.specific,
-      additionalSpecificValue: processData.experience.additionalSpecific.value,
-      additionalSpecificUnit: processData.experience.additionalSpecific.unit
-    } : {
+  const { setProcessData, setCurrentStep } = useAppStore();
+  
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<ProcessData>({
+    defaultValues: {
       processNumber: '',
       processObject: '',
       closingDate: '',
       totalContractValue: 0,
       minimumSalary: 0,
       processType: 'licitacion',
-      womanEntrepreneurship: 0,
-      mipyme: 0,
-      disabled: 0,
-      qualityFactor: 0,
-      environmentalQuality: 0,
-      nationalIndustrySupport: 0,
-      generalExperience: '',
-      specificExperience: '',
-      additionalSpecificValue: 0,
-      additionalSpecificUnit: 'area_ejecutada'
+      scoring: {
+        womanEntrepreneurship: 0,
+        mipyme: 0,
+        disabled: 0,
+        qualityFactor: 0,
+        environmentalQuality: 0,
+        nationalIndustrySupport: 0,
+      },
+      experience: {
+        general: '',
+        specific: '',
+        additionalSpecific: {
+          value: 0,
+          unit: 'longitud'
+        }
+      }
     }
   });
 
   const watchedValues = watch();
 
-  const onSubmit = (data: ProcessFormData) => {
-    const newProcessData: ProcessData = {
-      processNumber: data.processNumber,
-      processObject: data.processObject,
-      closingDate: data.closingDate,
-      totalContractValue: data.totalContractValue,
-      minimumSalary: data.minimumSalary,
-      processType: data.processType,
-      scoring: {
-        womanEntrepreneurship: data.womanEntrepreneurship,
-        mipyme: data.mipyme,
-        disabled: data.disabled,
-        qualityFactor: data.qualityFactor,
-        environmentalQuality: data.environmentalQuality,
-        nationalIndustrySupport: data.nationalIndustrySupport
-      },
-      experience: {
-        general: data.generalExperience,
-        specific: data.specificExperience,
-        additionalSpecific: {
-          value: data.additionalSpecificValue,
-          unit: data.additionalSpecificUnit
-        }
-      }
-    };
-
-    setProcessData(newProcessData);
+  const onSubmit = (data: ProcessData) => {
+    setProcessData(data);
     setCurrentStep(2);
-  };
-
-  const getUnitLabel = (unit: string): string => {
-    const labels = {
-      'longitud': 'Longitud',
-      'area_cubierta': 'Área de cubierta medida en planta',
-      'area_ejecutada': 'Área ejecutada'
-    };
-    return labels[unit as keyof typeof labels] || unit;
   };
 
   return (
@@ -122,11 +72,11 @@ export const ProcessDataForm: React.FC = () => {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Información general del proceso */}
+        {/* Process Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Información general del proceso</CardTitle>
-            <CardDescription>Datos básicos del proceso de selección</CardDescription>
+            <CardTitle>Información del proceso</CardTitle>
+            <CardDescription>Datos básicos del proceso de contratación</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -134,8 +84,8 @@ export const ProcessDataForm: React.FC = () => {
                 <Label htmlFor="processNumber">Número del proceso *</Label>
                 <Input
                   id="processNumber"
-                  {...register('processNumber')}
-                  placeholder="Ej: LP-001-2024"
+                  {...register('processNumber', { required: 'Número del proceso es requerido' })}
+                  placeholder="ej: LP-001-2024"
                 />
                 {errors.processNumber && (
                   <p className="text-sm text-destructive">{errors.processNumber.message}</p>
@@ -143,11 +93,11 @@ export const ProcessDataForm: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="closingDate">Fecha de cierre del proceso *</Label>
+                <Label htmlFor="closingDate">Fecha de cierre *</Label>
                 <Input
                   id="closingDate"
                   type="date"
-                  {...register('closingDate')}
+                  {...register('closingDate', { required: 'Fecha de cierre es requerida' })}
                 />
                 {errors.closingDate && (
                   <p className="text-sm text-destructive">{errors.closingDate.message}</p>
@@ -159,22 +109,26 @@ export const ProcessDataForm: React.FC = () => {
               <Label htmlFor="processObject">Objeto del proceso *</Label>
               <Input
                 id="processObject"
-                {...register('processObject')}
-                placeholder="Descripción del objeto del proceso"
+                {...register('processObject', { required: 'Objeto del proceso es requerido' })}
+                placeholder="Descripción del objeto a contratar"
               />
               {errors.processObject && (
                 <p className="text-sm text-destructive">{errors.processObject.message}</p>
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="totalContractValue">Valor total del contrato *</Label>
+                <Label htmlFor="totalContractValue">Valor total del contrato (SMMLV) *</Label>
                 <Input
                   id="totalContractValue"
                   type="number"
                   step="0.01"
-                  {...register('totalContractValue', { valueAsNumber: true })}
+                  min="0"
+                  {...register('totalContractValue', { 
+                    required: 'Valor total es requerido',
+                    valueAsNumber: true 
+                  })}
                   placeholder="0.00"
                 />
                 {errors.totalContractValue && (
@@ -183,42 +137,41 @@ export const ProcessDataForm: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="minimumSalary">Valor del salario mínimo actual *</Label>
+                <Label htmlFor="minimumSalary">Salario mínimo vigente *</Label>
                 <Input
                   id="minimumSalary"
                   type="number"
-                  step="0.01"
-                  {...register('minimumSalary', { valueAsNumber: true })}
-                  placeholder="0.00"
+                  min="0"
+                  {...register('minimumSalary', { 
+                    required: 'Salario mínimo es requerido',
+                    valueAsNumber: true 
+                  })}
+                  placeholder="1300000"
                 />
                 {errors.minimumSalary && (
                   <p className="text-sm text-destructive">{errors.minimumSalary.message}</p>
                 )}
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="processType">Tipo de proceso *</Label>
-                <Select onValueChange={(value) => setValue('processType', value as any)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {processTypeOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.processType && (
-                  <p className="text-sm text-destructive">{errors.processType.message}</p>
-                )}
-              </div>
+            <div className="space-y-3">
+              <Label>Tipo de proceso *</Label>
+              <RadioGroup 
+                value={watchedValues.processType} 
+                onValueChange={(value) => register('processType').onChange({ target: { value } })}
+              >
+                {processTypeOptions.map((option) => (
+                  <div key={option.value} className="flex items-center space-x-2">
+                    <RadioGroupItem value={option.value} id={option.value} />
+                    <Label htmlFor={option.value}>{option.label}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
             </div>
           </CardContent>
         </Card>
 
-        {/* Puntajes por criterios */}
+        {/* Scoring Configuration */}
         <Card>
           <CardHeader>
             <CardTitle>Puntajes por criterios</CardTitle>
@@ -228,154 +181,168 @@ export const ProcessDataForm: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="womanEntrepreneurship">Emprendimiento mujer (0 - 0.25)</Label>
-                <Select
-                  value={watchedValues.womanEntrepreneurship?.toString() || "0"}
-                  onValueChange={(value) => setValue('womanEntrepreneurship', parseFloat(value))}
+                <select
+                  id="womanEntrepreneurship"
+                  {...register('scoring.womanEntrepreneurship', { valueAsNumber: true })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar puntaje" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">0.00</SelectItem>
-                    <SelectItem value="0.25">0.25</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <option value={0}>0</option>
+                  <option value={0.25}>0.25</option>
+                </select>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="mipyme">MIPYME (0 - 0.25)</Label>
-                <Select
-                  value={watchedValues.mipyme?.toString() || "0"}
-                  onValueChange={(value) => setValue('mipyme', parseFloat(value))}
+                <select
+                  id="mipyme"
+                  {...register('scoring.mipyme', { valueAsNumber: true })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar puntaje" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">0.00</SelectItem>
-                    <SelectItem value="0.25">0.25</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <option value={0}>0</option>
+                  <option value={0.25}>0.25</option>
+                </select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="disabled">Discapacitado</Label>
+                <Label htmlFor="disabled">Discapacitado *</Label>
                 <Input
                   id="disabled"
                   type="number"
                   step="0.01"
                   min="0"
-                  {...register('disabled', { valueAsNumber: true })}
+                  {...register('scoring.disabled', { 
+                    required: 'Puntaje discapacitado es requerido',
+                    valueAsNumber: true 
+                  })}
+                  placeholder="0.00"
                 />
+                {errors.scoring?.disabled && (
+                  <p className="text-sm text-destructive">{errors.scoring.disabled.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="qualityFactor">Factor de calidad</Label>
+                <Label htmlFor="qualityFactor">Factor de calidad *</Label>
                 <Input
                   id="qualityFactor"
                   type="number"
                   step="0.01"
                   min="0"
-                  {...register('qualityFactor', { valueAsNumber: true })}
+                  {...register('scoring.qualityFactor', { 
+                    required: 'Factor de calidad es requerido',
+                    valueAsNumber: true 
+                  })}
+                  placeholder="0.00"
                 />
+                {errors.scoring?.qualityFactor && (
+                  <p className="text-sm text-destructive">{errors.scoring.qualityFactor.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="environmentalQuality">Factor de calidad ambiental</Label>
+                <Label htmlFor="environmentalQuality">Factor de calidad ambiental *</Label>
                 <Input
                   id="environmentalQuality"
                   type="number"
                   step="0.01"
                   min="0"
-                  {...register('environmentalQuality', { valueAsNumber: true })}
+                  {...register('scoring.environmentalQuality', { 
+                    required: 'Factor de calidad ambiental es requerido',
+                    valueAsNumber: true 
+                  })}
+                  placeholder="0.00"
                 />
+                {errors.scoring?.environmentalQuality && (
+                  <p className="text-sm text-destructive">{errors.scoring.environmentalQuality.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="nationalIndustrySupport">Apoyo a la industria nacional</Label>
+                <Label htmlFor="nationalIndustrySupport">Apoyo a la industria nacional *</Label>
                 <Input
                   id="nationalIndustrySupport"
                   type="number"
                   step="0.01"
                   min="0"
-                  {...register('nationalIndustrySupport', { valueAsNumber: true })}
+                  {...register('scoring.nationalIndustrySupport', { 
+                    required: 'Apoyo a la industria nacional es requerido',
+                    valueAsNumber: true 
+                  })}
+                  placeholder="0.00"
                 />
+                {errors.scoring?.nationalIndustrySupport && (
+                  <p className="text-sm text-destructive">{errors.scoring.nationalIndustrySupport.message}</p>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Experiencia del proceso */}
+        <Separator />
+
+        {/* Experience Requirements */}
         <Card>
           <CardHeader>
-            <CardTitle>Experiencia del proceso</CardTitle>
-            <CardDescription>Configure los requisitos de experiencia</CardDescription>
+            <CardTitle>Requisitos de experiencia</CardTitle>
+            <CardDescription>Configure los requisitos de experiencia del proceso</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="generalExperience">Experiencia general *</Label>
-                <Input
-                  id="generalExperience"
-                  {...register('generalExperience')}
-                  placeholder="Descripción de la experiencia general requerida"
-                />
-                {errors.generalExperience && (
-                  <p className="text-sm text-destructive">{errors.generalExperience.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="specificExperience">Experiencia específica *</Label>
-                <Input
-                  id="specificExperience"
-                  {...register('specificExperience')}
-                  placeholder="Descripción de la experiencia específica requerida"
-                />
-                {errors.specificExperience && (
-                  <p className="text-sm text-destructive">{errors.specificExperience.message}</p>
-                )}
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="generalExperience">Experiencia general *</Label>
+              <Input
+                id="generalExperience"
+                {...register('experience.general', { required: 'Experiencia general es requerida' })}
+                placeholder="Descripción de la experiencia general requerida"
+              />
+              {errors.experience?.general && (
+                <p className="text-sm text-destructive">{errors.experience.general.message}</p>
+              )}
             </div>
 
-            <Separator />
+            <div className="space-y-2">
+              <Label htmlFor="specificExperience">Experiencia específica *</Label>
+              <Input
+                id="specificExperience"
+                {...register('experience.specific', { required: 'Experiencia específica es requerida' })}
+                placeholder="Descripción de la experiencia específica requerida"
+              />
+              {errors.experience?.specific && (
+                <p className="text-sm text-destructive">{errors.experience.specific.message}</p>
+              )}
+            </div>
 
-            <div className="space-y-4">
-              <h4 className="font-medium">Experiencia específica adicional</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="additionalSpecificValue">Valor requerido</Label>
-                  <Input
-                    id="additionalSpecificValue"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    {...register('additionalSpecificValue', { valueAsNumber: true })}
-                    placeholder="0.00"
-                  />
-                  {errors.additionalSpecificValue && (
-                    <p className="text-sm text-destructive">{errors.additionalSpecificValue.message}</p>
-                  )}
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="additionalSpecificValue">Experiencia específica adicional (valor) *</Label>
+                <Input
+                  id="additionalSpecificValue"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  {...register('experience.additionalSpecific.value', { 
+                    required: 'Valor de experiencia específica adicional es requerido',
+                    valueAsNumber: true 
+                  })}
+                  placeholder="0.00"
+                />
+                {errors.experience?.additionalSpecific?.value && (
+                  <p className="text-sm text-destructive">{errors.experience.additionalSpecific.value.message}</p>
+                )}
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="additionalSpecificUnit">Unidad de medida</Label>
-                  <Select onValueChange={(value) => setValue('additionalSpecificUnit', value as any)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar unidad" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {unitOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.additionalSpecificUnit && (
-                    <p className="text-sm text-destructive">{errors.additionalSpecificUnit.message}</p>
-                  )}
-                </div>
+              <div className="space-y-3">
+                <Label>Unidad de medida *</Label>
+                <RadioGroup 
+                  value={watchedValues.experience?.additionalSpecific?.unit || 'longitud'} 
+                  onValueChange={(value) => register('experience.additionalSpecific.unit').onChange({ target: { value } })}
+                >
+                  {unitOptions.map((option) => (
+                    <div key={option.value} className="flex items-center space-x-2">
+                      <RadioGroupItem value={option.value} id={`unit-${option.value}`} />
+                      <Label htmlFor={`unit-${option.value}`}>{option.label}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
               </div>
             </div>
           </CardContent>
@@ -383,7 +350,7 @@ export const ProcessDataForm: React.FC = () => {
 
         <div className="flex justify-end">
           <Button type="submit" className="flex items-center space-x-2">
-            <span>Continuar a evaluación de proponentes</span>
+            <span>Continuar a evaluación</span>
             <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
