@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,8 +25,8 @@ const processSchema = z.object({
   qualityFactor: z.number().min(0).max(20),
   environmentalQuality: z.number().min(0).max(10),
   nationalIndustrySupport: z.number().min(0).max(20),
-  generalExperience: z.number().min(0),
-  specificExperience: z.number().min(0),
+  generalExperience: z.string().min(1, 'Experiencia general es requerida'),
+  specificExperience: z.string().min(1, 'Experiencia específica es requerida'),
   additionalSpecificValue: z.number().min(0),
   additionalSpecificUnit: z.enum(['longitud', 'area_cubierta', 'area_ejecutada'])
 });
@@ -63,8 +62,8 @@ export const ProcessDataForm: React.FC = () => {
       qualityFactor: 0,
       environmentalQuality: 0,
       nationalIndustrySupport: 0,
-      generalExperience: 0,
-      specificExperience: 0,
+      generalExperience: '',
+      specificExperience: '',
       additionalSpecificValue: 0,
       additionalSpecificUnit: 'longitud' as const
     }
@@ -322,18 +321,16 @@ export const ProcessDataForm: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle>Experiencia del proceso</CardTitle>
-            <CardDescription>Configure los valores de experiencia requeridos</CardDescription>
+            <CardDescription>Configure los requisitos de experiencia</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="generalExperience">Experiencia general</Label>
+                <Label htmlFor="generalExperience">Experiencia general *</Label>
                 <Input
                   id="generalExperience"
-                  type="number"
-                  min="0"
-                  {...register('generalExperience', { valueAsNumber: true })}
-                  placeholder="Años de experiencia general"
+                  {...register('generalExperience')}
+                  placeholder="Descripción de la experiencia general requerida"
                 />
                 {errors.generalExperience && (
                   <p className="text-sm text-destructive">{errors.generalExperience.message}</p>
@@ -341,13 +338,11 @@ export const ProcessDataForm: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="specificExperience">Experiencia específica</Label>
+                <Label htmlFor="specificExperience">Experiencia específica *</Label>
                 <Input
                   id="specificExperience"
-                  type="number"
-                  min="0"
-                  {...register('specificExperience', { valueAsNumber: true })}
-                  placeholder="Años de experiencia específica"
+                  {...register('specificExperience')}
+                  placeholder="Descripción de la experiencia específica requerida"
                 />
                 {errors.specificExperience && (
                   <p className="text-sm text-destructive">{errors.specificExperience.message}</p>

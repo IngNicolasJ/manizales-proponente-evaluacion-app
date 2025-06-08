@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
@@ -215,38 +214,50 @@ export const RequirementsForm: React.FC = () => {
               <CardDescription>Marque los requisitos que cumple el proponente {selectedProponent.name}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="generalExperience"
-                    checked={watchedValues.generalExperience}
-                    onCheckedChange={(checked) => setValue('generalExperience', !!checked)}
-                  />
-                  <Label htmlFor="generalExperience">
-                    ¿Cumple experiencia general? ({processData.experience.general} años)
-                  </Label>
-                </div>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-2">
+                    <Checkbox
+                      id="generalExperience"
+                      checked={watchedValues.generalExperience}
+                      onCheckedChange={(checked) => setValue('generalExperience', !!checked)}
+                    />
+                    <div className="space-y-1">
+                      <Label htmlFor="generalExperience" className="font-medium">
+                        ¿Cumple experiencia general?
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {processData.experience.general}
+                      </p>
+                    </div>
+                  </div>
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="specificExperience"
-                    checked={watchedValues.specificExperience}
-                    onCheckedChange={(checked) => setValue('specificExperience', !!checked)}
-                  />
-                  <Label htmlFor="specificExperience">
-                    ¿Cumple experiencia específica? ({processData.experience.specific} años)
-                  </Label>
-                </div>
+                  <div className="flex items-start space-x-2">
+                    <Checkbox
+                      id="specificExperience"
+                      checked={watchedValues.specificExperience}
+                      onCheckedChange={(checked) => setValue('specificExperience', !!checked)}
+                    />
+                    <div className="space-y-1">
+                      <Label htmlFor="specificExperience" className="font-medium">
+                        ¿Cumple experiencia específica?
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {processData.experience.specific}
+                      </p>
+                    </div>
+                  </div>
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="professionalCard"
-                    checked={watchedValues.professionalCard}
-                    onCheckedChange={(checked) => setValue('professionalCard', !!checked)}
-                  />
-                  <Label htmlFor="professionalCard">
-                    ¿Aporta tarjeta profesional del ingeniero?
-                  </Label>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="professionalCard"
+                      checked={watchedValues.professionalCard}
+                      onCheckedChange={(checked) => setValue('professionalCard', !!checked)}
+                    />
+                    <Label htmlFor="professionalCard">
+                      ¿Aporta tarjeta profesional del ingeniero?
+                    </Label>
+                  </div>
                 </div>
               </div>
 

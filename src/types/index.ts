@@ -15,8 +15,8 @@ export interface ProcessData {
     nationalIndustrySupport: number;
   };
   experience: {
-    general: number;
-    specific: number;
+    general: string;
+    specific: string;
     additionalSpecific: {
       value: number;
       unit: 'longitud' | 'area_cubierta' | 'area_ejecutada';
