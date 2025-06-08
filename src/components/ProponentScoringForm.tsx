@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { v4 as uuidv4 } from 'uuid';
@@ -11,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Users, User, AlertTriangle } from 'lucide-react';
+import { ScoringSelect } from '@/components/ScoringSelect';
 import { Proponent } from '@/types';
 
 interface ProponentFormData {
@@ -19,6 +19,7 @@ interface ProponentFormData {
   partners: Array<{
     name: string;
     percentage: number;
+    rupRenewalDate: string;
   }>;
   rupRenewalDate: string;
   scoring: {
@@ -76,13 +77,24 @@ export const ProponentScoringForm: React.FC = () => {
     );
   }
 
-  const onSubmit = (data: ProponentFormData) => {
+  const checkRupCompliance = (rupDate: string): boolean => {
+    if (!rupDate || !processData) return false;
     const closingDate = new Date(processData.closingDate);
-    const rupDate = new Date(data.rupRenewalDate);
-    const timeDiff = Math.abs(rupDate.getTime() - closingDate.getTime());
+    const renewalDate = new Date(rupDate);
+    const timeDiff = Math.abs(renewalDate.getTime() - closingDate.getTime());
     const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    return daysDiff <= 30;
+  };
+
+  const onSubmit = (data: ProponentFormData) => {
+    let rupComplies = false;
     
-    const rupComplies = daysDiff <= 30;
+    if (data.isPlural) {
+      // Para proponentes plurales, verificar que todos los socios cumplan
+      rupComplies = data.partners.every(partner => checkRupCompliance(partner.rupRenewalDate));
+    } else {
+      rupComplies = checkRupCompliance(data.rupRenewalDate);
+    }
 
     const totalScore = 
       data.scoring.womanEntrepreneurship +
@@ -125,7 +137,7 @@ export const ProponentScoringForm: React.FC = () => {
   };
 
   const addPartner = () => {
-    append({ name: '', percentage: 0 });
+    append({ name: '', percentage: 0, rupRenewalDate: '' });
   };
 
   const getScoringComment = (criterionKey: string): string => {
@@ -150,13 +162,11 @@ export const ProponentScoringForm: React.FC = () => {
     return (
       <div key={key} className="space-y-2">
         <Label htmlFor={key}>{label}</Label>
-        <Input
-          id={key}
-          type="number"
-          step="0.01"
-          min="0"
-          max={maxValue}
-          {...register(`scoring.${key}`, { valueAsNumber: true })}
+        <ScoringSelect
+          value={currentValue}
+          onChange={(value) => setValue(`scoring.${key}`, value)}
+          maxValue={maxValue}
+          placeholder="Seleccionar puntaje"
         />
         {description && (
           <p className="text-xs text-muted-foreground">{description}</p>
@@ -272,6 +282,26 @@ export const ProponentScoringForm: React.FC = () => {
                                   placeholder="0.00"
                                 />
                               </div>
+                              <div className="w-40 space-y-2">
+                                <Label>Fecha renovación RUP</Label>
+                                <Input
+                                  type="date"
+                                  {...register(`partners.${index}.rupRenewalDate`)}
+                                />
+                                {watchedValues.partners?.[index]?.rupRenewalDate && processData && (
+                                  <div className="flex items-center space-x-2">
+                                    {checkRupCompliance(watchedValues.partners[index].rupRenewalDate) ? (
+                                      <Badge variant="default" className="bg-green-100 text-green-800">
+                                        Cumple
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="destructive">
+                                        No cumple
+                                      </Badge>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                               <Button
                                 type="button"
                                 variant="outline"
@@ -288,38 +318,40 @@ export const ProponentScoringForm: React.FC = () => {
                   </Card>
                 )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="rupRenewalDate">Fecha de renovación del RUP *</Label>
-                  <Input
-                    id="rupRenewalDate"
-                    type="date"
-                    {...register('rupRenewalDate', { required: 'Fecha de renovación es requerida' })}
-                  />
-                  {errors.rupRenewalDate && (
-                    <p className="text-sm text-destructive">{errors.rupRenewalDate.message}</p>
-                  )}
-                  {watchedValues.rupRenewalDate && processData && (
-                    <div className="flex items-center space-x-2">
-                      {(() => {
-                        const closingDate = new Date(processData.closingDate);
-                        const rupDate = new Date(watchedValues.rupRenewalDate);
-                        const timeDiff = Math.abs(rupDate.getTime() - closingDate.getTime());
-                        const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-                        const complies = daysDiff <= 30;
-                        
-                        return complies ? (
-                          <Badge variant="default" className="bg-green-100 text-green-800">
-                            Cumple
-                          </Badge>
-                        ) : (
-                          <Badge variant="destructive">
-                            No cumple (más de 30 días)
-                          </Badge>
-                        );
-                      })()}
-                    </div>
-                  )}
-                </div>
+                {!watchedValues.isPlural && (
+                  <div className="space-y-2">
+                    <Label htmlFor="rupRenewalDate">Fecha de renovación del RUP *</Label>
+                    <Input
+                      id="rupRenewalDate"
+                      type="date"
+                      {...register('rupRenewalDate', { required: 'Fecha de renovación es requerida' })}
+                    />
+                    {errors.rupRenewalDate && (
+                      <p className="text-sm text-destructive">{errors.rupRenewalDate.message}</p>
+                    )}
+                    {watchedValues.rupRenewalDate && processData && (
+                      <div className="flex items-center space-x-2">
+                        {(() => {
+                          const closingDate = new Date(processData.closingDate);
+                          const rupDate = new Date(watchedValues.rupRenewalDate);
+                          const timeDiff = Math.abs(rupDate.getTime() - closingDate.getTime());
+                          const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                          const complies = daysDiff <= 30;
+                          
+                          return complies ? (
+                            <Badge variant="default" className="bg-green-100 text-green-800">
+                              Cumple
+                            </Badge>
+                          ) : (
+                            <Badge variant="destructive">
+                              No cumple (más de 30 días)
+                            </Badge>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Puntajes por criterios */}

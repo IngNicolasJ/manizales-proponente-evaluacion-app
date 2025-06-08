@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,19 @@ export const RequirementsForm: React.FC = () => {
   });
 
   const watchedValues = watch();
+
+  // Calcular automáticamente la cantidad aportada basada en los contratos
+  const calculateAdditionalSpecificAmount = () => {
+    const total = watchedValues.contractors?.reduce((sum, contractor) => {
+      return sum + (contractor.additionalSpecificExperienceContribution || 0);
+    }, 0) || 0;
+    
+    setValue('additionalSpecificAmount', total);
+  };
+
+  useEffect(() => {
+    calculateAdditionalSpecificAmount();
+  }, [watchedValues.contractors]);
 
   if (!processData) {
     return (
@@ -95,6 +108,24 @@ export const RequirementsForm: React.FC = () => {
 
   const checkAdditionalSpecificCompliance = (amount: number): boolean => {
     return amount >= processData.experience.additionalSpecific.value;
+  };
+
+  const calculateAdjustedValue = (index: number) => {
+    const contractor = watchedValues.contractors?.[index];
+    if (contractor) {
+      const adjustedValue = (contractor.totalValueSMMLV || 0) * ((contractor.participationPercentage || 0) / 100);
+      setValue(`contractors.${index}.adjustedValue`, adjustedValue);
+    }
+  };
+
+  const getExperienceContributorOptions = () => {
+    if (!selectedProponent) return [];
+    
+    if (selectedProponent.isPlural && selectedProponent.partners) {
+      return selectedProponent.partners.map(partner => partner.name);
+    } else {
+      return [selectedProponent.name];
+    }
   };
 
   const onSubmit = (data: RequirementsFormData) => {
@@ -275,10 +306,15 @@ export const RequirementsForm: React.FC = () => {
                       type="number"
                       step="0.01"
                       min="0"
-                      {...register('additionalSpecificAmount', { valueAsNumber: true })}
+                      value={watchedValues.additionalSpecificAmount || 0}
+                      readOnly
+                      className="bg-muted"
                     />
                     <div className="text-sm text-muted-foreground">
                       Valor requerido: {processData.experience.additionalSpecific.value}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      * Calculado automáticamente desde los contratos aportados
                     </div>
                     {watchedValues.additionalSpecificAmount !== undefined && (
                       <div className="flex items-center space-x-2">
@@ -417,13 +453,25 @@ export const RequirementsForm: React.FC = () => {
                             step="0.01"
                             min="0"
                             max="100"
-                            {...register(`contractors.${index}.participationPercentage`, { valueAsNumber: true })}
+                            {...register(`contractors.${index}.participationPercentage`, { 
+                              valueAsNumber: true,
+                              onChange: () => calculateAdjustedValue(index)
+                            })}
                           />
                         </div>
 
                         <div className="space-y-2">
                           <Label>Integrante que aporta experiencia</Label>
-                          <Input {...register(`contractors.${index}.experienceContributor`)} />
+                          <Select onValueChange={(value) => setValue(`contractors.${index}.experienceContributor`, value)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getExperienceContributorOptions().map((option) => (
+                                <SelectItem key={option} value={option}>{option}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         <div className="space-y-2">
@@ -432,7 +480,10 @@ export const RequirementsForm: React.FC = () => {
                             type="number"
                             step="0.01"
                             min="0"
-                            {...register(`contractors.${index}.totalValueSMMLV`, { valueAsNumber: true })}
+                            {...register(`contractors.${index}.totalValueSMMLV`, { 
+                              valueAsNumber: true,
+                              onChange: () => calculateAdjustedValue(index)
+                            })}
                           />
                         </div>
 
@@ -442,7 +493,9 @@ export const RequirementsForm: React.FC = () => {
                             type="number"
                             step="0.01"
                             min="0"
-                            {...register(`contractors.${index}.adjustedValue`, { valueAsNumber: true })}
+                            value={watchedValues.contractors?.[index]?.adjustedValue || 0}
+                            readOnly
+                            className="bg-muted"
                           />
                         </div>
 
@@ -452,7 +505,9 @@ export const RequirementsForm: React.FC = () => {
                             type="number"
                             step="0.01"
                             min="0"
-                            {...register(`contractors.${index}.additionalSpecificExperienceContribution`, { valueAsNumber: true })}
+                            {...register(`contractors.${index}.additionalSpecificExperienceContribution`, { 
+                              valueAsNumber: true 
+                            })}
                           />
                         </div>
                       </div>

@@ -1,43 +1,38 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { ArrowRight, FileText } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Settings, Calculator } from 'lucide-react';
 import { ProcessData } from '@/types';
 
-const processSchema = z.object({
-  processNumber: z.string().min(1, 'Número del proceso es requerido'),
-  processObject: z.string().min(1, 'Objeto del proceso es requerido'),
-  closingDate: z.string().min(1, 'Fecha de cierre es requerida'),
-  totalContractValue: z.number().min(0, 'Valor debe ser mayor a 0'),
-  minimumSalary: z.number().min(0, 'Salario mínimo debe ser mayor a 0'),
-  processType: z.enum(['licitacion', 'concurso', 'abreviada', 'minima']),
-  womanEntrepreneurship: z.number().min(0).max(0.25),
-  mipyme: z.number().min(0).max(0.25),
-  disabled: z.number().min(0).max(1),
-  qualityFactor: z.number().min(0).max(20),
-  environmentalQuality: z.number().min(0).max(10),
-  nationalIndustrySupport: z.number().min(0).max(20),
-  generalExperience: z.string().min(1, 'Experiencia general es requerida'),
-  specificExperience: z.string().min(1, 'Experiencia específica es requerida'),
-  additionalSpecificValue: z.number().min(0),
-  additionalSpecificUnit: z.enum(['longitud', 'area_cubierta', 'area_ejecutada'])
-});
-
-type ProcessFormData = z.infer<typeof processSchema>;
+interface ProcessFormData {
+  processNumber: string;
+  processObject: string;
+  closingDate: string;
+  totalContractValue: number;
+  minimumSalary: number;
+  processType: 'licitacion' | 'concurso' | 'abreviada' | 'minima';
+  womanEntrepreneurship: number;
+  mipyme: number;
+  disabled: number;
+  qualityFactor: number;
+  environmentalQuality: number;
+  nationalIndustrySupport: number;
+  generalExperience: string;
+  specificExperience: string;
+  additionalSpecificValue: number;
+  additionalSpecificUnit: 'longitud' | 'area_cubierta' | 'area_ejecutada';
+}
 
 export const ProcessDataForm: React.FC = () => {
   const { setProcessData, setCurrentStep, processData } = useAppStore();
 
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ProcessFormData>({
-    resolver: zodResolver(processSchema),
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ProcessFormData>({
     defaultValues: processData ? {
       processNumber: processData.processNumber,
       processObject: processData.processObject,
@@ -56,6 +51,12 @@ export const ProcessDataForm: React.FC = () => {
       additionalSpecificValue: processData.experience.additionalSpecific.value,
       additionalSpecificUnit: processData.experience.additionalSpecific.unit
     } : {
+      processNumber: '',
+      processObject: '',
+      closingDate: '',
+      totalContractValue: 0,
+      minimumSalary: 0,
+      processType: 'licitacion',
       womanEntrepreneurship: 0,
       mipyme: 0,
       disabled: 0,
@@ -65,12 +66,14 @@ export const ProcessDataForm: React.FC = () => {
       generalExperience: '',
       specificExperience: '',
       additionalSpecificValue: 0,
-      additionalSpecificUnit: 'longitud' as const
+      additionalSpecificUnit: 'area_ejecutada'
     }
   });
 
+  const watchedValues = watch();
+
   const onSubmit = (data: ProcessFormData) => {
-    const processData: ProcessData = {
+    const newProcessData: ProcessData = {
       processNumber: data.processNumber,
       processObject: data.processObject,
       closingDate: data.closingDate,
@@ -95,22 +98,18 @@ export const ProcessDataForm: React.FC = () => {
       }
     };
 
-    setProcessData(processData);
+    setProcessData(newProcessData);
     setCurrentStep(2);
   };
 
-  const processTypeOptions = [
-    { value: 'licitacion', label: 'Licitación pública' },
-    { value: 'concurso', label: 'Concurso de méritos' },
-    { value: 'abreviada', label: 'Selección abreviada' },
-    { value: 'minima', label: 'Mínima cuantía' }
-  ];
-
-  const unitOptions = [
-    { value: 'longitud', label: 'Longitud' },
-    { value: 'area_cubierta', label: 'Área de cubierta medida en planta' },
-    { value: 'area_ejecutada', label: 'Área ejecutada' }
-  ];
+  const getUnitLabel = (unit: string): string => {
+    const labels = {
+      'longitud': 'Longitud',
+      'area_cubierta': 'Área de cubierta medida en planta',
+      'area_ejecutada': 'Área ejecutada'
+    };
+    return labels[unit as keyof typeof labels] || unit;
+  };
 
   return (
     <div className="p-6">
@@ -122,7 +121,7 @@ export const ProcessDataForm: React.FC = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Información general del proceso */}
         <Card>
           <CardHeader>
@@ -225,93 +224,82 @@ export const ProcessDataForm: React.FC = () => {
             <CardTitle>Puntajes por criterios</CardTitle>
             <CardDescription>Configure los puntajes máximos para cada criterio de evaluación</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="womanEntrepreneurship">Emprendimiento mujer (0 - 0.25)</Label>
-                <Input
-                  id="womanEntrepreneurship"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="0.25"
-                  {...register('womanEntrepreneurship', { valueAsNumber: true })}
-                />
-                {errors.womanEntrepreneurship && (
-                  <p className="text-sm text-destructive">{errors.womanEntrepreneurship.message}</p>
-                )}
+                <Select
+                  value={watchedValues.womanEntrepreneurship?.toString() || "0"}
+                  onValueChange={(value) => setValue('womanEntrepreneurship', parseFloat(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar puntaje" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">0.00</SelectItem>
+                    <SelectItem value="0.25">0.25</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="mipyme">MIPYME (0 - 0.25)</Label>
-                <Input
-                  id="mipyme"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="0.25"
-                  {...register('mipyme', { valueAsNumber: true })}
-                />
-                {errors.mipyme && (
-                  <p className="text-sm text-destructive">{errors.mipyme.message}</p>
-                )}
+                <Select
+                  value={watchedValues.mipyme?.toString() || "0"}
+                  onValueChange={(value) => setValue('mipyme', parseFloat(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar puntaje" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">0.00</SelectItem>
+                    <SelectItem value="0.25">0.25</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="disabled">Discapacitado (0 - 1)</Label>
+                <Label htmlFor="disabled">Discapacitado</Label>
                 <Input
                   id="disabled"
                   type="number"
                   step="0.01"
                   min="0"
-                  max="1"
                   {...register('disabled', { valueAsNumber: true })}
                 />
-                {errors.disabled && (
-                  <p className="text-sm text-destructive">{errors.disabled.message}</p>
-                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="qualityFactor">Factor de calidad (0, 10, 19 o 20)</Label>
+                <Label htmlFor="qualityFactor">Factor de calidad</Label>
                 <Input
                   id="qualityFactor"
                   type="number"
+                  step="0.01"
                   min="0"
-                  max="20"
                   {...register('qualityFactor', { valueAsNumber: true })}
                 />
-                {errors.qualityFactor && (
-                  <p className="text-sm text-destructive">{errors.qualityFactor.message}</p>
-                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="environmentalQuality">Factor de calidad ambiental (0 - 10)</Label>
+                <Label htmlFor="environmentalQuality">Factor de calidad ambiental</Label>
                 <Input
                   id="environmentalQuality"
                   type="number"
+                  step="0.01"
                   min="0"
-                  max="10"
                   {...register('environmentalQuality', { valueAsNumber: true })}
                 />
-                {errors.environmentalQuality && (
-                  <p className="text-sm text-destructive">{errors.environmentalQuality.message}</p>
-                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="nationalIndustrySupport">Apoyo a la industria nacional (0 - 20)</Label>
+                <Label htmlFor="nationalIndustrySupport">Apoyo a la industria nacional</Label>
                 <Input
                   id="nationalIndustrySupport"
                   type="number"
+                  step="0.01"
                   min="0"
-                  max="20"
                   {...register('nationalIndustrySupport', { valueAsNumber: true })}
                 />
-                {errors.nationalIndustrySupport && (
-                  <p className="text-sm text-destructive">{errors.nationalIndustrySupport.message}</p>
-                )}
               </div>
             </div>
           </CardContent>

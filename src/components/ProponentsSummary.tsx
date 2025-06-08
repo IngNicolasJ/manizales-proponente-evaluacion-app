@@ -1,15 +1,18 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Edit, Trash2, AlertTriangle, CheckCircle, FileX } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { FileText, Download, Edit, Trash2, AlertTriangle, CheckCircle, FileX, Eye } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { Proponent } from '@/types';
 
 export const ProponentsSummary: React.FC = () => {
   const { proponents, deleteProponent, processData, setCurrentStep } = useAppStore();
+  const [selectedProponentForDetails, setSelectedProponentForDetails] = useState<Proponent | null>(null);
 
   if (!processData) {
     return (
@@ -80,6 +83,137 @@ export const ProponentsSummary: React.FC = () => {
   };
 
   const maxScore = Object.values(processData.scoring).reduce((a, b) => a + b, 0);
+
+  const ScoringDetailsDialog: React.FC<{ proponent: Proponent }> = ({ proponent }) => (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Eye className="w-4 h-4 mr-2" />
+          Ver detalles
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Detalles de puntaje - {proponent.name}</DialogTitle>
+          <DialogDescription>
+            Criterios y puntajes otorgados al proponente
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <h4 className="font-medium">Emprendimiento mujer</h4>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Puntaje obtenido:</span>
+                <span className="font-medium">{proponent.scoring.womanEntrepreneurship.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Puntaje máximo:</span>
+                <span className="text-sm">{processData.scoring.womanEntrepreneurship.toFixed(2)}</span>
+              </div>
+              {proponent.scoring.comments.womanEntrepreneurship && (
+                <div className="mt-2 p-2 bg-muted rounded text-sm">
+                  <strong>Comentario:</strong> {proponent.scoring.comments.womanEntrepreneurship}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-medium">MIPYME</h4>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Puntaje obtenido:</span>
+                <span className="font-medium">{proponent.scoring.mipyme.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Puntaje máximo:</span>
+                <span className="text-sm">{processData.scoring.mipyme.toFixed(2)}</span>
+              </div>
+              {proponent.scoring.comments.mipyme && (
+                <div className="mt-2 p-2 bg-muted rounded text-sm">
+                  <strong>Comentario:</strong> {proponent.scoring.comments.mipyme}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-medium">Discapacitado</h4>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Puntaje obtenido:</span>
+                <span className="font-medium">{proponent.scoring.disabled.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Puntaje máximo:</span>
+                <span className="text-sm">{processData.scoring.disabled.toFixed(2)}</span>
+              </div>
+              {proponent.scoring.comments.disabled && (
+                <div className="mt-2 p-2 bg-muted rounded text-sm">
+                  <strong>Comentario:</strong> {proponent.scoring.comments.disabled}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-medium">Factor de calidad</h4>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Puntaje obtenido:</span>
+                <span className="font-medium">{proponent.scoring.qualityFactor.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Puntaje máximo:</span>
+                <span className="text-sm">{processData.scoring.qualityFactor.toFixed(2)}</span>
+              </div>
+              {proponent.scoring.comments.qualityFactor && (
+                <div className="mt-2 p-2 bg-muted rounded text-sm">
+                  <strong>Comentario:</strong> {proponent.scoring.comments.qualityFactor}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-medium">Factor de calidad ambiental</h4>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Puntaje obtenido:</span>
+                <span className="font-medium">{proponent.scoring.environmentalQuality.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Puntaje máximo:</span>
+                <span className="text-sm">{processData.scoring.environmentalQuality.toFixed(2)}</span>
+              </div>
+              {proponent.scoring.comments.environmentalQuality && (
+                <div className="mt-2 p-2 bg-muted rounded text-sm">
+                  <strong>Comentario:</strong> {proponent.scoring.comments.environmentalQuality}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-medium">Apoyo a la industria nacional</h4>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Puntaje obtenido:</span>
+                <span className="font-medium">{proponent.scoring.nationalIndustrySupport.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Puntaje máximo:</span>
+                <span className="text-sm">{processData.scoring.nationalIndustrySupport.toFixed(2)}</span>
+              </div>
+              {proponent.scoring.comments.nationalIndustrySupport && (
+                <div className="mt-2 p-2 bg-muted rounded text-sm">
+                  <strong>Comentario:</strong> {proponent.scoring.comments.nationalIndustrySupport}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between text-lg font-semibold">
+              <span>Total obtenido:</span>
+              <span>{proponent.totalScore.toFixed(2)} / {maxScore.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 
   return (
     <div className="p-6">
@@ -196,6 +330,7 @@ export const ProponentsSummary: React.FC = () => {
                               style={{ width: `${Math.min((proponent.totalScore / maxScore) * 100, 100)}%` }}
                             />
                           </div>
+                          <ScoringDetailsDialog proponent={proponent} />
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
