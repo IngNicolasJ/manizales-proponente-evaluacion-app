@@ -186,9 +186,10 @@ export const ProcessDataForm: React.FC = () => {
                   value={watchedValues.scoring.womanEntrepreneurship}
                   onChange={(value) => setValue('scoring.womanEntrepreneurship', value)}
                   maxValue={0.25}
+                  customOptions={[0, 0.25]}
                   placeholder="Seleccionar puntaje"
                 />
-                <p className="text-xs text-muted-foreground">Máximo: 0.25</p>
+                <p className="text-xs text-muted-foreground">Opciones: 0 o 0.25</p>
               </div>
 
               <div className="space-y-2">
@@ -197,9 +198,10 @@ export const ProcessDataForm: React.FC = () => {
                   value={watchedValues.scoring.mipyme}
                   onChange={(value) => setValue('scoring.mipyme', value)}
                   maxValue={0.25}
+                  customOptions={[0, 0.25]}
                   placeholder="Seleccionar puntaje"
                 />
-                <p className="text-xs text-muted-foreground">Máximo: 0.25</p>
+                <p className="text-xs text-muted-foreground">Opciones: 0 o 0.25</p>
               </div>
 
               <div className="space-y-2">
@@ -207,10 +209,11 @@ export const ProcessDataForm: React.FC = () => {
                 <ScoringSelect
                   value={watchedValues.scoring.disabled}
                   onChange={(value) => setValue('scoring.disabled', value)}
-                  maxValue={5}
+                  maxValue={1}
+                  customOptions={[0, 1]}
                   placeholder="Seleccionar puntaje"
                 />
-                <p className="text-xs text-muted-foreground">Máximo: 5</p>
+                <p className="text-xs text-muted-foreground">Opciones: 0 o 1</p>
                 {errors.scoring?.disabled && (
                   <p className="text-sm text-destructive">{errors.scoring.disabled.message}</p>
                 )}
@@ -221,10 +224,11 @@ export const ProcessDataForm: React.FC = () => {
                 <ScoringSelect
                   value={watchedValues.scoring.qualityFactor}
                   onChange={(value) => setValue('scoring.qualityFactor', value)}
-                  maxValue={30}
+                  maxValue={20}
+                  customOptions={[0, 10, 19, 20]}
                   placeholder="Seleccionar puntaje"
                 />
-                <p className="text-xs text-muted-foreground">Máximo: 30</p>
+                <p className="text-xs text-muted-foreground">Opciones: 0, 10, 19 o 20</p>
                 {errors.scoring?.qualityFactor && (
                   <p className="text-sm text-destructive">{errors.scoring.qualityFactor.message}</p>
                 )}
@@ -235,10 +239,11 @@ export const ProcessDataForm: React.FC = () => {
                 <ScoringSelect
                   value={watchedValues.scoring.environmentalQuality}
                   onChange={(value) => setValue('scoring.environmentalQuality', value)}
-                  maxValue={5}
+                  maxValue={20}
+                  customOptions={[0, 10, 20]}
                   placeholder="Seleccionar puntaje"
                 />
-                <p className="text-xs text-muted-foreground">Máximo: 5</p>
+                <p className="text-xs text-muted-foreground">Opciones: 0, 10 o 20</p>
                 {errors.scoring?.environmentalQuality && (
                   <p className="text-sm text-destructive">{errors.scoring.environmentalQuality.message}</p>
                 )}
@@ -249,10 +254,11 @@ export const ProcessDataForm: React.FC = () => {
                 <ScoringSelect
                   value={watchedValues.scoring.nationalIndustrySupport}
                   onChange={(value) => setValue('scoring.nationalIndustrySupport', value)}
-                  maxValue={10}
+                  maxValue={20}
+                  customOptions={[0, 10, 20]}
                   placeholder="Seleccionar puntaje"
                 />
-                <p className="text-xs text-muted-foreground">Máximo: 10</p>
+                <p className="text-xs text-muted-foreground">Opciones: 0, 10 o 20</p>
                 {errors.scoring?.nationalIndustrySupport && (
                   <p className="text-sm text-destructive">{errors.scoring.nationalIndustrySupport.message}</p>
                 )}

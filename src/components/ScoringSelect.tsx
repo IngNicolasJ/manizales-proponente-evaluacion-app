@@ -8,6 +8,7 @@ interface ScoringSelectProps {
   maxValue: number;
   placeholder?: string;
   disabled?: boolean;
+  customOptions?: number[];
 }
 
 export const ScoringSelect: React.FC<ScoringSelectProps> = ({
@@ -15,9 +16,13 @@ export const ScoringSelect: React.FC<ScoringSelectProps> = ({
   onChange,
   maxValue,
   placeholder = "Seleccionar puntaje",
-  disabled = false
+  disabled = false,
+  customOptions
 }) => {
   const generateOptions = (max: number) => {
+    if (customOptions) {
+      return customOptions;
+    }
     const options = [];
     for (let i = 0; i <= max * 100; i += 25) {
       const val = i / 100;
@@ -27,6 +32,8 @@ export const ScoringSelect: React.FC<ScoringSelectProps> = ({
     }
     return options;
   };
+
+  const options = generateOptions(maxValue);
 
   return (
     <Select
@@ -38,7 +45,7 @@ export const ScoringSelect: React.FC<ScoringSelectProps> = ({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {generateOptions(maxValue).map((option) => (
+        {options.map((option) => (
           <SelectItem key={option} value={option.toString()}>
             {option.toFixed(2)}
           </SelectItem>
