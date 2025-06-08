@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
@@ -8,9 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { FileText, ArrowRight } from 'lucide-react';
+import { ScoringSelect } from '@/components/ScoringSelect';
 import { ProcessData } from '@/types';
 
-// ... keep existing code (processTypeOptions and unitOptions)
 const processTypeOptions = [
   { value: 'licitacion', label: 'Licitación Pública' },
   { value: 'concurso', label: 'Concurso de Méritos' },
@@ -27,7 +28,7 @@ const unitOptions = [
 export const ProcessDataForm: React.FC = () => {
   const { setProcessData, setCurrentStep } = useAppStore();
   
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<ProcessData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ProcessData>({
     defaultValues: {
       processNumber: '',
       processObject: '',
@@ -158,7 +159,7 @@ export const ProcessDataForm: React.FC = () => {
               <Label>Tipo de proceso *</Label>
               <RadioGroup 
                 value={watchedValues.processType} 
-                onValueChange={(value) => register('processType').onChange({ target: { value } })}
+                onValueChange={(value) => setValue('processType', value as any)}
               >
                 {processTypeOptions.map((option) => (
                   <div key={option.value} className="flex items-center space-x-2">
@@ -180,42 +181,36 @@ export const ProcessDataForm: React.FC = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="womanEntrepreneurship">Emprendimiento mujer (0 - 0.25)</Label>
-                <select
-                  id="womanEntrepreneurship"
-                  {...register('scoring.womanEntrepreneurship', { valueAsNumber: true })}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value={0}>0</option>
-                  <option value={0.25}>0.25</option>
-                </select>
+                <Label htmlFor="womanEntrepreneurship">Emprendimiento mujer</Label>
+                <ScoringSelect
+                  value={watchedValues.scoring.womanEntrepreneurship}
+                  onChange={(value) => setValue('scoring.womanEntrepreneurship', value)}
+                  maxValue={0.25}
+                  placeholder="Seleccionar puntaje"
+                />
+                <p className="text-xs text-muted-foreground">Máximo: 0.25</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="mipyme">MIPYME (0 - 0.25)</Label>
-                <select
-                  id="mipyme"
-                  {...register('scoring.mipyme', { valueAsNumber: true })}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value={0}>0</option>
-                  <option value={0.25}>0.25</option>
-                </select>
+                <Label htmlFor="mipyme">MIPYME</Label>
+                <ScoringSelect
+                  value={watchedValues.scoring.mipyme}
+                  onChange={(value) => setValue('scoring.mipyme', value)}
+                  maxValue={0.25}
+                  placeholder="Seleccionar puntaje"
+                />
+                <p className="text-xs text-muted-foreground">Máximo: 0.25</p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="disabled">Discapacitado *</Label>
-                <Input
-                  id="disabled"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...register('scoring.disabled', { 
-                    required: 'Puntaje discapacitado es requerido',
-                    valueAsNumber: true 
-                  })}
-                  placeholder="0.00"
+                <ScoringSelect
+                  value={watchedValues.scoring.disabled}
+                  onChange={(value) => setValue('scoring.disabled', value)}
+                  maxValue={5}
+                  placeholder="Seleccionar puntaje"
                 />
+                <p className="text-xs text-muted-foreground">Máximo: 5</p>
                 {errors.scoring?.disabled && (
                   <p className="text-sm text-destructive">{errors.scoring.disabled.message}</p>
                 )}
@@ -223,17 +218,13 @@ export const ProcessDataForm: React.FC = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="qualityFactor">Factor de calidad *</Label>
-                <Input
-                  id="qualityFactor"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...register('scoring.qualityFactor', { 
-                    required: 'Factor de calidad es requerido',
-                    valueAsNumber: true 
-                  })}
-                  placeholder="0.00"
+                <ScoringSelect
+                  value={watchedValues.scoring.qualityFactor}
+                  onChange={(value) => setValue('scoring.qualityFactor', value)}
+                  maxValue={30}
+                  placeholder="Seleccionar puntaje"
                 />
+                <p className="text-xs text-muted-foreground">Máximo: 30</p>
                 {errors.scoring?.qualityFactor && (
                   <p className="text-sm text-destructive">{errors.scoring.qualityFactor.message}</p>
                 )}
@@ -241,17 +232,13 @@ export const ProcessDataForm: React.FC = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="environmentalQuality">Factor de calidad ambiental *</Label>
-                <Input
-                  id="environmentalQuality"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...register('scoring.environmentalQuality', { 
-                    required: 'Factor de calidad ambiental es requerido',
-                    valueAsNumber: true 
-                  })}
-                  placeholder="0.00"
+                <ScoringSelect
+                  value={watchedValues.scoring.environmentalQuality}
+                  onChange={(value) => setValue('scoring.environmentalQuality', value)}
+                  maxValue={5}
+                  placeholder="Seleccionar puntaje"
                 />
+                <p className="text-xs text-muted-foreground">Máximo: 5</p>
                 {errors.scoring?.environmentalQuality && (
                   <p className="text-sm text-destructive">{errors.scoring.environmentalQuality.message}</p>
                 )}
@@ -259,17 +246,13 @@ export const ProcessDataForm: React.FC = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="nationalIndustrySupport">Apoyo a la industria nacional *</Label>
-                <Input
-                  id="nationalIndustrySupport"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...register('scoring.nationalIndustrySupport', { 
-                    required: 'Apoyo a la industria nacional es requerido',
-                    valueAsNumber: true 
-                  })}
-                  placeholder="0.00"
+                <ScoringSelect
+                  value={watchedValues.scoring.nationalIndustrySupport}
+                  onChange={(value) => setValue('scoring.nationalIndustrySupport', value)}
+                  maxValue={10}
+                  placeholder="Seleccionar puntaje"
                 />
+                <p className="text-xs text-muted-foreground">Máximo: 10</p>
                 {errors.scoring?.nationalIndustrySupport && (
                   <p className="text-sm text-destructive">{errors.scoring.nationalIndustrySupport.message}</p>
                 )}
@@ -334,7 +317,7 @@ export const ProcessDataForm: React.FC = () => {
                 <Label>Unidad de medida *</Label>
                 <RadioGroup 
                   value={watchedValues.experience?.additionalSpecific?.unit || 'longitud'} 
-                  onValueChange={(value) => register('experience.additionalSpecific.unit').onChange({ target: { value } })}
+                  onValueChange={(value) => setValue('experience.additionalSpecific.unit', value as any)}
                 >
                   {unitOptions.map((option) => (
                     <div key={option.value} className="flex items-center space-x-2">
