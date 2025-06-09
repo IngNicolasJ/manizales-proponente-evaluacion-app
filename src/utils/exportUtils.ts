@@ -28,22 +28,36 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
   doc.setFontSize(10);
   doc.setFont(undefined, 'normal');
   
-  // Datos del proceso en formato estructurado
-  const processInfo = [
+  // Datos del proceso en formato estructurado - handling multiline for process object
+  const processInfoSimple = [
     ['Número del proceso:', processData.processNumber],
-    ['Objeto:', processData.processObject],
     ['Fecha de cierre:', new Date(processData.closingDate).toLocaleDateString('es-ES')],
     ['Valor total del contrato:', `$${processData.totalContractValue.toLocaleString('es-ES')}`],
     ['Puntaje máximo posible:', `${Object.values(processData.scoring).reduce((a, b) => a + b, 0).toFixed(2)} puntos`]
   ];
   
-  processInfo.forEach(([label, value]) => {
+  // Handle simple fields first
+  processInfoSimple.forEach(([label, value]) => {
     doc.setFont(undefined, 'bold');
     doc.text(label, 25, yPosition);
     doc.setFont(undefined, 'normal');
     const labelWidth = doc.getTextWidth(label);
     doc.text(value, 25 + labelWidth + 5, yPosition);
     yPosition += 7;
+  });
+  
+  // Handle "Objeto del proceso" with text wrapping
+  doc.setFont(undefined, 'bold');
+  doc.text('Objeto:', 25, yPosition);
+  yPosition += 7;
+  
+  doc.setFont(undefined, 'normal');
+  const maxWidth = 165; // Maximum width for text (190 - 25 margin)
+  const processObjectLines = doc.splitTextToSize(processData.processObject, maxWidth);
+  
+  processObjectLines.forEach((line: string) => {
+    doc.text(line, 25, yPosition);
+    yPosition += 5;
   });
   
   yPosition += 10;
