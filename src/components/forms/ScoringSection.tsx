@@ -40,6 +40,9 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
     const currentValue = watchedValues.scoring?.[key] || 0;
     const requiresComment = currentValue === 0;
 
+    // Generate options: always include 0, and the configured max value if it's greater than 0
+    const customOptions = maxValue > 0 ? [0, maxValue] : [0];
+
     return (
       <div key={key} className="space-y-2">
         <Label htmlFor={key}>{label}</Label>
@@ -47,6 +50,7 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
           value={currentValue}
           onChange={(value) => setValue(`scoring.${key}`, value)}
           maxValue={maxValue}
+          customOptions={customOptions}
           placeholder="Seleccionar puntaje"
         />
         {description && (
@@ -81,37 +85,37 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
             'womanEntrepreneurship',
             'Emprendimiento mujer',
             processData.scoring.womanEntrepreneurship,
-            `Máximo: ${processData.scoring.womanEntrepreneurship}`
+            `Opciones: 0 o ${processData.scoring.womanEntrepreneurship}`
           )}
           {renderScoringField(
             'mipyme',
             'MIPYME',
             processData.scoring.mipyme,
-            `Máximo: ${processData.scoring.mipyme}`
+            `Opciones: 0 o ${processData.scoring.mipyme}`
           )}
           {renderScoringField(
             'disabled',
             'Discapacitado',
             processData.scoring.disabled,
-            `Máximo: ${processData.scoring.disabled}`
+            `Opciones: 0 o ${processData.scoring.disabled}`
           )}
           {renderScoringField(
             'qualityFactor',
             'Factor de calidad',
             processData.scoring.qualityFactor,
-            `Máximo: ${processData.scoring.qualityFactor}`
+            `Opciones: 0 o ${processData.scoring.qualityFactor}`
           )}
           {renderScoringField(
             'environmentalQuality',
             'Factor de calidad ambiental',
             processData.scoring.environmentalQuality,
-            `Máximo: ${processData.scoring.environmentalQuality}`
+            `Opciones: 0 o ${processData.scoring.environmentalQuality}`
           )}
           {renderScoringField(
             'nationalIndustrySupport',
             'Apoyo a la industria nacional',
             processData.scoring.nationalIndustrySupport,
-            `Máximo: ${processData.scoring.nationalIndustrySupport}`
+            `Opciones: 0 o ${processData.scoring.nationalIndustrySupport}`
           )}
         </div>
       </CardContent>
