@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { FileText, Download, Edit, Trash2, AlertTriangle, CheckCircle, FileX, Eye } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Proponent } from '@/types';
+import { exportToPDF, exportToExcel } from '@/utils/exportUtils';
 
 export const ProponentsSummary: React.FC = () => {
   const { proponents, deleteProponent, processData, setCurrentStep } = useAppStore();
@@ -30,21 +30,38 @@ export const ProponentsSummary: React.FC = () => {
   }
 
   const handleExportPDF = () => {
-    toast({
-      title: "Exportación a PDF",
-      description: "Funcionalidad de exportación en desarrollo",
-    });
+    try {
+      exportToPDF(processData, proponents);
+      toast({
+        title: "Exportación a PDF",
+        description: "El archivo PDF se ha descargado correctamente",
+      });
+    } catch (error) {
+      toast({
+        title: "Error en exportación",
+        description: "No se pudo generar el archivo PDF",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleExportExcel = () => {
-    toast({
-      title: "Exportación a Excel",
-      description: "Funcionalidad de exportación en desarrollo",
-    });
+    try {
+      exportToExcel(processData, proponents);
+      toast({
+        title: "Exportación a Excel",
+        description: "El archivo Excel se ha descargado correctamente",
+      });
+    } catch (error) {
+      toast({
+        title: "Error en exportación",
+        description: "No se pudo generar el archivo Excel",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditProponent = (proponentId: string) => {
-    // Lógica para editar proponente
     setCurrentStep(2);
     toast({
       title: "Editar proponente",
