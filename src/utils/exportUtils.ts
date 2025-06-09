@@ -49,8 +49,8 @@ export const exportToExcel = (processData: ProcessData, proponents: Proponent[])
     ['Número del proceso', processData.processNumber],
     ['Objeto del proceso', processData.processObject],
     ['Fecha de cierre', new Date(processData.closingDate).toLocaleDateString()],
-    ['Valor del contrato', processData.totalContractValue],
-    ['Puntaje máximo', Object.values(processData.scoring).reduce((a, b) => a + b, 0)]
+    ['Valor del contrato', processData.totalContractValue.toString()],
+    ['Puntaje máximo', Object.values(processData.scoring).reduce((a, b) => a + b, 0).toString()]
   ];
   
   const processSheet = XLSX.utils.aoa_to_sheet(processInfo);
@@ -64,19 +64,19 @@ export const exportToExcel = (processData: ProcessData, proponents: Proponent[])
   proponents.forEach(proponent => {
     proponentsData.push([
       proponent.name,
-      proponent.totalScore,
+      proponent.totalScore.toString(),
       proponent.requirements.generalExperience ? 'Sí' : 'No',
       proponent.requirements.specificExperience ? 'Sí' : 'No',
       proponent.requirements.additionalSpecificExperience.complies ? 'Sí' : 'No',
       proponent.requirements.professionalCard ? 'Sí' : 'No',
       proponent.rup.complies ? 'Sí' : 'No',
       proponent.needsSubsanation ? 'SUBSANAR' : 'CUMPLE',
-      proponent.scoring.womanEntrepreneurship,
-      proponent.scoring.mipyme,
-      proponent.scoring.disabled,
-      proponent.scoring.qualityFactor,
-      proponent.scoring.environmentalQuality,
-      proponent.scoring.nationalIndustrySupport
+      proponent.scoring.womanEntrepreneurship.toString(),
+      proponent.scoring.mipyme.toString(),
+      proponent.scoring.disabled.toString(),
+      proponent.scoring.qualityFactor.toString(),
+      proponent.scoring.environmentalQuality.toString(),
+      proponent.scoring.nationalIndustrySupport.toString()
     ]);
   });
   
@@ -102,8 +102,8 @@ export const exportToExcel = (processData: ProcessData, proponents: Proponent[])
       detailedData.push([
         proponent.name,
         criterion.name,
-        criterion.score,
-        criterion.max,
+        criterion.score.toString(),
+        criterion.max.toString(),
         criterion.comment || ''
       ]);
     });
