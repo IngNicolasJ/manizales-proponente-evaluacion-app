@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { FileText, Download, Edit, Trash2, AlertTriangle, CheckCircle, FileX, Eye } from 'lucide-react';
+import { FileText, Download, Edit, Trash2, AlertTriangle, CheckCircle, FileX, Eye, Info } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Proponent } from '@/types';
 import { exportToPDF, exportToExcel } from '@/utils/exportUtils';
@@ -100,6 +101,158 @@ export const ProponentsSummary: React.FC = () => {
   };
 
   const maxScore = Object.values(processData.scoring).reduce((a, b) => a + b, 0);
+
+  const ComplianceDetailsDialog: React.FC<{ proponent: Proponent }> = ({ proponent }) => (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Info className="w-4 h-4 mr-2" />
+          Ver detalles
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Detalles de cumplimiento - {proponent.name}</DialogTitle>
+          <DialogDescription>
+            Información detallada sobre el cumplimiento de requisitos habilitantes
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-6">
+          {/* Estado general */}
+          <div className="p-4 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-semibold">Estado general</h4>
+              {getStatusBadge(proponent)}
+            </div>
+            {proponent.needsSubsanation && proponent.subsanationDetails && (
+              <div className="mt-3">
+                <h5 className="font-medium text-destructive mb-2">Motivos de subsanación:</h5>
+                <ul className="list-disc list-inside space-y-1">
+                  {proponent.subsanationDetails.map((detail, index) => (
+                    <li key={index} className="text-sm text-destructive">{detail}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Requisitos habilitantes */}
+          <div className="space-y-4">
+            <h4 className="font-semibold">Requisitos habilitantes</h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-3 rounded border">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Experiencia general</span>
+                  {getComplianceBadge(proponent.requirements.generalExperience)}
+                </div>
+                {!proponent.requirements.generalExperience && (
+                  <p className="text-sm text-destructive mt-1">No cumple con la experiencia general requerida</p>
+                )}
+              </div>
+
+              <div className="p-3 rounded border">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Experiencia específica</span>
+                  {getComplianceBadge(proponent.requirements.specificExperience)}
+                </div>
+                {!proponent.requirements.specificExperience && (
+                  <p className="text-sm text-destructive mt-1">No cumple con la experiencia específica requerida</p>
+                )}
+              </div>
+
+              <div className="p-3 rounded border">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Tarjeta profesional</span>
+                  {getComplianceBadge(proponent.requirements.professionalCard)}
+                </div>
+                {!proponent.requirements.professionalCard && (
+                  <p className="text-sm text-destructive mt-1">No aporta tarjeta profesional del ingeniero</p>
+                )}
+              </div>
+
+              <div className="p-3 rounded border">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">RUP vigente</span>
+                  {getComplianceBadge(proponent.rup.complies)}
+                </div>
+                {!proponent.rup.complies && (
+                  <p className="text-sm text-destructive mt-1">RUP no se encuentra vigente</p>
+                )}
+              </div>
+            </div>
+
+            {/* Experiencia específica adicional */}
+            <div className="p-3 rounded border">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium">Experiencia específica adicional</span>
+                {getComplianceBadge(proponent.requirements.additionalSpecificExperience.complies)}
+              </div>
+              <div className="text-sm">
+                <p>Cantidad aportada: <span className="font-medium">{proponent.requirements.additionalSpecificExperience.amount}</span></p>
+                <p>Cantidad requerida: <span className="font-medium">{processData.experience.additionalSpecific.value}</span></p>
+                {proponent.requirements.additionalSpecificExperience.comment && (
+                  <div className="mt-2 p-2 bg-muted rounded">
+                    <p className="text-destructive font-medium">Comentario:</p>
+                    <p className="text-destructive">{proponent.requirements.additionalSpecificExperience.comment}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Contratos aportados */}
+          {proponent.contractors && proponent.contractors.length > 0 && (
+            <div className="space-y-4">
+              <h4 className="font-semibold">Contratos aportados</h4>
+              <div className="space-y-3">
+                {proponent.contractors.map((contractor, index) => (
+                  <div key={index} className="p-3 rounded border">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium">Contrato #{contractor.order}</span>
+                      {getComplianceBadge(contractor.contractComplies)}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Entidad contratante:</span>
+                        <span className="ml-1 font-medium">{contractor.contractingEntity || 'No especificada'}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">No. contrato:</span>
+                        <span className="ml-1 font-medium">{contractor.contractNumber || 'No especificado'}</span>
+                      </div>
+                      <div className="md:col-span-2">
+                        <span className="text-muted-foreground">Objeto:</span>
+                        <span className="ml-1 font-medium">{contractor.object || 'No especificado'}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Tipo:</span>
+                        <span className="ml-1 font-medium">{contractor.contractType === 'public' ? 'Público' : 'Privado'}</span>
+                      </div>
+                      {contractor.contractType === 'private' && (
+                        <div>
+                          <span className="text-muted-foreground">Documentos privados:</span>
+                          <span className="ml-1 font-medium">
+                            {contractor.privateDocumentsComplete ? 'Completos' : 'Incompletos'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {!contractor.contractComplies && contractor.nonComplianceReason && (
+                      <div className="mt-2 p-2 bg-destructive/10 rounded">
+                        <p className="text-destructive font-medium text-sm">Motivo de incumplimiento:</p>
+                        <p className="text-destructive text-sm">{contractor.nonComplianceReason}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 
   const ScoringDetailsDialog: React.FC<{ proponent: Proponent }> = ({ proponent }) => (
     <Dialog>
@@ -366,7 +519,10 @@ export const ProponentsSummary: React.FC = () => {
                         {getComplianceBadge(proponent.rup.complies)}
                       </TableCell>
                       <TableCell className="text-center">
-                        {getStatusBadge(proponent)}
+                        <div className="flex flex-col items-center space-y-1">
+                          {getStatusBadge(proponent)}
+                          <ComplianceDetailsDialog proponent={proponent} />
+                        </div>
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex justify-center space-x-1">
