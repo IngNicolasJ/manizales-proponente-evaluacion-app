@@ -39,6 +39,11 @@ export interface Contractor {
   totalValueSMMLV: number;
   adjustedValue: number;
   additionalSpecificExperienceContribution: number;
+  adjustedAdditionalSpecificValue: number;
+  contractType: 'public' | 'private';
+  privateDocumentsComplete?: boolean;
+  contractComplies: boolean;
+  nonComplianceReason?: string;
 }
 
 export interface Proponent {
@@ -75,6 +80,7 @@ export interface Proponent {
   contractors: Contractor[];
   totalScore: number;
   needsSubsanation: boolean;
+  subsanationDetails?: string[];
 }
 
 export interface AppState {

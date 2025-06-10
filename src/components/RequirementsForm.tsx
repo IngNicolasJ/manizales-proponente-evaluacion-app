@@ -50,7 +50,7 @@ export const RequirementsForm: React.FC = () => {
   // Calcular automáticamente la cantidad aportada basada en los contratos
   const calculateAdditionalSpecificAmount = () => {
     const total = watchedValues.contractors?.reduce((sum, contractor) => {
-      return sum + (contractor.additionalSpecificExperienceContribution || 0);
+      return sum + (contractor.adjustedAdditionalSpecificValue || 0);
     }, 0) || 0;
     
     setValue('additionalSpecificAmount', total);
@@ -118,6 +118,14 @@ export const RequirementsForm: React.FC = () => {
     }
   };
 
+  const calculateAdjustedAdditionalSpecificValue = (index: number) => {
+    const contractor = watchedValues.contractors?.[index];
+    if (contractor) {
+      const adjustedValue = (contractor.additionalSpecificExperienceContribution || 0) * ((contractor.participationPercentage || 0) / 100);
+      setValue(`contractors.${index}.adjustedAdditionalSpecificValue`, adjustedValue);
+    }
+  };
+
   const getExperienceContributorOptions = () => {
     if (!selectedProponent) return [];
     
@@ -136,8 +144,12 @@ export const RequirementsForm: React.FC = () => {
       !contractor.contractingEntity || 
       !contractor.contractNumber || 
       !contractor.object ||
-      !contractor.servicesCode
+      !contractor.servicesCode ||
+      !contractor.contractComplies ||
+      (contractor.contractType === 'private' && !contractor.privateDocumentsComplete)
     );
+
+    const nonCompliantContracts = data.contractors.filter(contractor => !contractor.contractComplies);
 
     const needsSubsanation = 
       !data.generalExperience ||
@@ -146,6 +158,21 @@ export const RequirementsForm: React.FC = () => {
       !additionalSpecificComplies ||
       hasIncompleteContracts ||
       !selectedProponent.rup.complies;
+
+    // Crear detalles de subsanación
+    const subsanationDetails: string[] = [];
+    
+    if (!data.generalExperience) subsanationDetails.push("No cumple experiencia general");
+    if (!data.specificExperience) subsanationDetails.push("No cumple experiencia específica");
+    if (!data.professionalCard) subsanationDetails.push("No aporta tarjeta profesional");
+    if (!additionalSpecificComplies) subsanationDetails.push("No cumple experiencia específica adicional");
+    if (!selectedProponent.rup.complies) subsanationDetails.push("RUP no vigente");
+    
+    nonCompliantContracts.forEach((contractor, index) => {
+      if (contractor.nonComplianceReason) {
+        subsanationDetails.push(`Contrato #${contractor.order}: ${contractor.nonComplianceReason}`);
+      }
+    });
 
     updateProponent(selectedProponent.id, {
       requirements: {
@@ -159,7 +186,8 @@ export const RequirementsForm: React.FC = () => {
         }
       },
       contractors: data.contractors,
-      needsSubsanation
+      needsSubsanation,
+      subsanationDetails: subsanationDetails.length > 0 ? subsanationDetails : undefined
     });
 
     setSelectedProponentId('');
@@ -181,7 +209,10 @@ export const RequirementsForm: React.FC = () => {
       experienceContributor: '',
       totalValueSMMLV: 0,
       adjustedValue: 0,
-      additionalSpecificExperienceContribution: 0
+      additionalSpecificExperienceContribution: 0,
+      adjustedAdditionalSpecificValue: 0,
+      contractType: 'public',
+      contractComplies: false
     });
   };
 
@@ -432,6 +463,34 @@ export const RequirementsForm: React.FC = () => {
                         </div>
 
                         <div className="space-y-2">
+                          <Label>Tipo de contrato *</Label>
+                          <Select onValueChange={(value) => setValue(`contractors.${index}.contractType`, value as any)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="public">Público</SelectItem>
+                              <SelectItem value="private">Privado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {watchedValues.contractors?.[index]?.contractType === 'private' && (
+                          <div className="space-y-2 col-span-full">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`privateDocuments_${index}`}
+                                checked={watchedValues.contractors?.[index]?.privateDocumentsComplete || false}
+                                onCheckedChange={(checked) => setValue(`contractors.${index}.privateDocumentsComplete`, !!checked)}
+                              />
+                              <Label htmlFor={`privateDocuments_${index}`}>
+                                ¿Presentó todos los documentos requeridos? (certificado de facturación firmado, acta de liquidación o recibo firmado)
+                              </Label>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
                           <Label>Forma de ejecución</Label>
                           <Select onValueChange={(value) => setValue(`contractors.${index}.executionForm`, value as any)}>
                             <SelectTrigger>
@@ -455,7 +514,10 @@ export const RequirementsForm: React.FC = () => {
                             max="100"
                             {...register(`contractors.${index}.participationPercentage`, { 
                               valueAsNumber: true,
-                              onChange: () => calculateAdjustedValue(index)
+                              onChange: () => {
+                                calculateAdjustedValue(index);
+                                calculateAdjustedAdditionalSpecificValue(index);
+                              }
                             })}
                           />
                         </div>
@@ -506,10 +568,52 @@ export const RequirementsForm: React.FC = () => {
                             step="0.01"
                             min="0"
                             {...register(`contractors.${index}.additionalSpecificExperienceContribution`, { 
-                              valueAsNumber: true 
+                              valueAsNumber: true,
+                              onChange: () => calculateAdjustedAdditionalSpecificValue(index)
                             })}
                           />
                         </div>
+
+                        <div className="space-y-2">
+                          <Label>Valor ajustado experiencia específica adicional</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={watchedValues.contractors?.[index]?.adjustedAdditionalSpecificValue || 0}
+                            readOnly
+                            className="bg-muted"
+                          />
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`contractComplies_${index}`}
+                            checked={watchedValues.contractors?.[index]?.contractComplies || false}
+                            onCheckedChange={(checked) => setValue(`contractors.${index}.contractComplies`, !!checked)}
+                          />
+                          <Label htmlFor={`contractComplies_${index}`} className="font-medium">
+                            ¿El contrato cumple con todos los requisitos?
+                          </Label>
+                        </div>
+
+                        {!watchedValues.contractors?.[index]?.contractComplies && (
+                          <div className="space-y-2">
+                            <Label htmlFor={`nonComplianceReason_${index}`} className="text-destructive">
+                              Motivo de incumplimiento *
+                            </Label>
+                            <Textarea
+                              id={`nonComplianceReason_${index}`}
+                              {...register(`contractors.${index}.nonComplianceReason`)}
+                              placeholder="Explique qué debe subsanar en este contrato"
+                              className="min-h-[80px]"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
