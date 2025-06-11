@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
@@ -183,22 +182,27 @@ export const ProponentsSummary: React.FC = () => {
             </div>
 
             {/* Experiencia específica adicional */}
-            <div className="p-3 rounded border">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium">Experiencia específica adicional</span>
-                {getComplianceBadge(proponent.requirements.additionalSpecificExperience.complies)}
-              </div>
-              <div className="text-sm">
-                <p>Cantidad aportada: <span className="font-medium">{proponent.requirements.additionalSpecificExperience.amount}</span></p>
-                <p>Cantidad requerida: <span className="font-medium">{processData.experience.additionalSpecific.value}</span></p>
-                {proponent.requirements.additionalSpecificExperience.comment && (
-                  <div className="mt-2 p-2 bg-muted rounded">
-                    <p className="text-destructive font-medium">Comentario:</p>
-                    <p className="text-destructive">{proponent.requirements.additionalSpecificExperience.comment}</p>
+            {proponent.requirements.additionalSpecificExperience.map((experience, index) => {
+              const processExperience = processData.experience.additionalSpecific[index];
+              return (
+                <div key={index} className="p-3 rounded border">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium">{experience.name}</span>
+                    {getComplianceBadge(experience.complies)}
                   </div>
-                )}
-              </div>
-            </div>
+                  <div className="text-sm">
+                    <p>Cantidad aportada: <span className="font-medium">{experience.amount}</span></p>
+                    <p>Cantidad requerida: <span className="font-medium">{processExperience?.value || 0}</span></p>
+                    {experience.comment && (
+                      <div className="mt-2 p-2 bg-muted rounded">
+                        <p className="text-destructive font-medium">Comentario:</p>
+                        <p className="text-destructive">{experience.comment}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Contratos aportados */}
@@ -478,72 +482,75 @@ export const ProponentsSummary: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {proponents.map((proponent) => (
-                    <TableRow key={proponent.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{proponent.name}</div>
-                          {proponent.isPlural && (
-                            <div className="text-sm text-muted-foreground">
-                              Proponente plural ({proponent.partners?.length || 0} socios)
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex flex-col items-center space-y-1">
-                          <span className="font-bold text-lg">{proponent.totalScore.toFixed(2)}</span>
-                          <span className="text-sm text-muted-foreground">/ {maxScore.toFixed(2)}</span>
-                          <div className="w-20 bg-muted rounded-full h-2">
-                            <div 
-                              className="bg-primary h-2 rounded-full transition-all"
-                              style={{ width: `${Math.min((proponent.totalScore / maxScore) * 100, 100)}%` }}
-                            />
+                  {proponents.map((proponent) => {
+                    const additionalComplies = proponent.requirements.additionalSpecificExperience.every(exp => exp.complies);
+                    return (
+                      <TableRow key={proponent.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{proponent.name}</div>
+                            {proponent.isPlural && (
+                              <div className="text-sm text-muted-foreground">
+                                Proponente plural ({proponent.partners?.length || 0} socios)
+                              </div>
+                            )}
                           </div>
-                          <ScoringDetailsDialog proponent={proponent} />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {getComplianceBadge(proponent.requirements.generalExperience)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {getComplianceBadge(proponent.requirements.specificExperience)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {getComplianceBadge(proponent.requirements.additionalSpecificExperience.complies)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {getComplianceBadge(proponent.requirements.professionalCard)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {getComplianceBadge(proponent.rup.complies)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex flex-col items-center space-y-1">
-                          {getStatusBadge(proponent)}
-                          <ComplianceDetailsDialog proponent={proponent} />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center space-x-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditProponent(proponent.id)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteProponent(proponent.id, proponent.name)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex flex-col items-center space-y-1">
+                            <span className="font-bold text-lg">{proponent.totalScore.toFixed(2)}</span>
+                            <span className="text-sm text-muted-foreground">/ {maxScore.toFixed(2)}</span>
+                            <div className="w-20 bg-muted rounded-full h-2">
+                              <div 
+                                className="bg-primary h-2 rounded-full transition-all"
+                                style={{ width: `${Math.min((proponent.totalScore / maxScore) * 100, 100)}%` }}
+                              />
+                            </div>
+                            <ScoringDetailsDialog proponent={proponent} />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {getComplianceBadge(proponent.requirements.generalExperience)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {getComplianceBadge(proponent.requirements.specificExperience)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {getComplianceBadge(additionalComplies)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {getComplianceBadge(proponent.requirements.professionalCard)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {getComplianceBadge(proponent.rup.complies)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex flex-col items-center space-y-1">
+                            {getStatusBadge(proponent)}
+                            <ComplianceDetailsDialog proponent={proponent} />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex justify-center space-x-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditProponent(proponent.id)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteProponent(proponent.id, proponent.name)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

@@ -83,6 +83,14 @@ export const ProponentScoringForm: React.FC = () => {
       data.scoring.environmentalQuality +
       data.scoring.nationalIndustrySupport;
 
+    // Inicializar additionalSpecificExperience como array basado en los criterios del processData
+    const additionalSpecificExperience = processData.experience.additionalSpecific.map(criterion => ({
+      name: criterion.name,
+      amount: 0,
+      complies: false,
+      comment: undefined
+    }));
+
     const newProponent: Proponent = {
       id: uuidv4(),
       name: data.name,
@@ -100,10 +108,7 @@ export const ProponentScoringForm: React.FC = () => {
         generalExperience: false,
         specificExperience: false,
         professionalCard: false,
-        additionalSpecificExperience: {
-          amount: 0,
-          complies: false
-        }
+        additionalSpecificExperience
       },
       contractors: [],
       totalScore,

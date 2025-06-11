@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -69,17 +68,20 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
   yPosition += 10;
   
   // Preparar datos para la tabla principal
-  const tableData = proponents.map((proponent, index) => [
-    (index + 1).toString(),
-    proponent.name,
-    `${proponent.totalScore.toFixed(2)} pts`,
-    proponent.requirements.generalExperience ? '✓' : '✗',
-    proponent.requirements.specificExperience ? '✓' : '✗',
-    proponent.requirements.additionalSpecificExperience.complies ? '✓' : '✗',
-    proponent.requirements.professionalCard ? '✓' : '✗',
-    proponent.rup.complies ? '✓' : '✗',
-    proponent.needsSubsanation ? 'SUBSANAR' : 'CUMPLE'
-  ]);
+  const tableData = proponents.map((proponent, index) => {
+    const additionalComplies = proponent.requirements.additionalSpecificExperience.every(exp => exp.complies);
+    return [
+      (index + 1).toString(),
+      proponent.name,
+      `${proponent.totalScore.toFixed(2)} pts`,
+      proponent.requirements.generalExperience ? '✓' : '✗',
+      proponent.requirements.specificExperience ? '✓' : '✗',
+      additionalComplies ? '✓' : '✗',
+      proponent.requirements.professionalCard ? '✓' : '✗',
+      proponent.rup.complies ? '✓' : '✗',
+      proponent.needsSubsanation ? 'SUBSANAR' : 'CUMPLE'
+    ];
+  });
   
   autoTable(doc, {
     head: [['#', 'Proponente', 'Puntaje Total', 'Exp. Gral', 'Exp. Esp.', 'Exp. Adic.', 'T. Prof.', 'RUP', 'Estado']],
@@ -224,6 +226,7 @@ export const exportToExcel = (processData: ProcessData, proponents: Proponent[])
   
   proponents.forEach((proponent, index) => {
     const percentage = ((proponent.totalScore / maxScore) * 100).toFixed(1);
+    const additionalComplies = proponent.requirements.additionalSpecificExperience.every(exp => exp.complies);
     proponentsData.push([
       (index + 1).toString(),
       proponent.name,
@@ -233,7 +236,7 @@ export const exportToExcel = (processData: ProcessData, proponents: Proponent[])
       `${percentage}%`,
       proponent.requirements.generalExperience ? 'SÍ' : 'NO',
       proponent.requirements.specificExperience ? 'SÍ' : 'NO',
-      proponent.requirements.additionalSpecificExperience.complies ? 'SÍ' : 'NO',
+      additionalComplies ? 'SÍ' : 'NO',
       proponent.requirements.professionalCard ? 'SÍ' : 'NO',
       proponent.rup.complies ? 'SÍ' : 'NO',
       proponent.needsSubsanation ? 'SUBSANAR' : 'CUMPLE',
