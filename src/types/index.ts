@@ -19,7 +19,7 @@ export interface ProcessData {
     specific: string;
     additionalSpecific: {
       value: number;
-      unit: 'longitud' | 'area_cubierta' | 'area_ejecutada';
+      unit: 'longitud' | 'area_cubierta' | 'area_ejecutada' | 'smlmv';
     };
   };
 }

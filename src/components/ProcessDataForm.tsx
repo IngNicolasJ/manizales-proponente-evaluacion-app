@@ -22,7 +22,8 @@ const processTypeOptions = [
 const unitOptions = [
   { value: 'longitud', label: 'Longitud (metros)' },
   { value: 'area_cubierta', label: 'Área cubierta (m²)' },
-  { value: 'area_ejecutada', label: 'Área ejecutada (m²)' }
+  { value: 'area_ejecutada', label: 'Área ejecutada (m²)' },
+  { value: 'smlmv', label: 'SMLMV' }
 ];
 
 export const ProcessDataForm: React.FC = () => {
@@ -240,10 +241,10 @@ export const ProcessDataForm: React.FC = () => {
                   value={watchedValues.scoring.environmentalQuality}
                   onChange={(value) => setValue('scoring.environmentalQuality', value)}
                   maxValue={20}
-                  customOptions={[0, 10, 20]}
+                  customOptions={[0, 9, 10, 20]}
                   placeholder="Seleccionar puntaje"
                 />
-                <p className="text-xs text-muted-foreground">Opciones: 0, 10 o 20</p>
+                <p className="text-xs text-muted-foreground">Opciones: 0, 9, 10 o 20</p>
                 {errors.scoring?.environmentalQuality && (
                   <p className="text-sm text-destructive">{errors.scoring.environmentalQuality.message}</p>
                 )}
