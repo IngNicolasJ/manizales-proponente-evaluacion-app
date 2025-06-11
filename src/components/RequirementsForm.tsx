@@ -52,7 +52,7 @@ export const RequirementsForm: React.FC = () => {
 
   // Calcular automáticamente las cantidades aportadas basadas en los contratos
   const calculateAdditionalSpecificAmounts = () => {
-    if (!processData?.experience.additionalSpecific) return;
+    if (!processData?.experience.additionalSpecific || !Array.isArray(processData.experience.additionalSpecific)) return;
 
     const calculatedAmounts = processData.experience.additionalSpecific.map((criteria, criteriaIndex) => {
       const total = watchedValues.contractors?.reduce((sum, contractor) => {
@@ -109,11 +109,20 @@ export const RequirementsForm: React.FC = () => {
     setSelectedProponentId(proponentId);
     const proponent = proponents.find(p => p.id === proponentId);
     if (proponent && processData) {
+      // Ensure additionalSpecific is an array before using it
+      const additionalSpecific = Array.isArray(processData.experience.additionalSpecific) 
+        ? processData.experience.additionalSpecific 
+        : [];
+      
       // Inicializar amounts basado en processData
-      const initialAmounts = processData.experience.additionalSpecific.map((criteria, index) => ({
+      const initialAmounts = additionalSpecific.map((criteria, index) => ({
         name: criteria.name,
-        amount: proponent.requirements.additionalSpecificExperience[index]?.amount || 0,
-        comment: proponent.requirements.additionalSpecificExperience[index]?.comment || ''
+        amount: Array.isArray(proponent.requirements.additionalSpecificExperience) 
+          ? proponent.requirements.additionalSpecificExperience[index]?.amount || 0
+          : 0,
+        comment: Array.isArray(proponent.requirements.additionalSpecificExperience)
+          ? proponent.requirements.additionalSpecificExperience[index]?.comment || ''
+          : ''
       }));
 
       reset({
@@ -141,8 +150,12 @@ export const RequirementsForm: React.FC = () => {
 
   const calculateAdjustedAdditionalSpecificValues = (contractorIndex: number) => {
     const contractor = watchedValues.contractors?.[contractorIndex];
-    if (contractor && processData?.experience.additionalSpecific) {
-      const adjustedValues = processData.experience.additionalSpecific.map((criteria, criteriaIndex) => {
+    const additionalSpecific = Array.isArray(processData?.experience.additionalSpecific) 
+      ? processData.experience.additionalSpecific 
+      : [];
+    
+    if (contractor && additionalSpecific.length > 0) {
+      const adjustedValues = additionalSpecific.map((criteria, criteriaIndex) => {
         const contribution = contractor.additionalSpecificExperienceContribution?.[criteriaIndex]?.value || 0;
         const adjustedValue = contribution * ((contractor.participationPercentage || 0) / 100);
         return {
@@ -168,7 +181,10 @@ export const RequirementsForm: React.FC = () => {
     if (!selectedProponent || !processData) return;
 
     const additionalSpecificResults = data.additionalSpecificAmounts.map((amount, index) => {
-      const requiredValue = processData.experience.additionalSpecific[index]?.value || 0;
+      const additionalSpecific = Array.isArray(processData.experience.additionalSpecific) 
+        ? processData.experience.additionalSpecific 
+        : [];
+      const requiredValue = additionalSpecific[index]?.value || 0;
       return {
         name: amount.name,
         amount: amount.amount,
@@ -232,15 +248,19 @@ export const RequirementsForm: React.FC = () => {
   };
 
   const addContractor = () => {
-    const initialAdditionalSpecific = processData?.experience.additionalSpecific.map(criteria => ({
+    const additionalSpecific = Array.isArray(processData?.experience.additionalSpecific) 
+      ? processData.experience.additionalSpecific 
+      : [];
+    
+    const initialAdditionalSpecific = additionalSpecific.map(criteria => ({
       name: criteria.name,
       value: 0
-    })) || [];
+    }));
 
-    const initialAdjustedAdditionalSpecific = processData?.experience.additionalSpecific.map(criteria => ({
+    const initialAdjustedAdditionalSpecific = additionalSpecific.map(criteria => ({
       name: criteria.name,
       value: 0
-    })) || [];
+    }));
 
     append({
       name: '',
@@ -272,6 +292,11 @@ export const RequirementsForm: React.FC = () => {
     };
     return labels[unit as keyof typeof labels] || unit;
   };
+
+  // Ensure additionalSpecific is always an array
+  const additionalSpecificCriteria = Array.isArray(processData?.experience.additionalSpecific) 
+    ? processData.experience.additionalSpecific 
+    : [];
 
   return (
     <div className="p-6">
@@ -375,7 +400,7 @@ export const RequirementsForm: React.FC = () => {
 
               <div className="space-y-4">
                 <h4 className="font-medium">Experiencia específica adicional</h4>
-                {processData.experience.additionalSpecific.map((criteria, index) => (
+                {additionalSpecificCriteria.map((criteria, index) => (
                   <div key={index} className="p-4 border rounded-lg space-y-4">
                     <h5 className="font-medium">{criteria.name}</h5>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -631,9 +656,9 @@ export const RequirementsForm: React.FC = () => {
                         </div>
 
                         {/* Aportes en experiencia específica adicional */}
-                        <div className="space-y-4">
+                        <div className="space-y-4 col-span-full">
                           <h5 className="font-medium">Aportes en experiencia específica adicional</h5>
-                          {processData.experience.additionalSpecific.map((criteria, criteriaIndex) => (
+                          {additionalSpecificCriteria.map((criteria, criteriaIndex) => (
                             <div key={criteriaIndex} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-muted/50 rounded">
                               <div className="space-y-2">
                                 <Label>Aporte en {criteria.name}</Label>
