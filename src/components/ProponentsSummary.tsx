@@ -182,7 +182,8 @@ export const ProponentsSummary: React.FC = () => {
             </div>
 
             {/* Experiencia específica adicional */}
-            {proponent.requirements.additionalSpecificExperience.map((experience, index) => {
+            {Array.isArray(proponent.requirements.additionalSpecificExperience) && 
+             proponent.requirements.additionalSpecificExperience.map((experience, index) => {
               const processExperience = processData.experience.additionalSpecific[index];
               return (
                 <div key={index} className="p-3 rounded border">
@@ -483,7 +484,9 @@ export const ProponentsSummary: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {proponents.map((proponent) => {
-                    const additionalComplies = proponent.requirements.additionalSpecificExperience.every(exp => exp.complies);
+                    const additionalComplies = Array.isArray(proponent.requirements.additionalSpecificExperience) 
+                      ? proponent.requirements.additionalSpecificExperience.every(exp => exp.complies)
+                      : true;
                     return (
                       <TableRow key={proponent.id}>
                         <TableCell>
