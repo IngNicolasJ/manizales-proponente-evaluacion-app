@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, ArrowRight, Plus, Trash2 } from 'lucide-react';
+import { FileText, ArrowRight, Plus, Trash2, Code } from 'lucide-react';
 import { ScoringSelect } from '@/components/ScoringSelect';
 import { ProcessData } from '@/types';
 
@@ -49,6 +49,7 @@ export const ProcessDataForm: React.FC = () => {
       experience: {
         general: '',
         specific: '',
+        classifierCodes: [''],
         additionalSpecific: [{
           name: 'Criterio 1',
           value: 0,
@@ -63,10 +64,23 @@ export const ProcessDataForm: React.FC = () => {
     name: 'experience.additionalSpecific'
   });
 
+  const { fields: codeFields, append: appendCode, remove: removeCode } = useFieldArray({
+    control,
+    name: 'experience.classifierCodes'
+  });
+
   const watchedValues = watch();
 
   const onSubmit = (data: ProcessData) => {
-    setProcessData(data);
+    // Filter out empty classifier codes
+    const filteredData = {
+      ...data,
+      experience: {
+        ...data.experience,
+        classifierCodes: data.experience.classifierCodes.filter(code => code.trim() !== '')
+      }
+    };
+    setProcessData(filteredData);
     setCurrentStep(2);
   };
 
@@ -78,6 +92,10 @@ export const ProcessDataForm: React.FC = () => {
         unit: 'longitud'
       });
     }
+  };
+
+  const addClassifierCode = () => {
+    appendCode('');
   };
 
   return (
@@ -316,6 +334,50 @@ export const ProcessDataForm: React.FC = () => {
               {errors.experience?.specific && (
                 <p className="text-sm text-destructive">{errors.experience.specific.message}</p>
               )}
+            </div>
+
+            {/* Classifier Codes Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <h4 className="font-medium flex items-center space-x-2">
+                    <Code className="w-4 h-4" />
+                    <span>Códigos clasificadores *</span>
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Agregue los códigos clasificadores válidos para este proceso
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addClassifierCode}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Agregar código
+                </Button>
+              </div>
+              
+              {codeFields.map((field, index) => (
+                <div key={field.id} className="flex items-center space-x-2">
+                  <Input
+                    {...register(`experience.classifierCodes.${index}`)}
+                    placeholder="ej: 72121501, 93141500, etc."
+                    className="flex-1"
+                  />
+                  {codeFields.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeCode(index)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
 
             <div className="space-y-4">

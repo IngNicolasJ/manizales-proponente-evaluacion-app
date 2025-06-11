@@ -1,4 +1,3 @@
-
 export interface ProcessData {
   processNumber: string;
   processObject: string;
@@ -17,6 +16,7 @@ export interface ProcessData {
   experience: {
     general: string;
     specific: string;
+    classifierCodes: string[];
     additionalSpecific: Array<{
       name: string;
       value: number;
@@ -51,6 +51,8 @@ export interface Contractor {
   privateDocumentsComplete?: boolean;
   contractComplies: boolean;
   nonComplianceReason?: string;
+  classifierCodeMatches: boolean;
+  matchingCodes: string[];
 }
 
 export interface Proponent {

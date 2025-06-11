@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CheckSquare, Plus, Trash2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { CheckSquare, Plus, Trash2, CheckCircle, AlertTriangle, Code } from 'lucide-react';
 import { Contractor } from '@/types';
 
 interface RequirementsFormData {
@@ -177,74 +177,17 @@ export const RequirementsForm: React.FC = () => {
     }
   };
 
-  const onSubmit = (data: RequirementsFormData) => {
-    if (!selectedProponent || !processData) return;
-
-    const additionalSpecificResults = data.additionalSpecificAmounts.map((amount, index) => {
-      const additionalSpecific = Array.isArray(processData.experience.additionalSpecific) 
-        ? processData.experience.additionalSpecific 
-        : [];
-      const requiredValue = additionalSpecific[index]?.value || 0;
-      return {
-        name: amount.name,
-        amount: amount.amount,
-        complies: checkAdditionalSpecificCompliance(amount.amount, requiredValue),
-        comment: amount.comment
-      };
-    });
-
-    const hasIncompleteContracts = data.contractors.some(contractor => 
-      !contractor.contractingEntity || 
-      !contractor.contractNumber || 
-      !contractor.object ||
-      !contractor.servicesCode ||
-      !contractor.contractComplies ||
-      (contractor.contractType === 'private' && !contractor.privateDocumentsComplete)
+  const checkClassifierCodeMatch = (contractCode: string): { matches: boolean; matchingCodes: string[] } => {
+    if (!processData?.experience.classifierCodes) return { matches: false, matchingCodes: [] };
+    
+    const matchingCodes = processData.experience.classifierCodes.filter(code => 
+      code.trim() !== '' && contractCode.includes(code)
     );
-
-    const nonCompliantContracts = data.contractors.filter(contractor => !contractor.contractComplies);
-    const nonCompliantAdditionalCriteria = additionalSpecificResults.filter(result => !result.complies);
-
-    const needsSubsanation = 
-      !data.generalExperience ||
-      !data.specificExperience ||
-      !data.professionalCard ||
-      nonCompliantAdditionalCriteria.length > 0 ||
-      hasIncompleteContracts ||
-      !selectedProponent.rup.complies;
-
-    // Crear detalles de subsanación
-    const subsanationDetails: string[] = [];
     
-    if (!data.generalExperience) subsanationDetails.push("No cumple experiencia general");
-    if (!data.specificExperience) subsanationDetails.push("No cumple experiencia específica");
-    if (!data.professionalCard) subsanationDetails.push("No aporta tarjeta profesional");
-    if (!selectedProponent.rup.complies) subsanationDetails.push("RUP no vigente");
-    
-    nonCompliantAdditionalCriteria.forEach((criteria) => {
-      subsanationDetails.push(`No cumple ${criteria.name}`);
-    });
-    
-    nonCompliantContracts.forEach((contractor, index) => {
-      if (contractor.nonComplianceReason) {
-        subsanationDetails.push(`Contrato #${contractor.order}: ${contractor.nonComplianceReason}`);
-      }
-    });
-
-    updateProponent(selectedProponent.id, {
-      requirements: {
-        generalExperience: data.generalExperience,
-        specificExperience: data.specificExperience,
-        professionalCard: data.professionalCard,
-        additionalSpecificExperience: additionalSpecificResults
-      },
-      contractors: data.contractors,
-      needsSubsanation,
-      subsanationDetails: subsanationDetails.length > 0 ? subsanationDetails : undefined
-    });
-
-    setSelectedProponentId('');
-    reset();
+    return {
+      matches: matchingCodes.length > 0,
+      matchingCodes
+    };
   };
 
   const addContractor = () => {
@@ -279,7 +222,9 @@ export const RequirementsForm: React.FC = () => {
       additionalSpecificExperienceContribution: initialAdditionalSpecific,
       adjustedAdditionalSpecificValue: initialAdjustedAdditionalSpecific,
       contractType: 'public',
-      contractComplies: false
+      contractComplies: false,
+      classifierCodeMatches: false,
+      matchingCodes: []
     });
   };
 
@@ -482,243 +427,307 @@ export const RequirementsForm: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {fields.map((field, index) => (
-                    <div key={field.id} className="p-4 border rounded-lg space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium">Contrato #{index + 1}</h4>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => remove(index)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                  {fields.map((field, index) => {
+                    const currentContract = watchedValues.contractors?.[index];
+                    const codeValidation = currentContract?.servicesCode ? 
+                      checkClassifierCodeMatch(currentContract.servicesCode) : 
+                      { matches: false, matchingCodes: [] };
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label>No. de orden</Label>
-                          <Input
-                            type="number"
-                            {...register(`contractors.${index}.order`, { valueAsNumber: true })}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Consecutivo en RUP</Label>
-                          <Input {...register(`contractors.${index}.rupConsecutive`)} />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Experiencia requerida</Label>
-                          <Select 
-                            value={watchedValues.contractors?.[index]?.requiredExperience || 'general'}
-                            onValueChange={(value) => setValue(`contractors.${index}.requiredExperience`, value as any)}
+                    return (
+                      <div key={field.id} className="p-4 border rounded-lg space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium">Contrato #{index + 1}</h4>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => remove(index)}
                           >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="general">General</SelectItem>
-                              <SelectItem value="specific">Específica</SelectItem>
-                              <SelectItem value="both">Ambas</SelectItem>
-                            </SelectContent>
-                          </Select>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
 
-                        <div className="space-y-2">
-                          <Label>Entidad contratante *</Label>
-                          <Input {...register(`contractors.${index}.contractingEntity`)} />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>No. de contrato *</Label>
-                          <Input {...register(`contractors.${index}.contractNumber`)} />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Objeto *</Label>
-                          <Input {...register(`contractors.${index}.object`)} />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Código clasificador *</Label>
-                          <Input {...register(`contractors.${index}.servicesCode`)} />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Tipo de contrato *</Label>
-                          <Select 
-                            value={watchedValues.contractors?.[index]?.contractType || 'public'}
-                            onValueChange={(value) => setValue(`contractors.${index}.contractType`, value as any)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="public">Público</SelectItem>
-                              <SelectItem value="private">Privado</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {watchedValues.contractors?.[index]?.contractType === 'private' && (
-                          <div className="space-y-2 col-span-full">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`privateDocuments_${index}`}
-                                checked={watchedValues.contractors?.[index]?.privateDocumentsComplete || false}
-                                onCheckedChange={(checked) => setValue(`contractors.${index}.privateDocumentsComplete`, !!checked)}
-                              />
-                              <Label htmlFor={`privateDocuments_${index}`}>
-                                ¿Presentó todos los documentos requeridos? (certificado de facturación firmado, acta de liquidación o recibo firmado)
-                              </Label>
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="space-y-2">
-                          <Label>Forma de ejecución</Label>
-                          <Select 
-                            value={watchedValues.contractors?.[index]?.executionForm || 'I'}
-                            onValueChange={(value) => setValue(`contractors.${index}.executionForm`, value as any)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="I">Individual (I)</SelectItem>
-                              <SelectItem value="C">Consorcio (C)</SelectItem>
-                              <SelectItem value="UT">Unión Temporal (UT)</SelectItem>
-                              <SelectItem value="OTRA">Otra</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>% de participación</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            max="100"
-                            {...register(`contractors.${index}.participationPercentage`, { 
-                              valueAsNumber: true,
-                              onChange: () => {
-                                calculateAdjustedValue(index);
-                                calculateAdjustedAdditionalSpecificValues(index);
-                              }
-                            })}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Integrante que aporta experiencia</Label>
-                          <Select 
-                            value={watchedValues.contractors?.[index]?.experienceContributor || ''}
-                            onValueChange={(value) => setValue(`contractors.${index}.experienceContributor`, value)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {getExperienceContributorOptions().map((option) => (
-                                <SelectItem key={option} value={option}>{option}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Valor total en SMMLV</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            {...register(`contractors.${index}.totalValueSMMLV`, { 
-                              valueAsNumber: true,
-                              onChange: () => calculateAdjustedValue(index)
-                            })}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Valor ajustado por participación</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={watchedValues.contractors?.[index]?.adjustedValue || 0}
-                            readOnly
-                            className="bg-muted"
-                          />
-                        </div>
-
-                        {/* Aportes en experiencia específica adicional */}
-                        <div className="space-y-4 col-span-full">
-                          <h5 className="font-medium">Aportes en experiencia específica adicional</h5>
-                          {additionalSpecificCriteria.map((criteria, criteriaIndex) => (
-                            <div key={criteriaIndex} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-muted/50 rounded">
-                              <div className="space-y-2">
-                                <Label>Aporte en {criteria.name}</Label>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  {...register(`contractors.${index}.additionalSpecificExperienceContribution.${criteriaIndex}.value`, { 
-                                    valueAsNumber: true,
-                                    onChange: () => calculateAdjustedAdditionalSpecificValues(index)
-                                  })}
-                                />
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label>Valor ajustado {criteria.name}</Label>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  value={watchedValues.contractors?.[index]?.adjustedAdditionalSpecificValue?.[criteriaIndex]?.value || 0}
-                                  readOnly
-                                  className="bg-muted"
-                                />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      <div className="space-y-4">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`contractComplies_${index}`}
-                            checked={watchedValues.contractors?.[index]?.contractComplies || false}
-                            onCheckedChange={(checked) => setValue(`contractors.${index}.contractComplies`, !!checked)}
-                          />
-                          <Label htmlFor={`contractComplies_${index}`} className="font-medium">
-                            ¿El contrato cumple con todos los requisitos?
-                          </Label>
-                        </div>
-
-                        {!watchedValues.contractors?.[index]?.contractComplies && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           <div className="space-y-2">
-                            <Label htmlFor={`nonComplianceReason_${index}`} className="text-destructive">
-                              Motivo de incumplimiento *
-                            </Label>
-                            <Textarea
-                              id={`nonComplianceReason_${index}`}
-                              {...register(`contractors.${index}.nonComplianceReason`)}
-                              placeholder="Explique qué debe subsanar en este contrato"
-                              className="min-h-[80px]"
+                            <Label>No. de orden</Label>
+                            <Input
+                              type="number"
+                              {...register(`contractors.${index}.order`, { valueAsNumber: true })}
                             />
                           </div>
-                        )}
+
+                          <div className="space-y-2">
+                            <Label>Consecutivo en RUP</Label>
+                            <Input {...register(`contractors.${index}.rupConsecutive`)} />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Experiencia requerida</Label>
+                            <Select 
+                              value={watchedValues.contractors?.[index]?.requiredExperience || 'general'}
+                              onValueChange={(value) => setValue(`contractors.${index}.requiredExperience`, value as any)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="general">General</SelectItem>
+                                <SelectItem value="specific">Específica</SelectItem>
+                                <SelectItem value="both">Ambas</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Entidad contratante *</Label>
+                            <Input {...register(`contractors.${index}.contractingEntity`)} />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>No. de contrato *</Label>
+                            <Input {...register(`contractors.${index}.contractNumber`)} />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Objeto *</Label>
+                            <Input {...register(`contractors.${index}.object`)} />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Código clasificador *</Label>
+                            <Input 
+                              {...register(`contractors.${index}.servicesCode`, {
+                                onChange: (e) => {
+                                  const validation = checkClassifierCodeMatch(e.target.value);
+                                  setValue(`contractors.${index}.classifierCodeMatches`, validation.matches);
+                                  setValue(`contractors.${index}.matchingCodes`, validation.matchingCodes);
+                                }
+                              })} 
+                            />
+                            
+                            {/* Validación de códigos clasificadores */}
+                            {processData?.experience.classifierCodes && processData.experience.classifierCodes.length > 0 && (
+                              <div className="mt-2 p-3 bg-muted/50 rounded">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <Code className="w-4 h-4" />
+                                  <span className="text-sm font-medium">Validación de código clasificador</span>
+                                </div>
+                                
+                                <div className="space-y-2">
+                                  <div className="text-xs text-muted-foreground">
+                                    Códigos válidos para este proceso:
+                                  </div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {processData.experience.classifierCodes.map((code, codeIndex) => (
+                                      code.trim() && (
+                                        <Badge key={codeIndex} variant="outline" className="text-xs">
+                                          {code}
+                                        </Badge>
+                                      )
+                                    ))}
+                                  </div>
+                                  
+                                  {currentContract?.servicesCode && (
+                                    <div className="flex items-center space-x-2 mt-2">
+                                      {codeValidation.matches ? (
+                                        <>
+                                          <CheckCircle className="w-4 h-4 text-success" />
+                                          <span className="text-sm text-success font-medium">
+                                            Código válido - Coincide con: {codeValidation.matchingCodes.join(', ')}
+                                          </span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <AlertTriangle className="w-4 h-4 text-destructive" />
+                                          <span className="text-sm text-destructive font-medium">
+                                            Código no válido para este proceso
+                                          </span>
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Tipo de contrato *</Label>
+                            <Select 
+                              value={watchedValues.contractors?.[index]?.contractType || 'public'}
+                              onValueChange={(value) => setValue(`contractors.${index}.contractType`, value as any)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="public">Público</SelectItem>
+                                <SelectItem value="private">Privado</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {watchedValues.contractors?.[index]?.contractType === 'private' && (
+                            <div className="space-y-2 col-span-full">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`privateDocuments_${index}`}
+                                  checked={watchedValues.contractors?.[index]?.privateDocumentsComplete || false}
+                                  onCheckedChange={(checked) => setValue(`contractors.${index}.privateDocumentsComplete`, !!checked)}
+                                />
+                                <Label htmlFor={`privateDocuments_${index}`}>
+                                  ¿Presentó todos los documentos requeridos? (certificado de facturación firmado, acta de liquidación o recibo firmado)
+                                </Label>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="space-y-2">
+                            <Label>Forma de ejecución</Label>
+                            <Select 
+                              value={watchedValues.contractors?.[index]?.executionForm || 'I'}
+                              onValueChange={(value) => setValue(`contractors.${index}.executionForm`, value as any)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="I">Individual (I)</SelectItem>
+                                <SelectItem value="C">Consorcio (C)</SelectItem>
+                                <SelectItem value="UT">Unión Temporal (UT)</SelectItem>
+                                <SelectItem value="OTRA">Otra</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>% de participación</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="100"
+                              {...register(`contractors.${index}.participationPercentage`, { 
+                                valueAsNumber: true,
+                                onChange: () => {
+                                  calculateAdjustedValue(index);
+                                  calculateAdjustedAdditionalSpecificValues(index);
+                                }
+                              })}
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Integrante que aporta experiencia</Label>
+                            <Select 
+                              value={watchedValues.contractors?.[index]?.experienceContributor || ''}
+                              onValueChange={(value) => setValue(`contractors.${index}.experienceContributor`, value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {getExperienceContributorOptions().map((option) => (
+                                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Valor total en SMMLV</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              {...register(`contractors.${index}.totalValueSMMLV`, { 
+                                valueAsNumber: true,
+                                onChange: () => calculateAdjustedValue(index)
+                              })}
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Valor ajustado por participación</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={watchedValues.contractors?.[index]?.adjustedValue || 0}
+                              readOnly
+                              className="bg-muted"
+                            />
+                          </div>
+
+                          {/* Aportes en experiencia específica adicional */}
+                          <div className="space-y-4 col-span-full">
+                            <h5 className="font-medium">Aportes en experiencia específica adicional</h5>
+                            {additionalSpecificCriteria.map((criteria, criteriaIndex) => (
+                              <div key={criteriaIndex} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-muted/50 rounded">
+                                <div className="space-y-2">
+                                  <Label>Aporte en {criteria.name}</Label>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    {...register(`contractors.${index}.additionalSpecificExperienceContribution.${criteriaIndex}.value`, { 
+                                      valueAsNumber: true,
+                                      onChange: () => calculateAdjustedAdditionalSpecificValues(index)
+                                    })}
+                                  />
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label>Valor ajustado {criteria.name}</Label>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={watchedValues.contractors?.[index]?.adjustedAdditionalSpecificValue?.[criteriaIndex]?.value || 0}
+                                    readOnly
+                                    className="bg-muted"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <Separator />
+
+                        <div className="space-y-4">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`contractComplies_${index}`}
+                              checked={watchedValues.contractors?.[index]?.contractComplies || false}
+                              onCheckedChange={(checked) => setValue(`contractors.${index}.contractComplies`, !!checked)}
+                            />
+                            <Label htmlFor={`contractComplies_${index}`} className="font-medium">
+                              ¿El contrato cumple con todos los requisitos?
+                            </Label>
+                          </div>
+
+                          {(!watchedValues.contractors?.[index]?.contractComplies || !codeValidation.matches) && (
+                            <div className="space-y-2">
+                              <Label htmlFor={`nonComplianceReason_${index}`} className="text-destructive">
+                                Motivo de incumplimiento *
+                              </Label>
+                              <Textarea
+                                id={`nonComplianceReason_${index}`}
+                                {...register(`contractors.${index}.nonComplianceReason`)}
+                                placeholder={
+                                  !codeValidation.matches 
+                                    ? "El código clasificador no es válido para este proceso" 
+                                    : "Explique qué debe subsanar en este contrato"
+                                }
+                                className="min-h-[80px]"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
