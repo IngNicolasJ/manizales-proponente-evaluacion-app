@@ -18,8 +18,11 @@ interface RequirementsFormData {
   generalExperience: boolean;
   specificExperience: boolean;
   professionalCard: boolean;
-  additionalSpecificAmount: number;
-  additionalSpecificComment?: string;
+  additionalSpecificAmounts: Array<{
+    name: string;
+    amount: number;
+    comment?: string;
+  }>;
   contractors: Contractor[];
 }
 
@@ -35,7 +38,7 @@ export const RequirementsForm: React.FC = () => {
       generalExperience: false,
       specificExperience: false,
       professionalCard: false,
-      additionalSpecificAmount: 0,
+      additionalSpecificAmounts: [],
       contractors: []
     }
   });
@@ -47,18 +50,30 @@ export const RequirementsForm: React.FC = () => {
 
   const watchedValues = watch();
 
-  // Calcular automáticamente la cantidad aportada basada en los contratos
-  const calculateAdditionalSpecificAmount = () => {
-    const total = watchedValues.contractors?.reduce((sum, contractor) => {
-      return sum + (contractor.adjustedAdditionalSpecificValue || 0);
-    }, 0) || 0;
-    
-    setValue('additionalSpecificAmount', total);
+  // Calcular automáticamente las cantidades aportadas basadas en los contratos
+  const calculateAdditionalSpecificAmounts = () => {
+    if (!processData?.experience.additionalSpecific) return;
+
+    const calculatedAmounts = processData.experience.additionalSpecific.map((criteria, criteriaIndex) => {
+      const total = watchedValues.contractors?.reduce((sum, contractor) => {
+        const contribution = contractor.additionalSpecificExperienceContribution?.[criteriaIndex];
+        const adjustedValue = contractor.adjustedAdditionalSpecificValue?.[criteriaIndex];
+        return sum + (adjustedValue?.value || 0);
+      }, 0) || 0;
+
+      return {
+        name: criteria.name,
+        amount: total,
+        comment: watchedValues.additionalSpecificAmounts?.[criteriaIndex]?.comment || ''
+      };
+    });
+
+    setValue('additionalSpecificAmounts', calculatedAmounts);
   };
 
   useEffect(() => {
-    calculateAdditionalSpecificAmount();
-  }, [watchedValues.contractors]);
+    calculateAdditionalSpecificAmounts();
+  }, [watchedValues.contractors, processData]);
 
   if (!processData) {
     return (
@@ -93,21 +108,27 @@ export const RequirementsForm: React.FC = () => {
   const handleProponentSelect = (proponentId: string) => {
     setSelectedProponentId(proponentId);
     const proponent = proponents.find(p => p.id === proponentId);
-    if (proponent) {
+    if (proponent && processData) {
+      // Inicializar amounts basado en processData
+      const initialAmounts = processData.experience.additionalSpecific.map((criteria, index) => ({
+        name: criteria.name,
+        amount: proponent.requirements.additionalSpecificExperience[index]?.amount || 0,
+        comment: proponent.requirements.additionalSpecificExperience[index]?.comment || ''
+      }));
+
       reset({
         proponentId,
         generalExperience: proponent.requirements.generalExperience,
         specificExperience: proponent.requirements.specificExperience,
         professionalCard: proponent.requirements.professionalCard,
-        additionalSpecificAmount: proponent.requirements.additionalSpecificExperience.amount,
-        additionalSpecificComment: proponent.requirements.additionalSpecificExperience.comment,
+        additionalSpecificAmounts: initialAmounts,
         contractors: proponent.contractors
       });
     }
   };
 
-  const checkAdditionalSpecificCompliance = (amount: number): boolean => {
-    return amount >= processData.experience.additionalSpecific.value;
+  const checkAdditionalSpecificCompliance = (amount: number, requiredValue: number): boolean => {
+    return amount >= requiredValue;
   };
 
   const calculateAdjustedValue = (index: number) => {
@@ -118,11 +139,18 @@ export const RequirementsForm: React.FC = () => {
     }
   };
 
-  const calculateAdjustedAdditionalSpecificValue = (index: number) => {
-    const contractor = watchedValues.contractors?.[index];
-    if (contractor) {
-      const adjustedValue = (contractor.additionalSpecificExperienceContribution || 0) * ((contractor.participationPercentage || 0) / 100);
-      setValue(`contractors.${index}.adjustedAdditionalSpecificValue`, adjustedValue);
+  const calculateAdjustedAdditionalSpecificValues = (contractorIndex: number) => {
+    const contractor = watchedValues.contractors?.[contractorIndex];
+    if (contractor && processData?.experience.additionalSpecific) {
+      const adjustedValues = processData.experience.additionalSpecific.map((criteria, criteriaIndex) => {
+        const contribution = contractor.additionalSpecificExperienceContribution?.[criteriaIndex]?.value || 0;
+        const adjustedValue = contribution * ((contractor.participationPercentage || 0) / 100);
+        return {
+          name: criteria.name,
+          value: adjustedValue
+        };
+      });
+      setValue(`contractors.${contractorIndex}.adjustedAdditionalSpecificValue`, adjustedValues);
     }
   };
 
@@ -137,9 +165,18 @@ export const RequirementsForm: React.FC = () => {
   };
 
   const onSubmit = (data: RequirementsFormData) => {
-    if (!selectedProponent) return;
+    if (!selectedProponent || !processData) return;
 
-    const additionalSpecificComplies = checkAdditionalSpecificCompliance(data.additionalSpecificAmount);
+    const additionalSpecificResults = data.additionalSpecificAmounts.map((amount, index) => {
+      const requiredValue = processData.experience.additionalSpecific[index]?.value || 0;
+      return {
+        name: amount.name,
+        amount: amount.amount,
+        complies: checkAdditionalSpecificCompliance(amount.amount, requiredValue),
+        comment: amount.comment
+      };
+    });
+
     const hasIncompleteContracts = data.contractors.some(contractor => 
       !contractor.contractingEntity || 
       !contractor.contractNumber || 
@@ -150,12 +187,13 @@ export const RequirementsForm: React.FC = () => {
     );
 
     const nonCompliantContracts = data.contractors.filter(contractor => !contractor.contractComplies);
+    const nonCompliantAdditionalCriteria = additionalSpecificResults.filter(result => !result.complies);
 
     const needsSubsanation = 
       !data.generalExperience ||
       !data.specificExperience ||
       !data.professionalCard ||
-      !additionalSpecificComplies ||
+      nonCompliantAdditionalCriteria.length > 0 ||
       hasIncompleteContracts ||
       !selectedProponent.rup.complies;
 
@@ -165,8 +203,11 @@ export const RequirementsForm: React.FC = () => {
     if (!data.generalExperience) subsanationDetails.push("No cumple experiencia general");
     if (!data.specificExperience) subsanationDetails.push("No cumple experiencia específica");
     if (!data.professionalCard) subsanationDetails.push("No aporta tarjeta profesional");
-    if (!additionalSpecificComplies) subsanationDetails.push("No cumple experiencia específica adicional");
     if (!selectedProponent.rup.complies) subsanationDetails.push("RUP no vigente");
+    
+    nonCompliantAdditionalCriteria.forEach((criteria) => {
+      subsanationDetails.push(`No cumple ${criteria.name}`);
+    });
     
     nonCompliantContracts.forEach((contractor, index) => {
       if (contractor.nonComplianceReason) {
@@ -179,11 +220,7 @@ export const RequirementsForm: React.FC = () => {
         generalExperience: data.generalExperience,
         specificExperience: data.specificExperience,
         professionalCard: data.professionalCard,
-        additionalSpecificExperience: {
-          amount: data.additionalSpecificAmount,
-          complies: additionalSpecificComplies,
-          comment: data.additionalSpecificComment
-        }
+        additionalSpecificExperience: additionalSpecificResults
       },
       contractors: data.contractors,
       needsSubsanation,
@@ -195,6 +232,16 @@ export const RequirementsForm: React.FC = () => {
   };
 
   const addContractor = () => {
+    const initialAdditionalSpecific = processData?.experience.additionalSpecific.map(criteria => ({
+      name: criteria.name,
+      value: 0
+    })) || [];
+
+    const initialAdjustedAdditionalSpecific = processData?.experience.additionalSpecific.map(criteria => ({
+      name: criteria.name,
+      value: 0
+    })) || [];
+
     append({
       name: '',
       order: fields.length + 1,
@@ -209,8 +256,8 @@ export const RequirementsForm: React.FC = () => {
       experienceContributor: '',
       totalValueSMMLV: 0,
       adjustedValue: 0,
-      additionalSpecificExperienceContribution: 0,
-      adjustedAdditionalSpecificValue: 0,
+      additionalSpecificExperienceContribution: initialAdditionalSpecific,
+      adjustedAdditionalSpecificValue: initialAdjustedAdditionalSpecific,
       contractType: 'public',
       contractComplies: false
     });
@@ -220,7 +267,8 @@ export const RequirementsForm: React.FC = () => {
     const labels = {
       'longitud': 'Longitud',
       'area_cubierta': 'Área de cubierta medida en planta',
-      'area_ejecutada': 'Área ejecutada'
+      'area_ejecutada': 'Área ejecutada',
+      'smlmv': 'SMLMV'
     };
     return labels[unit as keyof typeof labels] || unit;
   };
@@ -327,56 +375,65 @@ export const RequirementsForm: React.FC = () => {
 
               <div className="space-y-4">
                 <h4 className="font-medium">Experiencia específica adicional</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="additionalSpecificAmount">
-                      Cantidad aportada ({getUnitLabel(processData.experience.additionalSpecific.unit)})
-                    </Label>
-                    <Input
-                      id="additionalSpecificAmount"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={watchedValues.additionalSpecificAmount || 0}
-                      readOnly
-                      className="bg-muted"
-                    />
-                    <div className="text-sm text-muted-foreground">
-                      Valor requerido: {processData.experience.additionalSpecific.value}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      * Calculado automáticamente desde los contratos aportados
-                    </div>
-                    {watchedValues.additionalSpecificAmount !== undefined && (
-                      <div className="flex items-center space-x-2">
-                        {checkAdditionalSpecificCompliance(watchedValues.additionalSpecificAmount) ? (
-                          <>
-                            <CheckCircle className="w-4 h-4 text-success" />
-                            <span className="text-sm text-success font-medium">Cumple</span>
-                          </>
-                        ) : (
-                          <>
-                            <AlertTriangle className="w-4 h-4 text-destructive" />
-                            <span className="text-sm text-destructive font-medium">SUBSANAR</span>
-                          </>
+                {processData.experience.additionalSpecific.map((criteria, index) => (
+                  <div key={index} className="p-4 border rounded-lg space-y-4">
+                    <h5 className="font-medium">{criteria.name}</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>
+                          Cantidad aportada ({getUnitLabel(criteria.unit)})
+                        </Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={watchedValues.additionalSpecificAmounts?.[index]?.amount || 0}
+                          readOnly
+                          className="bg-muted"
+                        />
+                        <div className="text-sm text-muted-foreground">
+                          Valor requerido: {criteria.value}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          * Calculado automáticamente desde los contratos aportados
+                        </div>
+                        {watchedValues.additionalSpecificAmounts?.[index] && (
+                          <div className="flex items-center space-x-2">
+                            {checkAdditionalSpecificCompliance(
+                              watchedValues.additionalSpecificAmounts[index].amount,
+                              criteria.value
+                            ) ? (
+                              <>
+                                <CheckCircle className="w-4 h-4 text-success" />
+                                <span className="text-sm text-success font-medium">Cumple</span>
+                              </>
+                            ) : (
+                              <>
+                                <AlertTriangle className="w-4 h-4 text-destructive" />
+                                <span className="text-sm text-destructive font-medium">SUBSANAR</span>
+                              </>
+                            )}
+                          </div>
                         )}
                       </div>
-                    )}
-                  </div>
 
-                  {!checkAdditionalSpecificCompliance(watchedValues.additionalSpecificAmount || 0) && (
-                    <div className="space-y-2">
-                      <Label htmlFor="additionalSpecificComment" className="text-destructive">
-                        Comentario obligatorio (no cumple) *
-                      </Label>
-                      <Textarea
-                        id="additionalSpecificComment"
-                        {...register('additionalSpecificComment')}
-                        placeholder="Explique por qué no cumple el requisito"
-                      />
+                      {!checkAdditionalSpecificCompliance(
+                        watchedValues.additionalSpecificAmounts?.[index]?.amount || 0,
+                        criteria.value
+                      ) && (
+                        <div className="space-y-2">
+                          <Label className="text-destructive">
+                            Comentario obligatorio (no cumple) *
+                          </Label>
+                          <Textarea
+                            {...register(`additionalSpecificAmounts.${index}.comment`)}
+                            placeholder="Explique por qué no cumple el requisito"
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -430,7 +487,10 @@ export const RequirementsForm: React.FC = () => {
 
                         <div className="space-y-2">
                           <Label>Experiencia requerida</Label>
-                          <Select onValueChange={(value) => setValue(`contractors.${index}.requiredExperience`, value as any)}>
+                          <Select 
+                            value={watchedValues.contractors?.[index]?.requiredExperience || 'general'}
+                            onValueChange={(value) => setValue(`contractors.${index}.requiredExperience`, value as any)}
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccionar" />
                             </SelectTrigger>
@@ -464,7 +524,10 @@ export const RequirementsForm: React.FC = () => {
 
                         <div className="space-y-2">
                           <Label>Tipo de contrato *</Label>
-                          <Select onValueChange={(value) => setValue(`contractors.${index}.contractType`, value as any)}>
+                          <Select 
+                            value={watchedValues.contractors?.[index]?.contractType || 'public'}
+                            onValueChange={(value) => setValue(`contractors.${index}.contractType`, value as any)}
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccionar" />
                             </SelectTrigger>
@@ -492,7 +555,10 @@ export const RequirementsForm: React.FC = () => {
 
                         <div className="space-y-2">
                           <Label>Forma de ejecución</Label>
-                          <Select onValueChange={(value) => setValue(`contractors.${index}.executionForm`, value as any)}>
+                          <Select 
+                            value={watchedValues.contractors?.[index]?.executionForm || 'I'}
+                            onValueChange={(value) => setValue(`contractors.${index}.executionForm`, value as any)}
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccionar" />
                             </SelectTrigger>
@@ -516,7 +582,7 @@ export const RequirementsForm: React.FC = () => {
                               valueAsNumber: true,
                               onChange: () => {
                                 calculateAdjustedValue(index);
-                                calculateAdjustedAdditionalSpecificValue(index);
+                                calculateAdjustedAdditionalSpecificValues(index);
                               }
                             })}
                           />
@@ -524,7 +590,10 @@ export const RequirementsForm: React.FC = () => {
 
                         <div className="space-y-2">
                           <Label>Integrante que aporta experiencia</Label>
-                          <Select onValueChange={(value) => setValue(`contractors.${index}.experienceContributor`, value)}>
+                          <Select 
+                            value={watchedValues.contractors?.[index]?.experienceContributor || ''}
+                            onValueChange={(value) => setValue(`contractors.${index}.experienceContributor`, value)}
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Seleccionar" />
                             </SelectTrigger>
@@ -561,29 +630,37 @@ export const RequirementsForm: React.FC = () => {
                           />
                         </div>
 
-                        <div className="space-y-2">
-                          <Label>Aporte en experiencia específica adicional</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            {...register(`contractors.${index}.additionalSpecificExperienceContribution`, { 
-                              valueAsNumber: true,
-                              onChange: () => calculateAdjustedAdditionalSpecificValue(index)
-                            })}
-                          />
-                        </div>
+                        {/* Aportes en experiencia específica adicional */}
+                        <div className="space-y-4">
+                          <h5 className="font-medium">Aportes en experiencia específica adicional</h5>
+                          {processData.experience.additionalSpecific.map((criteria, criteriaIndex) => (
+                            <div key={criteriaIndex} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-muted/50 rounded">
+                              <div className="space-y-2">
+                                <Label>Aporte en {criteria.name}</Label>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  {...register(`contractors.${index}.additionalSpecificExperienceContribution.${criteriaIndex}.value`, { 
+                                    valueAsNumber: true,
+                                    onChange: () => calculateAdjustedAdditionalSpecificValues(index)
+                                  })}
+                                />
+                              </div>
 
-                        <div className="space-y-2">
-                          <Label>Valor ajustado experiencia específica adicional</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={watchedValues.contractors?.[index]?.adjustedAdditionalSpecificValue || 0}
-                            readOnly
-                            className="bg-muted"
-                          />
+                              <div className="space-y-2">
+                                <Label>Valor ajustado {criteria.name}</Label>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  value={watchedValues.contractors?.[index]?.adjustedAdditionalSpecificValue?.[criteriaIndex]?.value || 0}
+                                  readOnly
+                                  className="bg-muted"
+                                />
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
 

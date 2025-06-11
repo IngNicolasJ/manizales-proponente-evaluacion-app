@@ -17,10 +17,11 @@ export interface ProcessData {
   experience: {
     general: string;
     specific: string;
-    additionalSpecific: {
+    additionalSpecific: Array<{
+      name: string;
       value: number;
       unit: 'longitud' | 'area_cubierta' | 'area_ejecutada' | 'smlmv';
-    };
+    }>;
   };
 }
 
@@ -38,8 +39,14 @@ export interface Contractor {
   experienceContributor?: string;
   totalValueSMMLV: number;
   adjustedValue: number;
-  additionalSpecificExperienceContribution: number;
-  adjustedAdditionalSpecificValue: number;
+  additionalSpecificExperienceContribution: Array<{
+    name: string;
+    value: number;
+  }>;
+  adjustedAdditionalSpecificValue: Array<{
+    name: string;
+    value: number;
+  }>;
   contractType: 'public' | 'private';
   privateDocumentsComplete?: boolean;
   contractComplies: boolean;
@@ -71,11 +78,12 @@ export interface Proponent {
     generalExperience: boolean;
     specificExperience: boolean;
     professionalCard: boolean;
-    additionalSpecificExperience: {
+    additionalSpecificExperience: Array<{
+      name: string;
       amount: number;
       complies: boolean;
       comment?: string;
-    };
+    }>;
   };
   contractors: Contractor[];
   totalScore: number;
