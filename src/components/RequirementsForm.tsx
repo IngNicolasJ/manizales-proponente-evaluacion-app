@@ -44,7 +44,7 @@ export const RequirementsForm: React.FC<RequirementsFormProps> = ({
     } else if (field === 'requirements.professionalCard') {
       updatedProponent.requirements.professionalCard = value;
     }
-    updateProponent(proponentIndex, updatedProponent);
+    updateProponent(proponentIndex.toString(), updatedProponent);
   };
 
   const handleAdditionalExperienceChange = (index: number, field: string, value: any) => {
@@ -63,7 +63,7 @@ export const RequirementsForm: React.FC<RequirementsFormProps> = ({
       updatedProponent.requirements.additionalSpecificExperience[index].comment = value;
     }
     
-    updateProponent(proponentIndex, updatedProponent);
+    updateProponent(proponentIndex.toString(), updatedProponent);
   };
 
   const handleContractorCodeChange = (contractorIndex: number, codeIndex: number, value: string) => {
@@ -72,7 +72,7 @@ export const RequirementsForm: React.FC<RequirementsFormProps> = ({
       updatedProponent.contractors[contractorIndex].matchingCodes = [];
     }
     updatedProponent.contractors[contractorIndex].matchingCodes[codeIndex] = value;
-    updateProponent(proponentIndex, updatedProponent);
+    updateProponent(proponentIndex.toString(), updatedProponent);
   };
 
   const addContractorCode = (contractorIndex: number) => {
@@ -81,13 +81,13 @@ export const RequirementsForm: React.FC<RequirementsFormProps> = ({
       updatedProponent.contractors[contractorIndex].matchingCodes = [];
     }
     updatedProponent.contractors[contractorIndex].matchingCodes.push('');
-    updateProponent(proponentIndex, updatedProponent);
+    updateProponent(proponentIndex.toString(), updatedProponent);
   };
 
   const removeContractorCode = (contractorIndex: number, codeIndex: number) => {
     const updatedProponent = { ...proponent };
     updatedProponent.contractors[contractorIndex].matchingCodes.splice(codeIndex, 1);
-    updateProponent(proponentIndex, updatedProponent);
+    updateProponent(proponentIndex.toString(), updatedProponent);
   };
 
   return (
