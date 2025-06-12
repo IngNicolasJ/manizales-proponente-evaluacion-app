@@ -36,7 +36,7 @@ interface ProcessDataFormData {
 export const ProcessDataForm: React.FC = () => {
   const { processData, setProcessData, setCurrentStep } = useAppStore();
   
-  const { register, handleSubmit, control, formState: { errors }, getValues, setValue } = useForm<ProcessDataFormData>({
+  const { register, handleSubmit, control, formState: { errors }, getValues, setValue, watch } = useForm<ProcessDataFormData>({
     defaultValues: {
       processNumber: processData?.processNumber || '',
       processObject: processData?.processObject || '',
@@ -117,7 +117,11 @@ export const ProcessDataForm: React.FC = () => {
           defaultProcessType={processData?.processType}
         />
 
-        <ScoringCriteriaSection register={register} />
+        <ScoringCriteriaSection 
+          register={register}
+          setValue={setValue}
+          watch={watch}
+        />
 
         <ExperienceRequirementsSection
           register={register}
