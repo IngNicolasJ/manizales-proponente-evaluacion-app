@@ -50,6 +50,67 @@ export const RequirementsForm: React.FC = () => {
 
   const watchedValues = watch();
 
+  // Add the missing onSubmit function
+  const onSubmit = (data: RequirementsFormData) => {
+    if (!selectedProponent || !processData) return;
+
+    // Calculate compliance for additional specific experience
+    const additionalSpecificCriteria = Array.isArray(processData?.experience.additionalSpecific) 
+      ? processData.experience.additionalSpecific 
+      : [];
+    
+    const additionalSpecificExperience = additionalSpecificCriteria.map((criteria, index) => {
+      const amount = data.additionalSpecificAmounts[index]?.amount || 0;
+      const complies = amount >= criteria.value;
+      return {
+        name: criteria.name,
+        amount,
+        complies,
+        comment: !complies ? data.additionalSpecificAmounts[index]?.comment : undefined
+      };
+    });
+
+    // Check if proponent needs subsanation
+    const needsSubsanation = !data.generalExperience || 
+                            !data.specificExperience || 
+                            !data.professionalCard ||
+                            additionalSpecificExperience.some(exp => !exp.complies) ||
+                            data.contractors.some(contractor => !contractor.contractComplies || !contractor.classifierCodeMatches);
+
+    const subsanationDetails = [];
+    if (!data.generalExperience) subsanationDetails.push('No cumple experiencia general');
+    if (!data.specificExperience) subsanationDetails.push('No cumple experiencia específica');
+    if (!data.professionalCard) subsanationDetails.push('No aporta tarjeta profesional');
+    
+    additionalSpecificExperience.forEach(exp => {
+      if (!exp.complies) subsanationDetails.push(`No cumple ${exp.name}`);
+    });
+
+    data.contractors.forEach((contractor, index) => {
+      if (!contractor.contractComplies) subsanationDetails.push(`Contrato #${index + 1}: ${contractor.nonComplianceReason || 'No cumple requisitos'}`);
+      if (!contractor.classifierCodeMatches) subsanationDetails.push(`Contrato #${index + 1}: Código clasificador no válido`);
+    });
+
+    const updatedProponent = {
+      ...selectedProponent,
+      requirements: {
+        generalExperience: data.generalExperience,
+        specificExperience: data.specificExperience,
+        professionalCard: data.professionalCard,
+        additionalSpecificExperience
+      },
+      contractors: data.contractors,
+      needsSubsanation,
+      subsanationDetails: needsSubsanation ? subsanationDetails : undefined
+    };
+
+    updateProponent(updatedProponent);
+    
+    // Reset form and clear selection
+    setSelectedProponentId('');
+    reset();
+  };
+
   // Calcular automáticamente las cantidades aportadas basadas en los contratos
   const calculateAdditionalSpecificAmounts = () => {
     if (!processData?.experience.additionalSpecific || !Array.isArray(processData.experience.additionalSpecific)) return;

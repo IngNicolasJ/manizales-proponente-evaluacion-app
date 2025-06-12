@@ -1,101 +1,86 @@
-
 import React from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, ArrowRight, Plus, Trash2, Code } from 'lucide-react';
-import { ScoringSelect } from '@/components/ScoringSelect';
-import { ProcessData } from '@/types';
+import { Separator } from '@/components/ui/separator';
+import { FileText, Plus, Trash2 } from 'lucide-react';
 
-const processTypeOptions = [
-  { value: 'licitacion', label: 'Licitación Pública' },
-  { value: 'concurso', label: 'Concurso de Méritos' },
-  { value: 'abreviada', label: 'Selección Abreviada' },
-  { value: 'minima', label: 'Mínima Cuantía' }
-];
-
-const unitOptions = [
-  { value: 'longitud', label: 'Longitud (metros)' },
-  { value: 'area_cubierta', label: 'Área cubierta (m²)' },
-  { value: 'area_ejecutada', label: 'Área ejecutada (m²)' },
-  { value: 'smlmv', label: 'SMLMV' }
-];
+interface ProcessDataFormData {
+  processNumber: string;
+  processObject: string;
+  closingDate: string;
+  totalContractValue: number;
+  minimumSalary: number;
+  processType: 'licitacion' | 'concurso' | 'abreviada' | 'minima';
+  generalExperience: string;
+  specificExperience: string;
+  classifierCodes: string[];
+  additionalSpecific: Array<{
+    name: string;
+    value: number;
+    unit: 'longitud' | 'area_cubierta' | 'area_ejecutada' | 'smlmv';
+  }>;
+}
 
 export const ProcessDataForm: React.FC = () => {
-  const { setProcessData, setCurrentStep } = useAppStore();
+  const { processData, setProcessData, setCurrentStep } = useAppStore();
   
-  const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm<ProcessData>({
+  const { register, handleSubmit, control, formState: { errors }, getValues, setValue } = useForm<ProcessDataFormData>({
     defaultValues: {
-      processNumber: '',
-      processObject: '',
-      closingDate: '',
-      totalContractValue: 0,
-      minimumSalary: 0,
-      processType: 'licitacion',
-      scoring: {
+      processNumber: processData?.processNumber || '',
+      processObject: processData?.processObject || '',
+      closingDate: processData?.closingDate || '',
+      totalContractValue: processData?.totalContractValue || 0,
+      minimumSalary: processData?.minimumSalary || 0,
+      processType: processData?.processType || 'licitacion',
+      generalExperience: processData?.experience?.general || '',
+      specificExperience: processData?.experience?.specific || '',
+      classifierCodes: Array.isArray(processData?.experience?.classifierCodes) ? processData.experience.classifierCodes : [''],
+      additionalSpecific: Array.isArray(processData?.experience?.additionalSpecific) ? processData.experience.additionalSpecific : []
+    }
+  });
+
+  const { fields: classifierFields, append: appendClassifier, remove: removeClassifier } = useFieldArray({
+    control,
+    name: 'classifierCodes'
+  });
+
+  const { fields: additionalFields, append: appendAdditional, remove: removeAdditional } = useFieldArray({
+    control,
+    name: 'additionalSpecific'
+  });
+
+  const onSubmit = (data: ProcessDataFormData) => {
+    const formattedData = {
+      processNumber: data.processNumber,
+      processObject: data.processObject,
+      closingDate: data.closingDate,
+      totalContractValue: data.totalContractValue,
+      minimumSalary: data.minimumSalary,
+      processType: data.processType,
+      scoring: processData?.scoring || {
         womanEntrepreneurship: 0,
         mipyme: 0,
         disabled: 0,
         qualityFactor: 0,
         environmentalQuality: 0,
-        nationalIndustrySupport: 0,
+        nationalIndustrySupport: 0
       },
       experience: {
-        general: '',
-        specific: '',
-        classifierCodes: [''],
-        additionalSpecific: [{
-          name: 'Criterio 1',
-          value: 0,
-          unit: 'longitud'
-        }]
-      }
-    }
-  });
-
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'experience.additionalSpecific'
-  });
-
-  const { fields: codeFields, append: appendCode, remove: removeCode } = useFieldArray({
-    control,
-    name: 'experience.classifierCodes'
-  });
-
-  const watchedValues = watch();
-
-  const onSubmit = (data: ProcessData) => {
-    // Filter out empty classifier codes
-    const filteredData = {
-      ...data,
-      experience: {
-        ...data.experience,
-        classifierCodes: data.experience.classifierCodes.filter(code => code.trim() !== '')
+        general: data.generalExperience,
+        specific: data.specificExperience,
+        classifierCodes: data.classifierCodes.filter(code => code.trim() !== ''),
+        additionalSpecific: data.additionalSpecific
       }
     };
-    setProcessData(filteredData);
+
+    setProcessData(formattedData);
     setCurrentStep(2);
-  };
-
-  const addAdditionalCriteria = () => {
-    if (fields.length < 5) {
-      append({
-        name: `Criterio ${fields.length + 1}`,
-        value: 0,
-        unit: 'longitud'
-      });
-    }
-  };
-
-  const addClassifierCode = () => {
-    appendCode('');
   };
 
   return (
@@ -103,357 +88,228 @@ export const ProcessDataForm: React.FC = () => {
       <div className="flex items-center space-x-3 mb-6">
         <FileText className="w-6 h-6 text-primary" />
         <div>
-          <h2 className="text-2xl font-bold">Datos de entrada</h2>
-          <p className="text-muted-foreground">Configure los parámetros del proceso de selección</p>
+          <h2 className="text-2xl font-bold">Datos del proceso</h2>
+          <p className="text-muted-foreground">Ingrese la información básica del proceso de contratación</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Process Information */}
+        {/* Basic Process Data */}
         <Card>
           <CardHeader>
-            <CardTitle>Información del proceso</CardTitle>
-            <CardDescription>Datos básicos del proceso de contratación</CardDescription>
+            <CardTitle>Información básica</CardTitle>
+            <CardDescription>Datos generales del proceso de contratación</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="processNumber">Número del proceso *</Label>
-                <Input
-                  id="processNumber"
-                  {...register('processNumber', { required: 'Número del proceso es requerido' })}
-                  placeholder="ej: LP-001-2024"
-                />
-                {errors.processNumber && (
-                  <p className="text-sm text-destructive">{errors.processNumber.message}</p>
-                )}
+                <Label htmlFor="processNumber">Número de proceso</Label>
+                <Input id="processNumber" {...register('processNumber', { required: true })} />
+                {errors.processNumber && <p className="text-sm text-destructive">Campo requerido</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="closingDate">Fecha de cierre *</Label>
-                <Input
-                  id="closingDate"
-                  type="date"
-                  {...register('closingDate', { required: 'Fecha de cierre es requerida' })}
+                <Label htmlFor="processType">Tipo de proceso</Label>
+                <Select 
+                  defaultValue={processData?.processType || 'licitacion'}
+                  onValueChange={(value) => setValue('processType', value as any)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="licitacion">Licitación pública</SelectItem>
+                    <SelectItem value="concurso">Concurso de méritos</SelectItem>
+                    <SelectItem value="abreviada">Selección abreviada</SelectItem>
+                    <SelectItem value="minima">Mínima cuantía</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="closingDate">Fecha de cierre</Label>
+                <Input id="closingDate" type="date" {...register('closingDate', { required: true })} />
+                {errors.closingDate && <p className="text-sm text-destructive">Campo requerido</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="totalContractValue">Valor total del contrato</Label>
+                <Input 
+                  id="totalContractValue" 
+                  type="number" 
+                  step="0.01"
+                  min="0"
+                  {...register('totalContractValue', { required: true, valueAsNumber: true })} 
                 />
-                {errors.closingDate && (
-                  <p className="text-sm text-destructive">{errors.closingDate.message}</p>
-                )}
+                {errors.totalContractValue && <p className="text-sm text-destructive">Campo requerido</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="minimumSalary">Salario mínimo (SMMLV)</Label>
+                <Input 
+                  id="minimumSalary" 
+                  type="number" 
+                  step="0.01"
+                  min="0"
+                  {...register('minimumSalary', { required: true, valueAsNumber: true })} 
+                />
+                {errors.minimumSalary && <p className="text-sm text-destructive">Campo requerido</p>}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="processObject">Objeto del proceso *</Label>
-              <Input
-                id="processObject"
-                {...register('processObject', { required: 'Objeto del proceso es requerido' })}
-                placeholder="Descripción del objeto a contratar"
+              <Label htmlFor="processObject">Objeto del proceso</Label>
+              <Textarea 
+                id="processObject" 
+                {...register('processObject', { required: true })} 
+                className="min-h-[100px]"
               />
-              {errors.processObject && (
-                <p className="text-sm text-destructive">{errors.processObject.message}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="totalContractValue">Valor total del contrato (SMMLV) *</Label>
-                <Input
-                  id="totalContractValue"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...register('totalContractValue', { 
-                    required: 'Valor total es requerido',
-                    valueAsNumber: true 
-                  })}
-                  placeholder="0.00"
-                />
-                {errors.totalContractValue && (
-                  <p className="text-sm text-destructive">{errors.totalContractValue.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="minimumSalary">Salario mínimo vigente *</Label>
-                <Input
-                  id="minimumSalary"
-                  type="number"
-                  min="0"
-                  {...register('minimumSalary', { 
-                    required: 'Salario mínimo es requerido',
-                    valueAsNumber: true 
-                  })}
-                  placeholder="1300000"
-                />
-                {errors.minimumSalary && (
-                  <p className="text-sm text-destructive">{errors.minimumSalary.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <Label>Tipo de proceso *</Label>
-              <RadioGroup 
-                value={watchedValues.processType} 
-                onValueChange={(value) => setValue('processType', value as any)}
-              >
-                {processTypeOptions.map((option) => (
-                  <div key={option.value} className="flex items-center space-x-2">
-                    <RadioGroupItem value={option.value} id={option.value} />
-                    <Label htmlFor={option.value}>{option.label}</Label>
-                  </div>
-                ))}
-              </RadioGroup>
+              {errors.processObject && <p className="text-sm text-destructive">Campo requerido</p>}
             </div>
           </CardContent>
         </Card>
 
-        {/* Scoring Configuration */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Puntajes por criterios</CardTitle>
-            <CardDescription>Configure los puntajes máximos para cada criterio de evaluación</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="womanEntrepreneurship">Emprendimiento mujer</Label>
-                <ScoringSelect
-                  value={watchedValues.scoring.womanEntrepreneurship}
-                  onChange={(value) => setValue('scoring.womanEntrepreneurship', value)}
-                  maxValue={0.25}
-                  customOptions={[0, 0.25]}
-                  placeholder="Seleccionar puntaje"
-                />
-                <p className="text-xs text-muted-foreground">Opciones: 0 o 0.25</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="mipyme">MIPYME</Label>
-                <ScoringSelect
-                  value={watchedValues.scoring.mipyme}
-                  onChange={(value) => setValue('scoring.mipyme', value)}
-                  maxValue={0.25}
-                  customOptions={[0, 0.25]}
-                  placeholder="Seleccionar puntaje"
-                />
-                <p className="text-xs text-muted-foreground">Opciones: 0 o 0.25</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="disabled">Discapacitado *</Label>
-                <ScoringSelect
-                  value={watchedValues.scoring.disabled}
-                  onChange={(value) => setValue('scoring.disabled', value)}
-                  maxValue={1}
-                  customOptions={[0, 1]}
-                  placeholder="Seleccionar puntaje"
-                />
-                <p className="text-xs text-muted-foreground">Opciones: 0 o 1</p>
-                {errors.scoring?.disabled && (
-                  <p className="text-sm text-destructive">{errors.scoring.disabled.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="qualityFactor">Factor de calidad *</Label>
-                <ScoringSelect
-                  value={watchedValues.scoring.qualityFactor}
-                  onChange={(value) => setValue('scoring.qualityFactor', value)}
-                  maxValue={20}
-                  customOptions={[0, 10, 19, 20]}
-                  placeholder="Seleccionar puntaje"
-                />
-                <p className="text-xs text-muted-foreground">Opciones: 0, 10, 19 o 20</p>
-                {errors.scoring?.qualityFactor && (
-                  <p className="text-sm text-destructive">{errors.scoring.qualityFactor.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="environmentalQuality">Factor de calidad ambiental *</Label>
-                <ScoringSelect
-                  value={watchedValues.scoring.environmentalQuality}
-                  onChange={(value) => setValue('scoring.environmentalQuality', value)}
-                  maxValue={20}
-                  customOptions={[0, 9, 10, 20]}
-                  placeholder="Seleccionar puntaje"
-                />
-                <p className="text-xs text-muted-foreground">Opciones: 0, 9, 10 o 20</p>
-                {errors.scoring?.environmentalQuality && (
-                  <p className="text-sm text-destructive">{errors.scoring.environmentalQuality.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="nationalIndustrySupport">Apoyo a la industria nacional *</Label>
-                <ScoringSelect
-                  value={watchedValues.scoring.nationalIndustrySupport}
-                  onChange={(value) => setValue('scoring.nationalIndustrySupport', value)}
-                  maxValue={20}
-                  customOptions={[0, 10, 20]}
-                  placeholder="Seleccionar puntaje"
-                />
-                <p className="text-xs text-muted-foreground">Opciones: 0, 10 o 20</p>
-                {errors.scoring?.nationalIndustrySupport && (
-                  <p className="text-sm text-destructive">{errors.scoring.nationalIndustrySupport.message}</p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Separator />
-
-        {/* Experience Requirements */}
+        {/* Experience Requirements Section */}
         <Card>
           <CardHeader>
             <CardTitle>Requisitos de experiencia</CardTitle>
             <CardDescription>Configure los requisitos de experiencia del proceso</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="generalExperience">Experiencia general *</Label>
-              <Input
-                id="generalExperience"
-                {...register('experience.general', { required: 'Experiencia general es requerida' })}
-                placeholder="Descripción de la experiencia general requerida"
-              />
-              {errors.experience?.general && (
-                <p className="text-sm text-destructive">{errors.experience.general.message}</p>
-              )}
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="generalExperience">Experiencia general requerida</Label>
+                <Textarea 
+                  id="generalExperience" 
+                  {...register('generalExperience')} 
+                  placeholder="Describa los requisitos de experiencia general"
+                  className="min-h-[100px]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="specificExperience">Experiencia específica requerida</Label>
+                <Textarea 
+                  id="specificExperience" 
+                  {...register('specificExperience')} 
+                  placeholder="Describa los requisitos de experiencia específica"
+                  className="min-h-[100px]"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="specificExperience">Experiencia específica *</Label>
-              <Input
-                id="specificExperience"
-                {...register('experience.specific', { required: 'Experiencia específica es requerida' })}
-                placeholder="Descripción de la experiencia específica requerida"
-              />
-              {errors.experience?.specific && (
-                <p className="text-sm text-destructive">{errors.experience.specific.message}</p>
-              )}
-            </div>
+            <Separator />
 
             {/* Classifier Codes Section */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <h4 className="font-medium flex items-center space-x-2">
-                    <Code className="w-4 h-4" />
-                    <span>Códigos clasificadores *</span>
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Agregue los códigos clasificadores válidos para este proceso
-                  </p>
-                </div>
+                <Label className="text-base font-medium">Códigos clasificadores válidos</Label>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={addClassifierCode}
+                  onClick={() => appendClassifier('')}
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Agregar código
                 </Button>
               </div>
-              
-              {codeFields.map((field, index) => (
-                <div key={field.id} className="flex items-center space-x-2">
-                  <Input
-                    {...register(`experience.classifierCodes.${index}`)}
-                    placeholder="ej: 72121501, 93141500, etc."
-                    className="flex-1"
-                  />
-                  {codeFields.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeCode(index)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">Experiencia específica adicional</h4>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addAdditionalCriteria}
-                  disabled={fields.length >= 5}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Agregar criterio
-                </Button>
-              </div>
-              
-              {fields.map((field, index) => (
-                <div key={field.id} className="p-4 border rounded-lg space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h5 className="font-medium">Criterio {index + 1}</h5>
-                    {fields.length > 1 && (
+              <div className="space-y-3">
+                {classifierFields.map((field, index) => (
+                  <div key={field.id} className="flex items-center space-x-2">
+                    <Input
+                      {...register(`classifierCodes.${index}`)}
+                      placeholder="Ej: 72121801, 93131501"
+                      className="flex-1"
+                    />
+                    {classifierFields.length > 1 && (
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => remove(index)}
+                        onClick={() => removeClassifier(index)}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     )}
                   </div>
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Los contratos aportados deben incluir al menos uno de estos códigos para ser válidos
+              </p>
+            </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Nombre del criterio *</Label>
-                      <Input
-                        {...register(`experience.additionalSpecific.${index}.name`, { 
-                          required: 'Nombre del criterio es requerido' 
-                        })}
-                        placeholder="ej: Longitud en vías"
-                      />
-                    </div>
+            {/* Additional Specific Experience Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-medium">Experiencia específica adicional</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendAdditional({
+                    name: '',
+                    value: 0,
+                    unit: 'longitud'
+                  })}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Agregar criterio
+                </Button>
+              </div>
 
-                    <div className="space-y-2">
-                      <Label>Valor requerido *</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        {...register(`experience.additionalSpecific.${index}.value`, { 
-                          required: 'Valor es requerido',
-                          valueAsNumber: true 
-                        })}
-                        placeholder="0.00"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Unidad de medida *</Label>
-                      <Select 
-                        value={watchedValues.experience?.additionalSpecific?.[index]?.unit || 'longitud'}
-                        onValueChange={(value) => setValue(`experience.additionalSpecific.${index}.unit`, value as any)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar unidad" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {unitOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+              {additionalFields.map((field, index) => (
+                <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg">
+                  <div className="space-y-2">
+                    <Label>Nombre del criterio</Label>
+                    <Input
+                      {...register(`additionalSpecific.${index}.name`)}
+                      placeholder="Ej: Longitud de vía"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Valor requerido</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      {...register(`additionalSpecific.${index}.value`, { valueAsNumber: true })}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Unidad</Label>
+                    <Select 
+                      defaultValue={field.unit}
+                      onValueChange={(value) => {
+                        const currentValues = getValues();
+                        currentValues.additionalSpecific[index].unit = value as any;
+                        setValue('additionalSpecific', currentValues.additionalSpecific);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="longitud">Longitud</SelectItem>
+                        <SelectItem value="area_cubierta">Área de cubierta</SelectItem>
+                        <SelectItem value="area_ejecutada">Área ejecutada</SelectItem>
+                        <SelectItem value="smlmv">SMLMV</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeAdditional(index)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -461,10 +317,16 @@ export const ProcessDataForm: React.FC = () => {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end">
-          <Button type="submit" className="flex items-center space-x-2">
-            <span>Continuar a evaluación</span>
-            <ArrowRight className="w-4 h-4" />
+        <div className="flex justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setCurrentStep(0)}
+          >
+            Volver al inicio
+          </Button>
+          <Button type="submit">
+            Continuar
           </Button>
         </div>
       </form>
