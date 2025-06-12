@@ -59,6 +59,7 @@ export const ProcessDataForm: React.FC = () => {
     }
   });
 
+  // Separate field arrays for different data types
   const {
     fields: classifierCodeFields,
     append: appendClassifierCode,
@@ -68,7 +69,11 @@ export const ProcessDataForm: React.FC = () => {
     name: 'classifierCodes',
   });
 
-  const { fields: additionalFields, append: appendAdditional, remove: removeAdditional } = useFieldArray({
+  const { 
+    fields: additionalFields, 
+    append: appendAdditional, 
+    remove: removeAdditional 
+  } = useFieldArray({
     control,
     name: 'additionalSpecific'
   });
