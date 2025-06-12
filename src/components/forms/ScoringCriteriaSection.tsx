@@ -36,24 +36,14 @@ interface ScoringCriteriaSectionProps {
   watch: UseFormWatch<ProcessDataFormData>;
 }
 
-const scoringOptions = [
-  { value: 0, label: '0' },
-  { value: 0.25, label: '0.25' },
-  { value: 0.5, label: '0.5' },
-  { value: 0.75, label: '0.75' },
-  { value: 1, label: '1' },
-  { value: 1.25, label: '1.25' },
-  { value: 1.5, label: '1.5' },
-  { value: 1.75, label: '1.75' },
-  { value: 2, label: '2' },
-  { value: 2.5, label: '2.5' },
-  { value: 3, label: '3' },
-  { value: 4, label: '4' },
-  { value: 5, label: '5' },
-  { value: 10, label: '10' },
-  { value: 15, label: '15' },
-  { value: 20, label: '20' }
-];
+const scoringOptionsMap = {
+  womanEntrepreneurship: [0, 0.25],
+  mipyme: [0, 0.25],
+  disabled: [0, 1],
+  qualityFactor: [0, 10, 19, 20],
+  environmentalQuality: [0, 9, 10, 20],
+  nationalIndustrySupport: [0, 10, 20]
+};
 
 export const ScoringCriteriaSection: React.FC<ScoringCriteriaSectionProps> = ({ 
   register, 
@@ -81,9 +71,9 @@ export const ScoringCriteriaSection: React.FC<ScoringCriteriaSectionProps> = ({
           <SelectValue placeholder="Seleccionar puntaje" />
         </SelectTrigger>
         <SelectContent>
-          {scoringOptions.map((option) => (
-            <SelectItem key={option.value} value={option.value.toString()}>
-              {option.label}
+          {scoringOptionsMap[field].map((option) => (
+            <SelectItem key={option} value={option.toString()}>
+              {option}
             </SelectItem>
           ))}
         </SelectContent>
