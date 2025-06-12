@@ -1,14 +1,12 @@
+
 import React from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { FileText, Plus, Trash2 } from 'lucide-react';
+import { FileText } from 'lucide-react';
+import { BasicProcessInfo } from '@/components/forms/BasicProcessInfo';
+import { ScoringCriteriaSection } from '@/components/forms/ScoringCriteriaSection';
+import { ExperienceRequirementsSection } from '@/components/forms/ExperienceRequirementsSection';
 
 interface ProcessDataFormData {
   processNumber: string;
@@ -96,10 +94,6 @@ export const ProcessDataForm: React.FC = () => {
     setCurrentStep(2);
   };
 
-  const addClassifierCode = () => {
-    appendClassifierCode('');
-  };
-
   return (
     <div className="p-6">
       <div className="flex items-center space-x-3 mb-6">
@@ -111,302 +105,27 @@ export const ProcessDataForm: React.FC = () => {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Basic Process Data */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Información básica</CardTitle>
-            <CardDescription>Datos generales del proceso de contratación</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="processNumber">Número de proceso</Label>
-                <Input id="processNumber" {...register('processNumber', { required: true })} />
-                {errors.processNumber && <p className="text-sm text-destructive">Campo requerido</p>}
-              </div>
+        <BasicProcessInfo 
+          register={register}
+          errors={errors}
+          setValue={setValue}
+          defaultProcessType={processData?.processType}
+        />
 
-              <div className="space-y-2">
-                <Label htmlFor="processType">Tipo de proceso</Label>
-                <Select 
-                  defaultValue={processData?.processType || 'licitacion'}
-                  onValueChange={(value) => setValue('processType', value as any)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="licitacion">Licitación pública</SelectItem>
-                    <SelectItem value="concurso">Concurso de méritos</SelectItem>
-                    <SelectItem value="abreviada">Selección abreviada</SelectItem>
-                    <SelectItem value="minima">Mínima cuantía</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        <ScoringCriteriaSection register={register} />
 
-              <div className="space-y-2">
-                <Label htmlFor="closingDate">Fecha de cierre</Label>
-                <Input id="closingDate" type="date" {...register('closingDate', { required: true })} />
-                {errors.closingDate && <p className="text-sm text-destructive">Campo requerido</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="totalContractValue">Valor total del contrato</Label>
-                <Input 
-                  id="totalContractValue" 
-                  type="number" 
-                  step="0.01"
-                  min="0"
-                  {...register('totalContractValue', { required: true, valueAsNumber: true })} 
-                />
-                {errors.totalContractValue && <p className="text-sm text-destructive">Campo requerido</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="minimumSalary">Salario mínimo (SMMLV)</Label>
-                <Input 
-                  id="minimumSalary" 
-                  type="number" 
-                  step="0.01"
-                  min="0"
-                  {...register('minimumSalary', { required: true, valueAsNumber: true })} 
-                />
-                {errors.minimumSalary && <p className="text-sm text-destructive">Campo requerido</p>}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="processObject">Objeto del proceso</Label>
-              <Textarea 
-                id="processObject" 
-                {...register('processObject', { required: true })} 
-                className="min-h-[100px]"
-              />
-              {errors.processObject && <p className="text-sm text-destructive">Campo requerido</p>}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Scoring Criteria Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Criterios de puntuación</CardTitle>
-            <CardDescription>Configure los puntajes máximos para cada criterio de evaluación</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="womanEntrepreneurship">Emprendimiento mujer</Label>
-                <Input 
-                  id="womanEntrepreneurship"
-                  type="number" 
-                  step="0.01"
-                  min="0"
-                  {...register('scoring.womanEntrepreneurship', { valueAsNumber: true })} 
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="mipyme">MIPYME</Label>
-                <Input 
-                  id="mipyme"
-                  type="number" 
-                  step="0.01"
-                  min="0"
-                  {...register('scoring.mipyme', { valueAsNumber: true })} 
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="disabled">Discapacitado</Label>
-                <Input 
-                  id="disabled"
-                  type="number" 
-                  step="0.01"
-                  min="0"
-                  {...register('scoring.disabled', { valueAsNumber: true })} 
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="qualityFactor">Factor de calidad</Label>
-                <Input 
-                  id="qualityFactor"
-                  type="number" 
-                  step="0.01"
-                  min="0"
-                  {...register('scoring.qualityFactor', { valueAsNumber: true })} 
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="environmentalQuality">Factor de calidad ambiental</Label>
-                <Input 
-                  id="environmentalQuality"
-                  type="number" 
-                  step="0.01"
-                  min="0"
-                  {...register('scoring.environmentalQuality', { valueAsNumber: true })} 
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="nationalIndustrySupport">Apoyo a la industria nacional</Label>
-                <Input 
-                  id="nationalIndustrySupport"
-                  type="number" 
-                  step="0.01"
-                  min="0"
-                  {...register('scoring.nationalIndustrySupport', { valueAsNumber: true })} 
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Experience Requirements Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Requisitos de experiencia</CardTitle>
-            <CardDescription>Configure los requisitos de experiencia del proceso</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="generalExperience">Experiencia general requerida</Label>
-                <Textarea 
-                  id="generalExperience" 
-                  {...register('generalExperience')} 
-                  placeholder="Describa los requisitos de experiencia general"
-                  className="min-h-[100px]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="specificExperience">Experiencia específica requerida</Label>
-                <Textarea 
-                  id="specificExperience" 
-                  {...register('specificExperience')} 
-                  placeholder="Describa los requisitos de experiencia específica"
-                  className="min-h-[100px]"
-                />
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Classifier Codes Section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-medium">Códigos clasificadores requeridos</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addClassifierCode}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Agregar código
-                </Button>
-              </div>
-              
-              {classifierCodeFields.length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  No hay códigos clasificadores configurados
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {classifierCodeFields.map((field, index) => (
-                    <div key={field.id} className="flex items-center space-x-2">
-                      <Input
-                        {...register(`classifierCodes.${index}` as const)}
-                        placeholder="Código clasificador (ej: 72101600)"
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeClassifierCode(index)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Additional Specific Experience Section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-medium">Experiencia específica adicional</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => appendAdditional({
-                    name: '',
-                    value: 0,
-                    unit: 'longitud'
-                  })}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Agregar criterio
-                </Button>
-              </div>
-
-              {additionalFields.map((field, index) => (
-                <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg">
-                  <div className="space-y-2">
-                    <Label>Nombre del criterio</Label>
-                    <Input
-                      {...register(`additionalSpecific.${index}.name`)}
-                      placeholder="Ej: Longitud de vía"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Valor requerido</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      {...register(`additionalSpecific.${index}.value`, { valueAsNumber: true })}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Unidad</Label>
-                    <Select 
-                      defaultValue={field.unit}
-                      onValueChange={(value) => {
-                        const currentValues = getValues();
-                        currentValues.additionalSpecific[index].unit = value as any;
-                        setValue('additionalSpecific', currentValues.additionalSpecific);
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="longitud">Longitud</SelectItem>
-                        <SelectItem value="area_cubierta">Área de cubierta</SelectItem>
-                        <SelectItem value="area_ejecutada">Área ejecutada</SelectItem>
-                        <SelectItem value="smlmv">SMLMV</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="flex items-end">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeAdditional(index)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <ExperienceRequirementsSection
+          register={register}
+          control={control}
+          getValues={getValues}
+          setValue={setValue}
+          classifierCodeFields={classifierCodeFields}
+          appendClassifierCode={appendClassifierCode}
+          removeClassifierCode={removeClassifierCode}
+          additionalFields={additionalFields}
+          appendAdditional={appendAdditional}
+          removeAdditional={removeAdditional}
+        />
 
         <div className="flex justify-between">
           <Button
