@@ -45,9 +45,13 @@ export const ProcessDataForm: React.FC = () => {
     }
   });
 
-  const { fields: classifierFields, append: appendClassifier, remove: removeClassifier } = useFieldArray({
+  const {
+    fields: classifierCodeFields,
+    append: appendClassifierCode,
+    remove: removeClassifierCode,
+  } = useFieldArray({
     control,
-    name: 'classifierCodes'
+    name: 'experience.classifierCodes',
   });
 
   const { fields: additionalFields, append: appendAdditional, remove: removeAdditional } = useFieldArray({
@@ -81,6 +85,10 @@ export const ProcessDataForm: React.FC = () => {
 
     setProcessData(formattedData);
     setCurrentStep(2);
+  };
+
+  const addClassifierCode = () => {
+    appendClassifierCode('');
   };
 
   return (
@@ -203,41 +211,38 @@ export const ProcessDataForm: React.FC = () => {
             {/* Classifier Codes Section */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-base font-medium">Códigos clasificadores válidos</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => appendClassifier('')}
-                >
+                <Label className="text-base font-medium">Códigos clasificadores requeridos</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addClassifierCode}>
                   <Plus className="w-4 h-4 mr-2" />
                   Agregar código
                 </Button>
               </div>
-              <div className="space-y-3">
-                {classifierFields.map((field, index) => (
-                  <div key={field.id} className="flex items-center space-x-2">
-                    <Input
-                      {...register(`classifierCodes.${index}`)}
-                      placeholder="Ej: 72121801, 93131501"
-                      className="flex-1"
-                    />
-                    {classifierFields.length > 1 && (
+              
+              {classifierCodeFields.length === 0 ? (
+                <p className="text-muted-foreground text-sm">
+                  No hay códigos clasificadores configurados
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {classifierCodeFields.map((field, index) => (
+                    <div key={field.id} className="flex items-center space-x-2">
+                      <Input
+                        {...register(`experience.classifierCodes.${index}` as const)}
+                        placeholder="Código clasificador (ej: 72101600)"
+                        className="flex-1"
+                      />
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => removeClassifier(index)}
+                        onClick={() => removeClassifierCode(index)}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Los contratos aportados deben incluir al menos uno de estos códigos para ser válidos
-              </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Additional Specific Experience Section */}
