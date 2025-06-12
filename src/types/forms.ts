@@ -18,3 +18,18 @@ export interface ProponentFormData {
     comments: Record<string, string>;
   };
 }
+
+export interface RequirementsFormData {
+  requirements: {
+    generalExperience: boolean;
+    specificExperience: boolean;
+    professionalCard: boolean;
+    additionalSpecificExperience: Array<{
+      complies: boolean;
+      comment?: string;
+    }>;
+  };
+  contractors: Array<{
+    matchingCodes: string[];
+  }>;
+}

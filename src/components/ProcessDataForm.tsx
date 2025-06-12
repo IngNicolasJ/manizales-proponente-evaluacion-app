@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
@@ -51,7 +52,7 @@ export const ProcessDataForm: React.FC = () => {
     remove: removeClassifierCode,
   } = useFieldArray({
     control,
-    name: 'experience.classifierCodes',
+    name: 'classifierCodes',
   });
 
   const { fields: additionalFields, append: appendAdditional, remove: removeAdditional } = useFieldArray({
@@ -227,7 +228,7 @@ export const ProcessDataForm: React.FC = () => {
                   {classifierCodeFields.map((field, index) => (
                     <div key={field.id} className="flex items-center space-x-2">
                       <Input
-                        {...register(`experience.classifierCodes.${index}` as const)}
+                        {...register(`classifierCodes.${index}` as const)}
                         placeholder="Código clasificador (ej: 72101600)"
                         className="flex-1"
                       />
