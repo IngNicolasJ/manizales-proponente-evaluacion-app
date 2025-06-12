@@ -25,6 +25,14 @@ interface ProcessDataFormData {
     value: number;
     unit: 'longitud' | 'area_cubierta' | 'area_ejecutada' | 'smlmv';
   }>;
+  scoring: {
+    womanEntrepreneurship: number;
+    mipyme: number;
+    disabled: number;
+    qualityFactor: number;
+    environmentalQuality: number;
+    nationalIndustrySupport: number;
+  };
 }
 
 export const ProcessDataForm: React.FC = () => {
@@ -41,7 +49,15 @@ export const ProcessDataForm: React.FC = () => {
       generalExperience: processData?.experience?.general || '',
       specificExperience: processData?.experience?.specific || '',
       classifierCodes: Array.isArray(processData?.experience?.classifierCodes) ? processData.experience.classifierCodes : [''],
-      additionalSpecific: Array.isArray(processData?.experience?.additionalSpecific) ? processData.experience.additionalSpecific : []
+      additionalSpecific: Array.isArray(processData?.experience?.additionalSpecific) ? processData.experience.additionalSpecific : [],
+      scoring: {
+        womanEntrepreneurship: processData?.scoring?.womanEntrepreneurship || 0,
+        mipyme: processData?.scoring?.mipyme || 0,
+        disabled: processData?.scoring?.disabled || 0,
+        qualityFactor: processData?.scoring?.qualityFactor || 0,
+        environmentalQuality: processData?.scoring?.environmentalQuality || 0,
+        nationalIndustrySupport: processData?.scoring?.nationalIndustrySupport || 0
+      }
     }
   });
 
@@ -67,14 +83,7 @@ export const ProcessDataForm: React.FC = () => {
       totalContractValue: data.totalContractValue,
       minimumSalary: data.minimumSalary,
       processType: data.processType,
-      scoring: processData?.scoring || {
-        womanEntrepreneurship: 0,
-        mipyme: 0,
-        disabled: 0,
-        qualityFactor: 0,
-        environmentalQuality: 0,
-        nationalIndustrySupport: 0
-      },
+      scoring: data.scoring,
       experience: {
         general: data.generalExperience,
         specific: data.specificExperience,
@@ -173,6 +182,83 @@ export const ProcessDataForm: React.FC = () => {
                 className="min-h-[100px]"
               />
               {errors.processObject && <p className="text-sm text-destructive">Campo requerido</p>}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Scoring Criteria Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Criterios de puntuación</CardTitle>
+            <CardDescription>Configure los puntajes máximos para cada criterio de evaluación</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="womanEntrepreneurship">Emprendimiento mujer</Label>
+                <Input 
+                  id="womanEntrepreneurship"
+                  type="number" 
+                  step="0.01"
+                  min="0"
+                  {...register('scoring.womanEntrepreneurship', { valueAsNumber: true })} 
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="mipyme">MIPYME</Label>
+                <Input 
+                  id="mipyme"
+                  type="number" 
+                  step="0.01"
+                  min="0"
+                  {...register('scoring.mipyme', { valueAsNumber: true })} 
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="disabled">Discapacitado</Label>
+                <Input 
+                  id="disabled"
+                  type="number" 
+                  step="0.01"
+                  min="0"
+                  {...register('scoring.disabled', { valueAsNumber: true })} 
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="qualityFactor">Factor de calidad</Label>
+                <Input 
+                  id="qualityFactor"
+                  type="number" 
+                  step="0.01"
+                  min="0"
+                  {...register('scoring.qualityFactor', { valueAsNumber: true })} 
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="environmentalQuality">Factor de calidad ambiental</Label>
+                <Input 
+                  id="environmentalQuality"
+                  type="number" 
+                  step="0.01"
+                  min="0"
+                  {...register('scoring.environmentalQuality', { valueAsNumber: true })} 
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="nationalIndustrySupport">Apoyo a la industria nacional</Label>
+                <Input 
+                  id="nationalIndustrySupport"
+                  type="number" 
+                  step="0.01"
+                  min="0"
+                  {...register('scoring.nationalIndustrySupport', { valueAsNumber: true })} 
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
