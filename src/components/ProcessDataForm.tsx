@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
@@ -52,6 +53,9 @@ export const ProcessDataForm: React.FC = () => {
   });
 
   const watchedValues = watch();
+
+  // Calculate the result of contract value × minimum salary
+  const calculatedContractValueSMMLV = (watchedValues.totalContractValue || 0) * (watchedValues.minimumSalary || 0);
 
   const onSubmit = (data: ProcessData) => {
     setProcessData(data);
@@ -116,18 +120,22 @@ export const ProcessDataForm: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="totalContractValue">Valor total del contrato (SMMLV) *</Label>
-                <Input
-                  id="totalContractValue"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...register('totalContractValue', { 
-                    required: 'Valor total es requerido',
-                    valueAsNumber: true 
-                  })}
-                  placeholder="0.00"
-                />
+                <Label htmlFor="totalContractValue">Valor total del contrato *</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input
+                    id="totalContractValue"
+                    type="number"
+                    step="1"
+                    min="0"
+                    className="pl-8"
+                    {...register('totalContractValue', { 
+                      required: 'Valor total es requerido',
+                      valueAsNumber: true 
+                    })}
+                    placeholder="0"
+                  />
+                </div>
                 {errors.totalContractValue && (
                   <p className="text-sm text-destructive">{errors.totalContractValue.message}</p>
                 )}
@@ -135,21 +143,43 @@ export const ProcessDataForm: React.FC = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="minimumSalary">Salario mínimo vigente *</Label>
-                <Input
-                  id="minimumSalary"
-                  type="number"
-                  min="0"
-                  {...register('minimumSalary', { 
-                    required: 'Salario mínimo es requerido',
-                    valueAsNumber: true 
-                  })}
-                  placeholder="1300000"
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input
+                    id="minimumSalary"
+                    type="number"
+                    min="0"
+                    className="pl-8"
+                    {...register('minimumSalary', { 
+                      required: 'Salario mínimo es requerido',
+                      valueAsNumber: true 
+                    })}
+                    placeholder="1300000"
+                  />
+                </div>
                 {errors.minimumSalary && (
                   <p className="text-sm text-destructive">{errors.minimumSalary.message}</p>
                 )}
               </div>
             </div>
+
+            {/* Calculated Result */}
+            {(watchedValues.totalContractValue && watchedValues.minimumSalary) && (
+              <div className="bg-muted/50 p-4 rounded-lg border">
+                <Label className="text-sm font-medium text-muted-foreground">Valor del contrato en SMMLV:</Label>
+                <p className="text-lg font-semibold">
+                  {new Intl.NumberFormat('es-CO', {
+                    style: 'currency',
+                    currency: 'COP',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                  }).format(calculatedContractValueSMMLV)}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  ({(watchedValues.totalContractValue || 0).toLocaleString('es-CO')} × {(watchedValues.minimumSalary || 0).toLocaleString('es-CO')})
+                </p>
+              </div>
+            )}
 
             <div className="space-y-3">
               <Label>Tipo de proceso *</Label>
