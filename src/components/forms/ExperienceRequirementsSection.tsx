@@ -31,11 +31,13 @@ export const ExperienceRequirementsSection: React.FC<ExperienceRequirementsSecti
   watchedValues,
   setValue
 }) => {
+  // useFieldArray for additionalSpecific (objects)
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'experience.additionalSpecific'
   });
 
+  // useFieldArray for classifierCodes (strings)
   const { fields: classifierFields, append: appendClassifier, remove: removeClassifier } = useFieldArray({
     control,
     name: 'experience.classifierCodes'
