@@ -1,4 +1,3 @@
-
 export interface ProcessData {
   processNumber: string;
   processObject: string;
@@ -22,6 +21,7 @@ export interface ProcessData {
       value: number;
       unit: 'longitud' | 'area_cubierta' | 'area_ejecutada' | 'smlmv';
     }>;
+    classifierCodes: string[];
   };
 }
 
@@ -51,6 +51,8 @@ export interface Contractor {
   privateDocumentsComplete?: boolean;
   contractComplies: boolean;
   nonComplianceReason?: string;
+  selectedClassifierCodes: string[];
+  classifierCodesMatch: boolean;
 }
 
 export interface Proponent {

@@ -279,8 +279,24 @@ export const RequirementsForm: React.FC = () => {
       additionalSpecificExperienceContribution: initialAdditionalSpecific,
       adjustedAdditionalSpecificValue: initialAdjustedAdditionalSpecific,
       contractType: 'public',
-      contractComplies: false
+      contractComplies: false,
+      selectedClassifierCodes: [],
+      classifierCodesMatch: false
     });
+  };
+
+  const handleClassifierCodeChange = (contractorIndex: number, code: string, checked: boolean) => {
+    const currentCodes = watchedValues.contractors?.[contractorIndex]?.selectedClassifierCodes || [];
+    const newCodes = checked 
+      ? [...currentCodes, code]
+      : currentCodes.filter(c => c !== code);
+    
+    setValue(`contractors.${contractorIndex}.selectedClassifierCodes`, newCodes);
+    
+    // Check if at least one code matches
+    const processClassifierCodes = processData?.experience.classifierCodes || [];
+    const hasMatch = newCodes.some(code => processClassifierCodes.includes(code));
+    setValue(`contractors.${contractorIndex}.classifierCodesMatch`, hasMatch);
   };
 
   const getUnitLabel = (unit: string): string => {
@@ -688,6 +704,38 @@ export const RequirementsForm: React.FC = () => {
                           ))}
                         </div>
                       </div>
+
+                      {/* Códigos clasificadores */}
+                      {processData?.experience.classifierCodes && processData.experience.classifierCodes.length > 0 && (
+                        <div className="space-y-4">
+                          <h5 className="font-medium">Códigos clasificadores del proceso</h5>
+                          <p className="text-sm text-muted-foreground">
+                            Seleccione los códigos que coinciden con este contrato. 
+                            Si al menos uno coincide, el contrato será hábil para este proceso.
+                          </p>
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                            {processData.experience.classifierCodes.map((code) => (
+                              <div key={code} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`classifier_${index}_${code}`}
+                                  checked={watchedValues.contractors?.[index]?.selectedClassifierCodes?.includes(code) || false}
+                                  onCheckedChange={(checked) => handleClassifierCodeChange(index, code, !!checked)}
+                                />
+                                <Label htmlFor={`classifier_${index}_${code}`} className="text-sm">
+                                  {code}
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="text-sm">
+                            {watchedValues.contractors?.[index]?.classifierCodesMatch ? (
+                              <span className="text-green-600 font-medium">✓ Este contrato es hábil (códigos coincidentes)</span>
+                            ) : (
+                              <span className="text-red-600 font-medium">✗ Este contrato no es hábil (sin códigos coincidentes)</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
                       <Separator />
 

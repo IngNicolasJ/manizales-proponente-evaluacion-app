@@ -36,6 +36,11 @@ export const ExperienceRequirementsSection: React.FC<ExperienceRequirementsSecti
     name: 'experience.additionalSpecific'
   });
 
+  const { fields: classifierFields, append: appendClassifier, remove: removeClassifier } = useFieldArray({
+    control,
+    name: 'experience.classifierCodes'
+  });
+
   const addAdditionalCriteria = () => {
     if (fields.length < 5) {
       append({
@@ -44,6 +49,10 @@ export const ExperienceRequirementsSection: React.FC<ExperienceRequirementsSecti
         unit: 'longitud'
       });
     }
+  };
+
+  const addClassifierCode = () => {
+    appendClassifier('');
   };
 
   return (
@@ -74,6 +83,45 @@ export const ExperienceRequirementsSection: React.FC<ExperienceRequirementsSecti
           />
           {errors.experience?.specific && (
             <p className="text-sm text-destructive">{errors.experience.specific.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium">Códigos clasificadores</h4>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addClassifierCode}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Agregar código
+            </Button>
+          </div>
+          
+          {classifierFields.map((field, index) => (
+            <div key={field.id} className="flex items-center space-x-2">
+              <Input
+                {...register(`experience.classifierCodes.${index}` as const)}
+                placeholder="ej: 72121501"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => removeClassifier(index)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+          
+          {classifierFields.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No hay códigos clasificadores. Haga clic en "Agregar código" para añadir uno.
+            </p>
           )}
         </div>
 

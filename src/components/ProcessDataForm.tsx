@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
@@ -46,7 +45,8 @@ export const ProcessDataForm: React.FC = () => {
           name: 'Criterio 1',
           value: 0,
           unit: 'longitud'
-        }]
+        }],
+        classifierCodes: []
       }
     }
   });
