@@ -559,11 +559,6 @@ export const RequirementsForm: React.FC = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <Label>Código clasificador *</Label>
-                          <Input {...register(`contractors.${index}.servicesCode`)} />
-                        </div>
-
-                        <div className="space-y-2">
                           <Label>Tipo de contrato *</Label>
                           <Select 
                             value={watchedValues.contractors?.[index]?.contractType || 'public'}
