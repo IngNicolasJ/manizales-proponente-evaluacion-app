@@ -185,10 +185,19 @@ export const RequirementsForm: React.FC = () => {
         ? processData.experience.additionalSpecific 
         : [];
       const requiredValue = additionalSpecific[index]?.value || 0;
+      const complies = checkAdditionalSpecificCompliance(amount.amount, requiredValue);
+      
+      console.log(`Additional Specific ${index}:`, {
+        name: amount.name,
+        amount: amount.amount,
+        requiredValue,
+        complies
+      });
+      
       return {
         name: amount.name,
         amount: amount.amount,
-        complies: checkAdditionalSpecificCompliance(amount.amount, requiredValue),
+        complies,
         comment: amount.comment
       };
     });
@@ -205,6 +214,17 @@ export const RequirementsForm: React.FC = () => {
     const nonCompliantContracts = data.contractors.filter(contractor => !contractor.contractComplies);
     const nonCompliantAdditionalCriteria = additionalSpecificResults.filter(result => !result.complies);
 
+    console.log('Subsanation Debug:', {
+      generalExperience: data.generalExperience,
+      specificExperience: data.specificExperience,
+      professionalCard: data.professionalCard,
+      nonCompliantAdditionalCriteria: nonCompliantAdditionalCriteria.length,
+      hasIncompleteContracts,
+      rupComplies: selectedProponent.rup.complies,
+      contractsCount: data.contractors.length,
+      nonCompliantContractsCount: nonCompliantContracts.length
+    });
+
     const needsSubsanation = 
       !data.generalExperience ||
       !data.specificExperience ||
@@ -212,6 +232,8 @@ export const RequirementsForm: React.FC = () => {
       nonCompliantAdditionalCriteria.length > 0 ||
       hasIncompleteContracts ||
       !selectedProponent.rup.complies;
+
+    console.log('Final subsanation decision:', needsSubsanation);
 
     // Crear detalles de subsanación
     const subsanationDetails: string[] = [];

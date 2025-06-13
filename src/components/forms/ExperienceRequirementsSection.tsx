@@ -32,21 +32,21 @@ export const ExperienceRequirementsSection: React.FC<ExperienceRequirementsSecti
   setValue
 }) => {
   // useFieldArray for additionalSpecific (objects)
-  const { fields, append, remove } = useFieldArray({
+  const { fields: additionalFields, append: appendAdditional, remove: removeAdditional } = useFieldArray({
     control,
     name: 'experience.additionalSpecific'
   });
 
-  // useFieldArray for classifierCodes (strings)
+  // useFieldArray for classifierCodes (strings) 
   const { fields: classifierFields, append: appendClassifier, remove: removeClassifier } = useFieldArray({
     control,
     name: 'experience.classifierCodes'
   });
 
   const addAdditionalCriteria = () => {
-    if (fields.length < 5) {
-      append({
-        name: `Criterio ${fields.length + 1}`,
+    if (additionalFields.length < 5) {
+      appendAdditional({
+        name: `Criterio ${additionalFields.length + 1}`,
         value: 0,
         unit: 'longitud'
       });
@@ -135,23 +135,23 @@ export const ExperienceRequirementsSection: React.FC<ExperienceRequirementsSecti
               variant="outline"
               size="sm"
               onClick={addAdditionalCriteria}
-              disabled={fields.length >= 5}
+              disabled={additionalFields.length >= 5}
             >
               <Plus className="w-4 h-4 mr-2" />
               Agregar criterio
             </Button>
           </div>
           
-          {fields.map((field, index) => (
+          {additionalFields.map((field, index) => (
             <div key={field.id} className="p-4 border rounded-lg space-y-4">
               <div className="flex items-center justify-between">
                 <h5 className="font-medium">Criterio {index + 1}</h5>
-                {fields.length > 1 && (
+                {additionalFields.length > 1 && (
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => remove(index)}
+                    onClick={() => removeAdditional(index)}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
