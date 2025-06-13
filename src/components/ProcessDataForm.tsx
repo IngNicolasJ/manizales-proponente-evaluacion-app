@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,9 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, ArrowRight, Plus, Trash2 } from 'lucide-react';
+import { FileText, ArrowRight } from 'lucide-react';
 import { ScoringSelect } from '@/components/ScoringSelect';
+import { ExperienceRequirementsSection } from '@/components/forms/ExperienceRequirementsSection';
 import { ProcessData } from '@/types';
 
 const processTypeOptions = [
@@ -18,13 +18,6 @@ const processTypeOptions = [
   { value: 'concurso', label: 'Concurso de Méritos' },
   { value: 'abreviada', label: 'Selección Abreviada' },
   { value: 'minima', label: 'Mínima Cuantía' }
-];
-
-const unitOptions = [
-  { value: 'longitud', label: 'Longitud (metros)' },
-  { value: 'area_cubierta', label: 'Área cubierta (m²)' },
-  { value: 'area_ejecutada', label: 'Área ejecutada (m²)' },
-  { value: 'smlmv', label: 'SMLMV' }
 ];
 
 export const ProcessDataForm: React.FC = () => {
@@ -58,26 +51,11 @@ export const ProcessDataForm: React.FC = () => {
     }
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'experience.additionalSpecific'
-  });
-
   const watchedValues = watch();
 
   const onSubmit = (data: ProcessData) => {
     setProcessData(data);
     setCurrentStep(2);
-  };
-
-  const addAdditionalCriteria = () => {
-    if (fields.length < 5) {
-      append({
-        name: `Criterio ${fields.length + 1}`,
-        value: 0,
-        unit: 'longitud'
-      });
-    }
   };
 
   return (
@@ -288,116 +266,13 @@ export const ProcessDataForm: React.FC = () => {
         <Separator />
 
         {/* Experience Requirements */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Requisitos de experiencia</CardTitle>
-            <CardDescription>Configure los requisitos de experiencia del proceso</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="generalExperience">Experiencia general *</Label>
-              <Input
-                id="generalExperience"
-                {...register('experience.general', { required: 'Experiencia general es requerida' })}
-                placeholder="Descripción de la experiencia general requerida"
-              />
-              {errors.experience?.general && (
-                <p className="text-sm text-destructive">{errors.experience.general.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="specificExperience">Experiencia específica *</Label>
-              <Input
-                id="specificExperience"
-                {...register('experience.specific', { required: 'Experiencia específica es requerida' })}
-                placeholder="Descripción de la experiencia específica requerida"
-              />
-              {errors.experience?.specific && (
-                <p className="text-sm text-destructive">{errors.experience.specific.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">Experiencia específica adicional</h4>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addAdditionalCriteria}
-                  disabled={fields.length >= 5}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Agregar criterio
-                </Button>
-              </div>
-              
-              {fields.map((field, index) => (
-                <div key={field.id} className="p-4 border rounded-lg space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h5 className="font-medium">Criterio {index + 1}</h5>
-                    {fields.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => remove(index)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Nombre del criterio *</Label>
-                      <Input
-                        {...register(`experience.additionalSpecific.${index}.name`, { 
-                          required: 'Nombre del criterio es requerido' 
-                        })}
-                        placeholder="ej: Longitud en vías"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Valor requerido *</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        {...register(`experience.additionalSpecific.${index}.value`, { 
-                          required: 'Valor es requerido',
-                          valueAsNumber: true 
-                        })}
-                        placeholder="0.00"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Unidad de medida *</Label>
-                      <Select 
-                        value={watchedValues.experience?.additionalSpecific?.[index]?.unit || 'longitud'}
-                        onValueChange={(value) => setValue(`experience.additionalSpecific.${index}.unit`, value as any)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar unidad" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {unitOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <ExperienceRequirementsSection
+          register={register}
+          control={control}
+          errors={errors}
+          watchedValues={watchedValues}
+          setValue={setValue}
+        />
 
         <div className="flex justify-end">
           <Button type="submit" className="flex items-center space-x-2">
