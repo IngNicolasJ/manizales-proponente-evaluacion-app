@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
@@ -54,8 +53,10 @@ export const ProcessDataForm: React.FC = () => {
 
   const watchedValues = watch();
 
-  // Calculate the result of contract value × minimum salary
-  const calculatedContractValueSMMLV = (watchedValues.totalContractValue || 0) * (watchedValues.minimumSalary || 0);
+  // Calculate the result of contract value ÷ minimum salary
+  const calculatedContractValueSMMLV = (watchedValues.minimumSalary && watchedValues.minimumSalary > 0) 
+    ? (watchedValues.totalContractValue || 0) / (watchedValues.minimumSalary || 1)
+    : 0;
 
   const onSubmit = (data: ProcessData) => {
     setProcessData(data);
@@ -168,15 +169,20 @@ export const ProcessDataForm: React.FC = () => {
               <div className="bg-muted/50 p-4 rounded-lg border">
                 <Label className="text-sm font-medium text-muted-foreground">Valor del contrato en SMMLV:</Label>
                 <p className="text-lg font-semibold">
-                  {new Intl.NumberFormat('es-CO', {
+                  {calculatedContractValueSMMLV.toFixed(2)} SMMLV
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  ({new Intl.NumberFormat('es-CO', {
                     style: 'currency',
                     currency: 'COP',
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0
-                  }).format(calculatedContractValueSMMLV)}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  ({(watchedValues.totalContractValue || 0).toLocaleString('es-CO')} × {(watchedValues.minimumSalary || 0).toLocaleString('es-CO')})
+                  }).format(watchedValues.totalContractValue || 0)} ÷ {new Intl.NumberFormat('es-CO', {
+                    style: 'currency',
+                    currency: 'COP',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                  }).format(watchedValues.minimumSalary || 0)})
                 </p>
               </div>
             )}
