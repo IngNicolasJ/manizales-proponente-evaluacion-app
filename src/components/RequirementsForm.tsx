@@ -49,6 +49,12 @@ export const RequirementsForm: React.FC<RequirementsFormProps> = ({
 
   const handleAdditionalExperienceChange = (index: number, field: string, value: any) => {
     const updatedProponent = { ...proponent };
+    
+    // Ensure additionalSpecificExperience is always an array
+    if (!Array.isArray(updatedProponent.requirements.additionalSpecificExperience)) {
+      updatedProponent.requirements.additionalSpecificExperience = [];
+    }
+    
     if (!updatedProponent.requirements.additionalSpecificExperience[index]) {
       updatedProponent.requirements.additionalSpecificExperience[index] = {
         name: '',
@@ -89,6 +95,11 @@ export const RequirementsForm: React.FC<RequirementsFormProps> = ({
     updatedProponent.contractors[contractorIndex].matchingCodes.splice(codeIndex, 1);
     updateProponent(proponentIndex.toString(), updatedProponent);
   };
+
+  // Ensure additionalSpecificExperience is always an array before rendering
+  const additionalExperience = Array.isArray(proponent.requirements.additionalSpecificExperience) 
+    ? proponent.requirements.additionalSpecificExperience 
+    : [];
 
   return (
     <div className="space-y-6">
@@ -146,39 +157,38 @@ export const RequirementsForm: React.FC<RequirementsFormProps> = ({
         </CardContent>
       </Card>
 
-      {proponent.requirements.additionalSpecificExperience &&
-        proponent.requirements.additionalSpecificExperience.map((exp, index) => (
-          <Card key={index}>
-            <CardHeader>
-              <CardTitle>{exp.name}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label>Monto requerido: {exp.amount}</Label>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`additionalSpecificExperience-${index}`}
-                    checked={exp.complies}
-                    onCheckedChange={(checked) =>
-                      handleAdditionalExperienceChange(index, 'complies', !!checked)
-                    }
-                  />
-                  <Label htmlFor={`additionalSpecificExperience-${index}`}>Cumple</Label>
-                </div>
-                {exp.complies === false && (
-                  <>
-                    <Label>Comentario:</Label>
-                    <Textarea
-                      placeholder="Indique por qué no cumple"
-                      value={exp.comment || ''}
-                      onChange={(e) => handleAdditionalExperienceChange(index, 'comment', e.target.value)}
-                    />
-                  </>
-                )}
+      {additionalExperience.map((exp, index) => (
+        <Card key={index}>
+          <CardHeader>
+            <CardTitle>{exp.name}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label>Monto requerido: {exp.amount}</Label>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id={`additionalSpecificExperience-${index}`}
+                  checked={exp.complies}
+                  onCheckedChange={(checked) =>
+                    handleAdditionalExperienceChange(index, 'complies', !!checked)
+                  }
+                />
+                <Label htmlFor={`additionalSpecificExperience-${index}`}>Cumple</Label>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+              {exp.complies === false && (
+                <>
+                  <Label>Comentario:</Label>
+                  <Textarea
+                    placeholder="Indique por qué no cumple"
+                    value={exp.comment || ''}
+                    onChange={(e) => handleAdditionalExperienceChange(index, 'comment', e.target.value)}
+                  />
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
 
       {proponent.contractors &&
         proponent.contractors.map((contractor, contractorIndex) => (
