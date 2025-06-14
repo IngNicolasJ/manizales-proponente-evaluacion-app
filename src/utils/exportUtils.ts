@@ -536,7 +536,7 @@ export const exportToExcel = (processData: ProcessData, proponents: Proponent[])
   const contractsData = [
     ['CONTRATOS APORTADOS POR PROPONENTE', '', '', '', '', '', '', '', '', ''],
     ['', '', '', '', '', '', '', '', '', ''],
-    ['Proponente', 'No. Contrato', 'Entidad Contratante', 'Objeto', 'Tipo', 'Valor', 'Fecha Inicio', 'Fecha Fin', 'Cumple', 'Observaciones']
+    ['Proponente', 'No. Contrato', 'Entidad Contratante', 'Objeto', 'Tipo', 'Valor', 'Cumple', 'Observaciones']
   ];
   
   proponents.forEach(proponent => {
@@ -548,9 +548,7 @@ export const exportToExcel = (processData: ProcessData, proponents: Proponent[])
           contractor.contractingEntity || 'No especificada',
           contractor.object || 'No especificado',
           contractor.contractType === 'public' ? 'Público' : 'Privado',
-          contractor.contractValue ? `$${contractor.contractValue.toLocaleString('es-ES')}` : 'No especificado',
-          contractor.startDate || 'No especificada',
-          contractor.endDate || 'No especificada',
+          contractor.totalValueSMMLV ? `${contractor.totalValueSMMLV} SMLMV` : 'No especificado',
           contractor.contractComplies ? 'SÍ' : 'NO',
           contractor.nonComplianceReason || 'Sin observaciones'
         ]);
@@ -559,7 +557,7 @@ export const exportToExcel = (processData: ProcessData, proponents: Proponent[])
       contractsData.push([
         proponent.name,
         'Sin contratos aportados',
-        '', '', '', '', '', '', '', ''
+        '', '', '', '', '', ''
       ]);
     }
   });
@@ -567,7 +565,7 @@ export const exportToExcel = (processData: ProcessData, proponents: Proponent[])
   const contractsSheet = XLSX.utils.aoa_to_sheet(contractsData);
   contractsSheet['!cols'] = [
     { width: 30 }, { width: 20 }, { width: 30 }, { width: 40 }, { width: 15 }, 
-    { width: 18 }, { width: 15 }, { width: 15 }, { width: 10 }, { width: 40 }
+    { width: 18 }, { width: 10 }, { width: 40 }
   ];
   
   XLSX.utils.book_append_sheet(workbook, contractsSheet, 'Contratos Detallados');
