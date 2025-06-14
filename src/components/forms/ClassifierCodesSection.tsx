@@ -15,7 +15,6 @@ interface ClassifierCodesSectionProps {
 
 export const ClassifierCodesSection: React.FC<ClassifierCodesSectionProps> = ({
   register,
-  control,
   watch,
   setValue
 }) => {
@@ -29,6 +28,12 @@ export const ClassifierCodesSection: React.FC<ClassifierCodesSectionProps> = ({
 
   const removeClassifierCode = (index: number) => {
     const newCodes = classifierCodes.filter((_, i) => i !== index);
+    setValue('experience.classifierCodes', newCodes);
+  };
+
+  const updateClassifierCode = (index: number, value: string) => {
+    const newCodes = [...classifierCodes];
+    newCodes[index] = value;
     setValue('experience.classifierCodes', newCodes);
   };
 
@@ -50,7 +55,8 @@ export const ClassifierCodesSection: React.FC<ClassifierCodesSectionProps> = ({
       {classifierCodes.map((code, index) => (
         <div key={index} className="flex items-center space-x-2">
           <Input
-            {...register(`experience.classifierCodes.${index}` as const)}
+            value={code}
+            onChange={(e) => updateClassifierCode(index, e.target.value)}
             placeholder="ej: 72121501"
             className="flex-1"
           />
