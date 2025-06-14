@@ -4,22 +4,11 @@ import { UseFormRegister, Control, useFieldArray } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2 } from 'lucide-react';
-
-// Define a type that includes classifierCodes
-interface ProcessDataWithClassifierCodes {
-  experience: {
-    classifierCodes: string[];
-    additionalSpecific?: Array<{
-      name: string;
-      value: number;
-      unit: 'longitud' | 'area_cubierta' | 'area_ejecutada' | 'smlmv';
-    }>;
-  };
-}
+import { ProcessData } from '@/types';
 
 interface ClassifierCodesSectionProps {
-  register: UseFormRegister<ProcessDataWithClassifierCodes>;
-  control: Control<ProcessDataWithClassifierCodes>;
+  register: UseFormRegister<ProcessData>;
+  control: Control<ProcessData>;
 }
 
 export const ClassifierCodesSection: React.FC<ClassifierCodesSectionProps> = ({
