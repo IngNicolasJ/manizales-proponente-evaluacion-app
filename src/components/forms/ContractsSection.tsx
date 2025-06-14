@@ -8,6 +8,15 @@ import { ProcessData, Contractor, Proponent } from '@/types';
 import { ContractForm } from './ContractForm';
 
 interface RequirementsFormData {
+  proponentId: string;
+  generalExperience: boolean;
+  specificExperience: boolean;
+  professionalCard: boolean;
+  additionalSpecificAmounts: Array<{
+    name: string;
+    amount: number;
+    comment?: string;
+  }>;
   contractors: Contractor[];
 }
 

@@ -12,6 +12,15 @@ import { Trash2 } from 'lucide-react';
 import { ProcessData, Contractor } from '@/types';
 
 interface RequirementsFormData {
+  proponentId: string;
+  generalExperience: boolean;
+  specificExperience: boolean;
+  professionalCard: boolean;
+  additionalSpecificAmounts: Array<{
+    name: string;
+    amount: number;
+    comment?: string;
+  }>;
   contractors: Contractor[];
 }
 
