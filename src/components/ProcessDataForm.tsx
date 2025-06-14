@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
@@ -309,6 +308,7 @@ export const ProcessDataForm: React.FC = () => {
           errors={errors}
           watchedValues={watchedValues}
           setValue={setValue}
+          watch={watch}
         />
 
         <div className="flex justify-end">
