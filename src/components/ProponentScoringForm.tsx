@@ -83,8 +83,13 @@ export const ProponentScoringForm: React.FC = () => {
       data.scoring.environmentalQuality +
       data.scoring.nationalIndustrySupport;
 
+    // Asegurar que additionalSpecific sea un array antes de acceder
+    const additionalSpecificCriteria = Array.isArray(processData.experience?.additionalSpecific) 
+      ? processData.experience.additionalSpecific 
+      : [];
+
     // Inicializar additionalSpecificExperience como array basado en los criterios del processData
-    const additionalSpecificExperience = processData.experience.additionalSpecific.map(criterion => ({
+    const additionalSpecificExperience = additionalSpecificCriteria.map(criterion => ({
       name: criterion.name,
       amount: 0,
       complies: false,

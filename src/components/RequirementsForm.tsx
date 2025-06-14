@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
@@ -233,8 +234,11 @@ export const RequirementsForm: React.FC = () => {
       subsanationDetails: subsanationDetails.length > 0 ? subsanationDetails : undefined
     });
 
-    setSelectedProponentId('');
-    reset();
+    // Forzar una actualización del estado al resetear el formulario
+    setTimeout(() => {
+      setSelectedProponentId('');
+      reset();
+    }, 100);
   };
 
   return (
