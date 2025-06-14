@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
@@ -20,10 +21,10 @@ const processTypeOptions = [
 ];
 
 export const ProcessDataForm: React.FC = () => {
-  const { setProcessData, setCurrentStep } = useAppStore();
+  const { setProcessData, setCurrentStep, processData } = useAppStore();
   
   const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm<ProcessData>({
-    defaultValues: {
+    defaultValues: processData || {
       processNumber: '',
       processObject: '',
       closingDate: '',
