@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
@@ -222,6 +221,7 @@ export const RequirementsForm: React.FC = () => {
       subsanationDetails.push("Hay contratos con información incompleta");
     }
 
+    // Actualizar el proponente directamente
     updateProponent(selectedProponent.id, {
       requirements: {
         generalExperience: data.generalExperience,
@@ -234,11 +234,9 @@ export const RequirementsForm: React.FC = () => {
       subsanationDetails: subsanationDetails.length > 0 ? subsanationDetails : undefined
     });
 
-    // Forzar una actualización del estado al resetear el formulario
-    setTimeout(() => {
-      setSelectedProponentId('');
-      reset();
-    }, 100);
+    // Limpiar la selección inmediatamente después de guardar
+    setSelectedProponentId('');
+    reset();
   };
 
   return (
