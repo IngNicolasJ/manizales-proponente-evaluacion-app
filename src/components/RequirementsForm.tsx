@@ -1,26 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { CheckSquare, AlertTriangle } from 'lucide-react';
-import { Contractor } from '@/types';
+import { RequirementsFormData } from '@/types/forms';
 import { ProponentSelector } from './forms/ProponentSelector';
 import { ExperienceVerificationSection } from './forms/ExperienceVerificationSection';
 import { ContractsSection } from './forms/ContractsSection';
-
-interface RequirementsFormData {
-  proponentId: string;
-  generalExperience: boolean;
-  specificExperience: boolean;
-  professionalCard: boolean;
-  additionalSpecificAmounts: Array<{
-    name: string;
-    amount: number;
-    comment?: string;
-  }>;
-  contractors: Contractor[];
-}
 
 export const RequirementsForm: React.FC = () => {
   const { proponents, updateProponent, processData, setCurrentStep } = useAppStore();

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UseFormRegister, Control, UseFormSetValue } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
@@ -9,20 +8,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Trash2 } from 'lucide-react';
-import { ProcessData, Contractor } from '@/types';
-
-interface RequirementsFormData {
-  proponentId: string;
-  generalExperience: boolean;
-  specificExperience: boolean;
-  professionalCard: boolean;
-  additionalSpecificAmounts: Array<{
-    name: string;
-    amount: number;
-    comment?: string;
-  }>;
-  contractors: Contractor[];
-}
+import { ProcessData } from '@/types';
+import { RequirementsFormData } from '@/types/forms';
 
 interface ContractFormProps {
   index: number;

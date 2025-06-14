@@ -1,24 +1,11 @@
-
 import React from 'react';
 import { UseFormRegister, Control, UseFormSetValue, useFieldArray } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { ProcessData, Contractor, Proponent } from '@/types';
+import { ProcessData, Proponent } from '@/types';
+import { RequirementsFormData } from '@/types/forms';
 import { ContractForm } from './ContractForm';
-
-interface RequirementsFormData {
-  proponentId: string;
-  generalExperience: boolean;
-  specificExperience: boolean;
-  professionalCard: boolean;
-  additionalSpecificAmounts: Array<{
-    name: string;
-    amount: number;
-    comment?: string;
-  }>;
-  contractors: Contractor[];
-}
 
 interface ContractsSectionProps {
   register: UseFormRegister<RequirementsFormData>;
