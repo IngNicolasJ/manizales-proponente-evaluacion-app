@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UseFormRegister, Control, useFieldArray } from 'react-hook-form';
+import { UseFormRegister, Control, UseFormWatch, UseFormSetValue } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2 } from 'lucide-react';
@@ -9,23 +9,27 @@ import { ProcessData } from '@/types';
 interface ClassifierCodesSectionProps {
   register: UseFormRegister<ProcessData>;
   control: Control<ProcessData>;
+  watch: UseFormWatch<ProcessData>;
+  setValue: UseFormSetValue<ProcessData>;
 }
 
 export const ClassifierCodesSection: React.FC<ClassifierCodesSectionProps> = ({
   register,
-  control
+  control,
+  watch,
+  setValue
 }) => {
-  const { 
-    fields: classifierFields, 
-    append: appendClassifier, 
-    remove: removeClassifier 
-  } = useFieldArray({
-    control,
-    name: 'experience.classifierCodes'
-  });
+  const watchedValues = watch();
+  const classifierCodes = watchedValues.experience?.classifierCodes || [];
 
   const addClassifierCode = () => {
-    appendClassifier('');
+    const newCodes = [...classifierCodes, ''];
+    setValue('experience.classifierCodes', newCodes);
+  };
+
+  const removeClassifierCode = (index: number) => {
+    const newCodes = classifierCodes.filter((_, i) => i !== index);
+    setValue('experience.classifierCodes', newCodes);
   };
 
   return (
@@ -43,8 +47,8 @@ export const ClassifierCodesSection: React.FC<ClassifierCodesSectionProps> = ({
         </Button>
       </div>
       
-      {classifierFields.map((field, index) => (
-        <div key={field.id} className="flex items-center space-x-2">
+      {classifierCodes.map((code, index) => (
+        <div key={index} className="flex items-center space-x-2">
           <Input
             {...register(`experience.classifierCodes.${index}` as const)}
             placeholder="ej: 72121501"
@@ -54,14 +58,14 @@ export const ClassifierCodesSection: React.FC<ClassifierCodesSectionProps> = ({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => removeClassifier(index)}
+            onClick={() => removeClassifierCode(index)}
           >
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       ))}
       
-      {classifierFields.length === 0 && (
+      {classifierCodes.length === 0 && (
         <p className="text-sm text-muted-foreground">
           No hay códigos clasificadores. Haga clic en "Agregar código" para añadir uno.
         </p>

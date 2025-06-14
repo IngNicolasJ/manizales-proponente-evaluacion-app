@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UseFormRegister, Control, FieldErrors, UseFormSetValue } from 'react-hook-form';
+import { UseFormRegister, Control, FieldErrors, UseFormSetValue, UseFormWatch } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProcessData } from '@/types';
 import { BasicExperienceFields } from './BasicExperienceFields';
@@ -13,6 +13,7 @@ interface ExperienceRequirementsSectionProps {
   errors: FieldErrors<ProcessData>;
   watchedValues: ProcessData;
   setValue: UseFormSetValue<ProcessData>;
+  watch: UseFormWatch<ProcessData>;
 }
 
 export const ExperienceRequirementsSection: React.FC<ExperienceRequirementsSectionProps> = ({
@@ -20,7 +21,8 @@ export const ExperienceRequirementsSection: React.FC<ExperienceRequirementsSecti
   control,
   errors,
   watchedValues,
-  setValue
+  setValue,
+  watch
 }) => {
   return (
     <Card>
@@ -31,7 +33,12 @@ export const ExperienceRequirementsSection: React.FC<ExperienceRequirementsSecti
       <CardContent className="space-y-4">
         <BasicExperienceFields register={register} errors={errors} />
         
-        <ClassifierCodesSection register={register} control={control} />
+        <ClassifierCodesSection 
+          register={register} 
+          control={control} 
+          watch={watch}
+          setValue={setValue}
+        />
 
         <AdditionalSpecificSection 
           register={register} 
