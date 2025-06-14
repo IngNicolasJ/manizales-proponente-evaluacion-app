@@ -67,12 +67,18 @@ export const ProponentScoringForm: React.FC = () => {
   };
 
   const onSubmit = (data: ProponentFormData) => {
+    console.log('🚀 onSubmit called with data:', data);
+    console.log('📋 Form errors:', errors);
+    console.log('📊 ProcessData:', processData);
+
     let rupComplies = false;
     
     if (data.isPlural) {
       rupComplies = data.partners.every(partner => checkRupCompliance(partner.rupRenewalDate));
+      console.log('👥 Plural proponent RUP compliance:', rupComplies);
     } else {
       rupComplies = checkRupCompliance(data.rupRenewalDate);
+      console.log('👤 Single proponent RUP compliance:', rupComplies);
     }
 
     const totalScore = 
@@ -83,10 +89,14 @@ export const ProponentScoringForm: React.FC = () => {
       data.scoring.environmentalQuality +
       data.scoring.nationalIndustrySupport;
 
+    console.log('🎯 Total score calculated:', totalScore);
+
     // Asegurar que additionalSpecific sea un array antes de acceder
     const additionalSpecificCriteria = Array.isArray(processData.experience?.additionalSpecific) 
       ? processData.experience.additionalSpecific 
       : [];
+
+    console.log('📐 Additional specific criteria:', additionalSpecificCriteria);
 
     // Inicializar additionalSpecificExperience como array basado en los criterios del processData
     const additionalSpecificExperience = additionalSpecificCriteria.map(criterion => ({
@@ -120,9 +130,29 @@ export const ProponentScoringForm: React.FC = () => {
       needsSubsanation: false
     };
 
-    addProponent(newProponent);
-    reset();
-    setShowForm(false);
+    console.log('💾 New proponent created:', newProponent);
+
+    try {
+      addProponent(newProponent);
+      console.log('✅ Proponent added successfully');
+      reset();
+      setShowForm(false);
+      console.log('🔄 Form reset and closed');
+    } catch (error) {
+      console.error('❌ Error adding proponent:', error);
+    }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    console.log('🔥 Form submit triggered');
+    console.log('📝 Form values at submit:', watchedValues);
+    handleSubmit(onSubmit)(e);
+  };
+
+  const handleButtonClick = () => {
+    console.log('🖱️ Button clicked');
+    console.log('📋 Current form state:', watchedValues);
+    console.log('❌ Form errors:', errors);
   };
 
   return (
@@ -157,7 +187,7 @@ export const ProponentScoringForm: React.FC = () => {
             <CardDescription>Complete la información del proponente</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={handleFormSubmit} className="space-y-6">
               <ProponentBasicInfo
                 register={register}
                 watch={watch}
@@ -201,7 +231,10 @@ export const ProponentScoringForm: React.FC = () => {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit">
+                <Button 
+                  type="submit"
+                  onClick={handleButtonClick}
+                >
                   Guardar proponente
                 </Button>
               </div>
