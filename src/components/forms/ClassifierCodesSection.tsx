@@ -14,11 +14,12 @@ interface ClassifierCodesSectionProps {
 }
 
 export const ClassifierCodesSection: React.FC<ClassifierCodesSectionProps> = ({
-  register,
   watch,
   setValue
 }) => {
   const watchedValues = watch();
+  
+  // Ensure classifierCodes is always an array
   const classifierCodes = watchedValues.experience?.classifierCodes || [];
 
   const addClassifierCode = () => {
@@ -52,10 +53,10 @@ export const ClassifierCodesSection: React.FC<ClassifierCodesSectionProps> = ({
         </Button>
       </div>
       
-      {classifierCodes.map((code, index) => (
+      {classifierCodes.length > 0 && classifierCodes.map((code, index) => (
         <div key={index} className="flex items-center space-x-2">
           <Input
-            value={code}
+            value={code || ''}
             onChange={(e) => updateClassifierCode(index, e.target.value)}
             placeholder="ej: 72121501"
             className="flex-1"
