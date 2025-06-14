@@ -202,14 +202,30 @@ export const RequirementsForm: React.FC = () => {
       };
     });
 
-    const hasIncompleteContracts = data.contractors.some(contractor => 
-      !contractor.contractingEntity || 
-      !contractor.contractNumber || 
-      !contractor.object ||
-      !contractor.servicesCode ||
-      !contractor.contractComplies ||
-      (contractor.contractType === 'private' && !contractor.privateDocumentsComplete)
-    );
+    // Fix: Better validation for incomplete contracts
+    const hasIncompleteContracts = data.contractors.some(contractor => {
+      const basicFieldsIncomplete = !contractor.contractingEntity?.trim() || 
+        !contractor.contractNumber?.trim() || 
+        !contractor.object?.trim() ||
+        !contractor.servicesCode?.trim();
+      
+      const privateContractIncomplete = contractor.contractType === 'private' && 
+        !contractor.privateDocumentsComplete;
+      
+      console.log(`Contract ${contractor.order} validation:`, {
+        contractingEntity: !!contractor.contractingEntity?.trim(),
+        contractNumber: !!contractor.contractNumber?.trim(),
+        object: !!contractor.object?.trim(),
+        servicesCode: !!contractor.servicesCode?.trim(),
+        contractComplies: contractor.contractComplies,
+        contractType: contractor.contractType,
+        privateDocumentsComplete: contractor.privateDocumentsComplete,
+        basicFieldsIncomplete,
+        privateContractIncomplete
+      });
+      
+      return basicFieldsIncomplete || privateContractIncomplete;
+    });
 
     const nonCompliantContracts = data.contractors.filter(contractor => !contractor.contractComplies);
     const nonCompliantAdditionalCriteria = additionalSpecificResults.filter(result => !result.complies);
