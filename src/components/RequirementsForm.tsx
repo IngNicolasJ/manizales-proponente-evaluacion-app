@@ -142,22 +142,27 @@ export const RequirementsForm: React.FC = () => {
       };
     });
 
-    // Fix: Better validation for incomplete contracts
-    const hasIncompleteContracts = data.contractors.some(contractor => {
+    // Mejor validación para contratos incompletos - solo considerar contratos que NO cumplen
+    const nonCompliantContracts = data.contractors.filter(contractor => !contractor.contractComplies);
+    
+    // Validar campos requeridos solo en contratos que deben cumplir
+    const hasIncompleteRequiredContracts = data.contractors.some(contractor => {
+      // Si el contrato ya está marcado como no cumple, no validar campos individuales
+      if (!contractor.contractComplies) return false;
+      
+      // Para contratos que deben cumplir, verificar campos requeridos
       const basicFieldsIncomplete = !contractor.contractingEntity?.trim() || 
         !contractor.contractNumber?.trim() || 
-        !contractor.object?.trim() ||
-        !contractor.servicesCode?.trim();
+        !contractor.object?.trim();
       
       const privateContractIncomplete = contractor.contractType === 'private' && 
         !contractor.privateDocumentsComplete;
       
-      console.log(`Contract ${contractor.order} validation:`, {
+      console.log(`Contract ${contractor.order} required fields validation:`, {
+        contractComplies: contractor.contractComplies,
         contractingEntity: !!contractor.contractingEntity?.trim(),
         contractNumber: !!contractor.contractNumber?.trim(),
         object: !!contractor.object?.trim(),
-        servicesCode: !!contractor.servicesCode?.trim(),
-        contractComplies: contractor.contractComplies,
         contractType: contractor.contractType,
         privateDocumentsComplete: contractor.privateDocumentsComplete,
         basicFieldsIncomplete,
@@ -167,7 +172,6 @@ export const RequirementsForm: React.FC = () => {
       return basicFieldsIncomplete || privateContractIncomplete;
     });
 
-    const nonCompliantContracts = data.contractors.filter(contractor => !contractor.contractComplies);
     const nonCompliantAdditionalCriteria = additionalSpecificResults.filter(result => !result.complies);
 
     console.log('Subsanation Debug:', {
@@ -175,23 +179,25 @@ export const RequirementsForm: React.FC = () => {
       specificExperience: data.specificExperience,
       professionalCard: data.professionalCard,
       nonCompliantAdditionalCriteria: nonCompliantAdditionalCriteria.length,
-      hasIncompleteContracts,
+      hasIncompleteRequiredContracts,
       rupComplies: selectedProponent.rup.complies,
       contractsCount: data.contractors.length,
       nonCompliantContractsCount: nonCompliantContracts.length
     });
 
+    // Lógica corregida de subsanación
     const needsSubsanation = 
       !data.generalExperience ||
       !data.specificExperience ||
       !data.professionalCard ||
       nonCompliantAdditionalCriteria.length > 0 ||
-      hasIncompleteContracts ||
-      !selectedProponent.rup.complies;
+      hasIncompleteRequiredContracts ||
+      !selectedProponent.rup.complies ||
+      nonCompliantContracts.length > 0;
 
     console.log('Final subsanation decision:', needsSubsanation);
 
-    // Crear detalles de subsanación
+    // Crear detalles de subsanación más precisos
     const subsanationDetails: string[] = [];
     
     if (!data.generalExperience) subsanationDetails.push("No cumple experiencia general");
@@ -203,11 +209,17 @@ export const RequirementsForm: React.FC = () => {
       subsanationDetails.push(`No cumple ${criteria.name}`);
     });
     
-    nonCompliantContracts.forEach((contractor, index) => {
+    nonCompliantContracts.forEach((contractor) => {
       if (contractor.nonComplianceReason) {
         subsanationDetails.push(`Contrato #${contractor.order}: ${contractor.nonComplianceReason}`);
+      } else {
+        subsanationDetails.push(`Contrato #${contractor.order}: No cumple requisitos`);
       }
     });
+
+    if (hasIncompleteRequiredContracts) {
+      subsanationDetails.push("Hay contratos con información incompleta");
+    }
 
     updateProponent(selectedProponent.id, {
       requirements: {
