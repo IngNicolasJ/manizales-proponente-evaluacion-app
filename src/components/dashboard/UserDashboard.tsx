@@ -31,10 +31,13 @@ const UserDashboard = () => {
     // Cargar los datos del proceso en el store
     setProcessData({
       processNumber: process.process_number,
-      processName: process.process_name,
+      processObject: process.process_name,
       closingDate: process.closing_date,
-      experience: process.experience,
-      scoringCriteria: process.scoring_criteria
+      totalContractValue: 0,
+      minimumSalary: 0,
+      processType: 'licitacion',
+      scoring: process.scoring_criteria || {},
+      experience: process.experience || {}
     });
 
     // Obtener los proponentes de este proceso

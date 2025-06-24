@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAppStore } from '@/store/useAppStore';
-import { UserMenu } from '@/components/UserMenu';
+import UserMenu from '@/components/UserMenu';
 import { useProcessSaving } from '@/hooks/useProcessSaving';
 
 interface LayoutProps {
@@ -74,7 +73,7 @@ export const Layout = ({ children }: LayoutProps) => {
                   </Badge>
                   <span className="text-sm text-gray-500">|</span>
                   <span className="text-sm text-gray-600 max-w-xs truncate">
-                    {processData.processName}
+                    {processData.processObject}
                   </span>
                 </div>
               )}

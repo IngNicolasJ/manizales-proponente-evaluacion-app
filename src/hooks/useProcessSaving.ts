@@ -23,10 +23,10 @@ export const useProcessSaving = () => {
           .upsert({
             user_id: user.id,
             process_number: processData.processNumber,
-            process_name: processData.processName,
+            process_name: processData.processObject,
             closing_date: processData.closingDate,
             experience: processData.experience,
-            scoring_criteria: processData.scoringCriteria,
+            scoring_criteria: processData.scoring,
             updated_at: new Date().toISOString()
           }, {
             onConflict: 'user_id,process_number'
@@ -79,20 +79,21 @@ export const useProcessSaving = () => {
           const { error } = await supabase
             .from('proponents')
             .upsert({
-              id: proponent.id,
               user_id: user.id,
               process_data_id: processId,
               name: proponent.name,
               is_plural: proponent.isPlural || false,
               partners: proponent.partners || null,
               rup: proponent.rup || {},
-              contractors: proponent.contractors || [],
+              contractors: JSON.parse(JSON.stringify(proponent.contractors || [])),
               scoring: proponent.scoring || {},
               requirements: proponent.requirements || {},
               total_score: proponent.totalScore || 0,
               needs_subsanation: proponent.needsSubsanation || false,
               subsanation_details: proponent.subsanationDetails || null,
               updated_at: new Date().toISOString()
+            }, {
+              onConflict: 'user_id,process_data_id,name'
             });
 
           if (error) {
