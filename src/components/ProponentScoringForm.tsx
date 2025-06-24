@@ -5,17 +5,19 @@ import { v4 as uuidv4 } from 'uuid';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Users, User, AlertTriangle } from 'lucide-react';
+import { Plus, Users, User, AlertTriangle, Edit, Save, X } from 'lucide-react';
 import { ProponentBasicInfo } from '@/components/forms/ProponentBasicInfo';
 import { PartnersSection } from '@/components/forms/PartnersSection';
 import { RupSection } from '@/components/forms/RupSection';
 import { ScoringSection } from '@/components/forms/ScoringSection';
 import { Proponent } from '@/types';
 import { ProponentFormData } from '@/types/forms';
+import { toast } from '@/hooks/use-toast';
 
 export const ProponentScoringForm: React.FC = () => {
-  const { processData, addProponent, setCurrentStep } = useAppStore();
+  const { processData, proponents, addProponent, updateProponent, setCurrentStep } = useAppStore();
   const [showForm, setShowForm] = useState(false);
+  const [editingProponent, setEditingProponent] = useState<string | null>(null);
 
   const { register, handleSubmit, control, watch, setValue, reset, formState: { errors } } = useForm<ProponentFormData>({
     defaultValues: {
@@ -66,19 +68,78 @@ export const ProponentScoringForm: React.FC = () => {
     return daysDiff <= 30;
   };
 
+  const handleEditProponent = (proponent: Proponent) => {
+    setEditingProponent(proponent.id);
+    setValue('name', proponent.name);
+    setValue('isPlural', proponent.isPlural);
+    setValue('rupRenewalDate', proponent.rup.renewalDate);
+    setValue('scoring', proponent.scoring);
+    
+    if (proponent.isPlural && proponent.partners) {
+      setValue('partners', proponent.partners.map(partner => ({
+        name: partner.name,
+        percentage: partner.percentage,
+        rupRenewalDate: '' // This would need to be stored if we want to edit it
+      })));
+    }
+    
+    setShowForm(true);
+  };
+
+  const handleUpdateProponent = (data: ProponentFormData) => {
+    if (!editingProponent) return;
+
+    const rupComplies = data.isPlural 
+      ? data.partners.every(partner => checkRupCompliance(partner.rupRenewalDate))
+      : checkRupCompliance(data.rupRenewalDate);
+
+    const totalScore = 
+      data.scoring.womanEntrepreneurship +
+      data.scoring.mipyme +
+      data.scoring.disabled +
+      data.scoring.qualityFactor +
+      data.scoring.environmentalQuality +
+      data.scoring.nationalIndustrySupport;
+
+    const updatedProponent: Partial<Proponent> = {
+      name: data.name,
+      isPlural: data.isPlural,
+      partners: data.isPlural ? data.partners.map(partner => ({
+        name: partner.name || '',
+        percentage: partner.percentage || 0
+      })) : undefined,
+      rup: {
+        renewalDate: data.rupRenewalDate,
+        complies: rupComplies
+      },
+      scoring: data.scoring,
+      totalScore
+    };
+
+    updateProponent(editingProponent, updatedProponent);
+    
+    toast({
+      title: "Proponente actualizado",
+      description: "Los puntajes han sido actualizados correctamente",
+    });
+
+    reset();
+    setShowForm(false);
+    setEditingProponent(null);
+  };
+
   const onSubmit = (data: ProponentFormData) => {
-    console.log('🚀 onSubmit called with data:', data);
-    console.log('📋 Form errors:', errors);
-    console.log('📊 ProcessData:', processData);
+    if (editingProponent) {
+      handleUpdateProponent(data);
+      return;
+    }
 
     let rupComplies = false;
     
     if (data.isPlural) {
       rupComplies = data.partners.every(partner => checkRupCompliance(partner.rupRenewalDate));
-      console.log('👥 Plural proponent RUP compliance:', rupComplies);
     } else {
       rupComplies = checkRupCompliance(data.rupRenewalDate);
-      console.log('👤 Single proponent RUP compliance:', rupComplies);
     }
 
     const totalScore = 
@@ -89,16 +150,10 @@ export const ProponentScoringForm: React.FC = () => {
       data.scoring.environmentalQuality +
       data.scoring.nationalIndustrySupport;
 
-    console.log('🎯 Total score calculated:', totalScore);
-
-    // Asegurar que additionalSpecific sea un array antes de acceder
     const additionalSpecificCriteria = Array.isArray(processData.experience?.additionalSpecific) 
       ? processData.experience.additionalSpecific 
       : [];
 
-    console.log('📐 Additional specific criteria:', additionalSpecificCriteria);
-
-    // Inicializar additionalSpecificExperience como array basado en los criterios del processData
     const additionalSpecificExperience = additionalSpecificCriteria.map(criterion => ({
       name: criterion.name,
       amount: 0,
@@ -130,29 +185,25 @@ export const ProponentScoringForm: React.FC = () => {
       needsSubsanation: false
     };
 
-    console.log('💾 New proponent created:', newProponent);
+    addProponent(newProponent);
+    
+    toast({
+      title: "Proponente agregado",
+      description: "El proponente ha sido agregado correctamente",
+    });
 
-    try {
-      addProponent(newProponent);
-      console.log('✅ Proponent added successfully');
-      reset();
-      setShowForm(false);
-      console.log('🔄 Form reset and closed');
-    } catch (error) {
-      console.error('❌ Error adding proponent:', error);
-    }
+    reset();
+    setShowForm(false);
+  };
+
+  const handleCancelEdit = () => {
+    reset();
+    setShowForm(false);
+    setEditingProponent(null);
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
-    console.log('🔥 Form submit triggered');
-    console.log('📝 Form values at submit:', watchedValues);
     handleSubmit(onSubmit)(e);
-  };
-
-  const handleButtonClick = () => {
-    console.log('🖱️ Button clicked');
-    console.log('📋 Current form state:', watchedValues);
-    console.log('❌ Form errors:', errors);
   };
 
   return (
@@ -180,11 +231,60 @@ export const ProponentScoringForm: React.FC = () => {
         </div>
       </div>
 
+      {/* Lista de proponentes existentes */}
+      {proponents.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Proponentes registrados</CardTitle>
+            <CardDescription>
+              Revise y modifique los puntajes de los proponentes existentes
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {proponents.map((proponent) => (
+                <div key={proponent.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">{proponent.name}</h4>
+                    <div className="text-sm text-muted-foreground">
+                      Puntaje total: <span className="font-semibold">{proponent.totalScore.toFixed(2)}</span>
+                      {proponent.isPlural && (
+                        <span className="ml-2">• Proponente plural ({proponent.partners?.length || 0} socios)</span>
+                      )}
+                    </div>
+                    <div className="flex space-x-4 text-xs text-muted-foreground mt-1">
+                      <span>Mujer: {proponent.scoring.womanEntrepreneurship}</span>
+                      <span>MIPYME: {proponent.scoring.mipyme}</span>
+                      <span>Discapacitado: {proponent.scoring.disabled}</span>
+                      <span>Calidad: {proponent.scoring.qualityFactor}</span>
+                      <span>Ambiental: {proponent.scoring.environmentalQuality}</span>
+                      <span>Nacional: {proponent.scoring.nationalIndustrySupport}</span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEditProponent(proponent)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Editar puntajes
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {showForm && (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Nuevo proponente</CardTitle>
-            <CardDescription>Complete la información del proponente</CardDescription>
+            <CardTitle>
+              {editingProponent ? 'Editar proponente' : 'Nuevo proponente'}
+            </CardTitle>
+            <CardDescription>
+              {editingProponent ? 'Modifique los puntajes del proponente' : 'Complete la información del proponente'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleFormSubmit} className="space-y-6">
@@ -227,15 +327,14 @@ export const ProponentScoringForm: React.FC = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setShowForm(false)}
+                  onClick={handleCancelEdit}
                 >
+                  <X className="w-4 h-4 mr-2" />
                   Cancelar
                 </Button>
-                <Button 
-                  type="submit"
-                  onClick={handleButtonClick}
-                >
-                  Guardar proponente
+                <Button type="submit">
+                  <Save className="w-4 h-4 mr-2" />
+                  {editingProponent ? 'Actualizar proponente' : 'Guardar proponente'}
                 </Button>
               </div>
             </form>
@@ -243,7 +342,7 @@ export const ProponentScoringForm: React.FC = () => {
         </Card>
       )}
 
-      {!showForm && (
+      {!showForm && proponents.length === 0 && (
         <div className="text-center py-12">
           <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">Agregar proponentes</h3>
