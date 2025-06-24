@@ -12,7 +12,7 @@ export const useProcessSaving = () => {
 
   // Guardar datos del proceso cuando cambien
   useEffect(() => {
-    if (!processData || !user) return;
+    if (!processData || !user || !processData.processNumber) return;
 
     const saveProcessData = async () => {
       try {
@@ -28,8 +28,6 @@ export const useProcessSaving = () => {
             experience: processData.experience || {},
             scoring_criteria: processData.scoring || {},
             updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'user_id,process_number'
           })
           .select()
           .single();
@@ -76,6 +74,18 @@ export const useProcessSaving = () => {
         console.log('💾 Guardando proponentes:', proponents.length);
 
         for (const proponent of proponents) {
+          // Convertir contractors a JSON compatible
+          const contractorsJson = proponent.contractors?.map(contractor => ({
+            name: contractor.name || '',
+            nit: contractor.nit || '',
+            contractValue: contractor.contractValue || 0,
+            executionDate: contractor.executionDate || '',
+            object: contractor.object || '',
+            clientName: contractor.clientName || '',
+            clientPhone: contractor.clientPhone || '',
+            codes: contractor.codes || []
+          })) || [];
+
           const { error } = await supabase
             .from('proponents')
             .upsert({
@@ -85,15 +95,13 @@ export const useProcessSaving = () => {
               is_plural: proponent.isPlural || false,
               partners: proponent.partners || null,
               rup: proponent.rup || {},
-              contractors: JSON.parse(JSON.stringify(proponent.contractors || [])),
+              contractors: contractorsJson,
               scoring: proponent.scoring || {},
               requirements: proponent.requirements || {},
               total_score: proponent.totalScore || 0,
               needs_subsanation: proponent.needsSubsanation || false,
               subsanation_details: proponent.subsanationDetails || null,
               updated_at: new Date().toISOString()
-            }, {
-              onConflict: 'user_id,process_data_id,name'
             });
 
           if (error) {
@@ -122,7 +130,6 @@ export const useProcessSaving = () => {
   return {
     // Función para forzar guardado manual si es necesario
     forceSave: async () => {
-      // Esta función se puede usar para guardar manualmente
       console.log('🔄 Forzando guardado manual...');
     }
   };
