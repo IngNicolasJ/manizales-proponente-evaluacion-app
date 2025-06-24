@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,30 +48,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     console.log('AuthProvider: Setting up auth');
-    let isMounted = true;
-
-    // Get initial session first
+    
+    // Get initial session
     const getInitialSession = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         console.log('AuthProvider: Initial session:', initialSession?.user?.email || 'none');
         
-        if (isMounted) {
-          setSession(initialSession);
-          setUser(initialSession?.user ?? null);
-          
-          if (initialSession?.user) {
-            await checkAdminRole(initialSession.user.id);
-          }
-          
-          setLoading(false);
-          console.log('AuthProvider: Initial loading complete');
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+        
+        if (initialSession?.user) {
+          await checkAdminRole(initialSession.user.id);
         }
+        
+        // CRÍTICO: Establecer loading a false después de obtener la sesión inicial
+        setLoading(false);
+        console.log('AuthProvider: Initial loading complete, loading set to false');
       } catch (error) {
         console.error('Error getting initial session:', error);
-        if (isMounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
@@ -79,27 +76,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (event, session) => {
         console.log('AuthProvider: Auth state changed:', event, session?.user?.email || 'none');
         
-        if (isMounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            await checkAdminRole(session.user.id);
-          } else {
-            setIsAdmin(false);
-          }
-          
-          // Asegurar que loading se ponga en false
-          setLoading(false);
-          console.log('AuthProvider: Auth state processed, loading set to false');
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await checkAdminRole(session.user.id);
+        } else {
+          setIsAdmin(false);
         }
+        
+        // CRÍTICO: Asegurar que loading siempre se ponga en false
+        setLoading(false);
+        console.log('AuthProvider: Auth state processed, loading set to false');
       }
     );
 
     getInitialSession();
 
     return () => {
-      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
