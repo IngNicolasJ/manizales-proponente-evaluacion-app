@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAppStore } from '@/store/useAppStore';
 import { exportToExcel, exportToPDF } from '@/utils/exportUtils';
-import { Download, FileSpreadsheet, FileText, AlertTriangle, Edit, Users, CheckSquare, Settings } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText, AlertTriangle, Edit, Users, CheckSquare, Settings, Info, FileCheck } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export const ProponentsSummary: React.FC = () => {
@@ -139,25 +139,143 @@ export const ProponentsSummary: React.FC = () => {
         </Alert>
       )}
 
-      {/* Process Information */}
+      {/* Complete Process Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Información del Proceso</CardTitle>
+          <CardTitle className="flex items-center space-x-2">
+            <Info className="w-5 h-5" />
+            <span>Información Completa del Proceso</span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Número de proceso</p>
+                <p className="text-lg font-semibold">{processData.processNumber}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Fecha de cierre</p>
+                <p className="text-lg font-semibold">{new Date(processData.closingDate).toLocaleDateString('es-ES')}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Tipo de proceso</p>
+                <p className="text-lg font-semibold capitalize">{processData.processType}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Valor total del contrato</p>
+                <p className="text-lg font-semibold">${processData.totalContractValue?.toLocaleString('es-ES') || 'No especificado'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Salario mínimo vigente</p>
+                <p className="text-lg font-semibold">${processData.minimumSalary?.toLocaleString('es-ES') || 'No especificado'}</p>
+              </div>
+            </div>
+
+            {/* Scoring Criteria */}
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-2">Distribución de Puntajes</p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Emprendimiento Mujer:</span>
+                    <span className="font-semibold">{processData.scoring.womanEntrepreneurship} pts</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>MIPYME:</span>
+                    <span className="font-semibold">{processData.scoring.mipyme} pts</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Discapacidad:</span>
+                    <span className="font-semibold">{processData.scoring.disabled} pts</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Factor Calidad:</span>
+                    <span className="font-semibold">{processData.scoring.qualityFactor} pts</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Calidad Ambiental:</span>
+                    <span className="font-semibold">{processData.scoring.environmentalQuality} pts</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Industria Nacional:</span>
+                    <span className="font-semibold">{processData.scoring.nationalIndustrySupport} pts</span>
+                  </div>
+                </div>
+                <div className="mt-2 pt-2 border-t">
+                  <div className="flex justify-between font-semibold">
+                    <span>Total Máximo:</span>
+                    <span>{Object.values(processData.scoring).reduce((a, b) => a + b, 0)} pts</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Object of the process */}
+          <div className="mt-6">
+            <p className="text-sm font-medium text-muted-foreground mb-2">Objeto del proceso</p>
+            <p className="text-base leading-relaxed bg-gray-50 p-3 rounded-md">{processData.processObject}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Qualifying Requirements */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <FileCheck className="w-5 h-5" />
+            <span>Requisitos Habilitantes del Proceso</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Experience Requirements */}
             <div>
-              <p className="text-sm text-muted-foreground">Número de proceso</p>
-              <p className="font-semibold">{processData.processNumber}</p>
+              <h4 className="text-lg font-semibold mb-3">Experiencia Requerida</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="font-medium text-blue-900">Experiencia General</p>
+                  <p className="text-blue-700 text-lg font-semibold">{processData.experience.general} SMLMV</p>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <p className="font-medium text-green-900">Experiencia Específica</p>
+                  <p className="text-green-700 text-lg font-semibold">{processData.experience.specific} SMLMV</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Fecha de cierre</p>
-              <p className="font-semibold">{new Date(processData.closingDate).toLocaleDateString()}</p>
-            </div>
-            <div className="md:col-span-2">
-              <p className="text-sm text-muted-foreground">Objeto del proceso</p>
-              <p className="font-semibold">{processData.processObject}</p>
-            </div>
+
+            {/* Classifier Codes */}
+            {processData.experience.classifierCodes && processData.experience.classifierCodes.length > 0 && (
+              <div>
+                <h4 className="text-lg font-semibold mb-3">Códigos Clasificadores Requeridos</h4>
+                <div className="flex flex-wrap gap-2">
+                  {processData.experience.classifierCodes.map((code, index) => (
+                    <Badge key={index} variant="outline" className="text-sm">
+                      {code}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Additional Specific Experience */}
+            {processData.experience.additionalSpecific && processData.experience.additionalSpecific.length > 0 && (
+              <div>
+                <h4 className="text-lg font-semibold mb-3">Experiencia Específica Adicional</h4>
+                <div className="space-y-3">
+                  {processData.experience.additionalSpecific.map((exp, index) => (
+                    <div key={index} className="bg-purple-50 p-4 rounded-lg">
+                      <p className="font-medium text-purple-900">{exp.name}</p>
+                      <p className="text-purple-700">
+                        <span className="font-semibold">{exp.value}</span> {exp.unit}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
