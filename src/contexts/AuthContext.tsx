@@ -30,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const checkAdminRole = async (userId: string) => {
+  const checkAdminRole = async (userId: string): Promise<boolean> => {
     try {
       const { data: profile } = await supabase
         .from('profiles')
@@ -39,47 +39,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
       
       const adminStatus = profile?.role === 'admin';
-      setIsAdmin(adminStatus);
       console.log('AuthProvider: User is admin:', adminStatus);
+      return adminStatus;
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      setIsAdmin(false);
+      return false;
     }
   };
 
-  // Función para limpiar completamente el estado
   const clearAuthState = () => {
     setUser(null);
     setSession(null);
     setIsAdmin(false);
-    setLoading(false);
     console.log('AuthProvider: Auth state cleared');
+  };
+
+  const processAuthState = async (session: Session | null) => {
+    console.log('AuthProvider: Processing auth state:', session?.user?.email || 'none');
+    
+    setSession(session);
+    setUser(session?.user ?? null);
+    
+    if (session?.user) {
+      const adminStatus = await checkAdminRole(session.user.id);
+      setIsAdmin(adminStatus);
+    } else {
+      setIsAdmin(false);
+    }
+    
+    setLoading(false);
+    console.log('AuthProvider: Auth processing complete, loading set to false');
   };
 
   useEffect(() => {
     console.log('AuthProvider: Setting up auth');
     
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        console.log('AuthProvider: Initial session:', initialSession?.user?.email || 'none');
-        
-        setSession(initialSession);
-        setUser(initialSession?.user ?? null);
-        
-        if (initialSession?.user) {
-          await checkAdminRole(initialSession.user.id);
-        }
-        
-        setLoading(false);
-        console.log('AuthProvider: Initial loading complete, loading set to false');
-      } catch (error) {
-        console.error('Error getting initial session:', error);
-        clearAuthState();
-      }
-    };
-
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -87,22 +81,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (event === 'SIGNED_OUT') {
           clearAuthState();
+          setLoading(false);
           return;
         }
         
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await checkAdminRole(session.user.id);
-        } else {
-          setIsAdmin(false);
-        }
-        
-        setLoading(false);
-        console.log('AuthProvider: Auth state processed, loading set to false');
+        await processAuthState(session);
       }
     );
+
+    // Get initial session
+    const getInitialSession = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        console.log('AuthProvider: Initial session:', initialSession?.user?.email || 'none');
+        await processAuthState(initialSession);
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+        clearAuthState();
+        setLoading(false);
+      }
+    };
 
     getInitialSession();
 
@@ -143,22 +141,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const forceSignOut = async () => {
     console.log('AuthProvider: Force signing out...');
     try {
-      // Limpiar localStorage
       localStorage.removeItem('sb-iudzwslvdgknfmsikxpy-auth-token');
       localStorage.clear();
-      
-      // Cerrar sesión en Supabase
       await supabase.auth.signOut();
-      
-      // Limpiar estado inmediatamente
       clearAuthState();
-      
-      // Recargar la página para asegurar limpieza completa
+      setLoading(false);
       window.location.reload();
     } catch (error) {
       console.error('Error during force sign out:', error);
-      // Limpiar estado incluso si hay error
       clearAuthState();
+      setLoading(false);
       window.location.reload();
     }
   };
