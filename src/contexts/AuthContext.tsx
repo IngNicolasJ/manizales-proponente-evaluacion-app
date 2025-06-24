@@ -46,11 +46,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    console.log('AuthProvider: Initializing...');
+    console.log('🚀 AuthProvider v3.0: Initializing...');
     
-    // Get initial session immediately
+    // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('AuthProvider: Initial session check:', session?.user?.email || 'none');
+      console.log('🔍 Initial session check:', session?.user?.email || 'none');
       
       setSession(session);
       setUser(session?.user ?? null);
@@ -58,19 +58,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session?.user) {
         const adminStatus = await checkAdminRole(session.user.id);
         setIsAdmin(adminStatus);
-        console.log('AuthProvider: User is admin:', adminStatus);
+        console.log('👑 User is admin:', adminStatus);
       } else {
         setIsAdmin(false);
       }
       
       setLoading(false);
-      console.log('AuthProvider: Initial loading complete');
+      console.log('✅ Initial auth check complete - loading set to false');
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('AuthProvider: Auth state changed:', event);
+        console.log('🔄 Auth state changed:', event, session?.user?.email || 'none');
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -82,10 +82,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsAdmin(false);
         }
         
-        // Only set loading to false if we're not in the initial load
-        if (!loading) {
-          setLoading(false);
-        }
+        // Always ensure loading is false after auth state change
+        setLoading(false);
+        console.log('✅ Auth state change complete - loading set to false');
       }
     );
 
@@ -119,12 +118,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    console.log('AuthProvider: Signing out...');
+    console.log('🚪 Signing out...');
     await supabase.auth.signOut();
   };
 
   const forceSignOut = async () => {
-    console.log('AuthProvider: Force signing out...');
+    console.log('🔥 Force signing out...');
     try {
       localStorage.clear();
       await supabase.auth.signOut();
@@ -143,7 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  console.log('AuthProvider: Current state - loading:', loading, 'user:', user?.email || 'none');
+  console.log('📊 AuthProvider state - loading:', loading, 'user:', user?.email || 'none');
 
   const value = {
     user,

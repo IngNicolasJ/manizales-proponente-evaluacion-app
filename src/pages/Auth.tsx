@@ -17,11 +17,11 @@ const Auth = () => {
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  console.log('Auth page - loading:', loading, 'user:', user?.email || 'none');
+  console.log('🔐 Auth page v3.0 - loading:', loading, 'user:', user?.email || 'none');
 
   // If already authenticated, redirect to app
   if (!loading && user) {
-    console.log('Auth: User authenticated, redirecting to /app');
+    console.log('✅ Auth: User authenticated, redirecting to /app');
     return <Navigate to="/app" replace />;
   }
 
@@ -31,7 +31,7 @@ const Auth = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Verificando autenticación...</p>
+          <p className="text-muted-foreground">🔄 Verificando autenticación v3.0...</p>
         </div>
       </div>
     );
@@ -107,7 +107,7 @@ const Auth = () => {
             <Users className="w-8 h-8 text-primary-foreground" />
           </div>
           <CardTitle className="text-2xl">Alcaldía de Manizales</CardTitle>
-          <CardDescription>Sistema de Evaluación de Proponentes</CardDescription>
+          <CardDescription>Sistema de Evaluación de Proponentes v3.0</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
