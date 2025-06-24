@@ -74,16 +74,29 @@ export const useProcessSaving = () => {
         console.log('💾 Guardando proponentes:', proponents.length);
 
         for (const proponent of proponents) {
-          // Convertir contractors a JSON compatible
+          // Convertir contractors a JSON compatible usando las propiedades correctas de la interfaz Contractor
           const contractorsJson = proponent.contractors?.map(contractor => ({
             name: contractor.name || '',
-            nit: contractor.nit || '',
-            contractValue: contractor.contractValue || 0,
-            executionDate: contractor.executionDate || '',
+            order: contractor.order || 0,
+            rupConsecutive: contractor.rupConsecutive || '',
+            requiredExperience: contractor.requiredExperience || 'general',
+            contractingEntity: contractor.contractingEntity || '',
+            contractNumber: contractor.contractNumber || '',
             object: contractor.object || '',
-            clientName: contractor.clientName || '',
-            clientPhone: contractor.clientPhone || '',
-            codes: contractor.codes || []
+            servicesCode: contractor.servicesCode || '',
+            executionForm: contractor.executionForm || 'I',
+            participationPercentage: contractor.participationPercentage || 0,
+            experienceContributor: contractor.experienceContributor || '',
+            totalValueSMMLV: contractor.totalValueSMMLV || 0,
+            adjustedValue: contractor.adjustedValue || 0,
+            additionalSpecificExperienceContribution: contractor.additionalSpecificExperienceContribution || [],
+            adjustedAdditionalSpecificValue: contractor.adjustedAdditionalSpecificValue || [],
+            contractType: contractor.contractType || 'public',
+            privateDocumentsComplete: contractor.privateDocumentsComplete || false,
+            contractComplies: contractor.contractComplies || false,
+            nonComplianceReason: contractor.nonComplianceReason || '',
+            selectedClassifierCodes: contractor.selectedClassifierCodes || [],
+            classifierCodesMatch: contractor.classifierCodesMatch || false
           })) || [];
 
           const { error } = await supabase
