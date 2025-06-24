@@ -17,6 +17,14 @@ const UserMenu = () => {
 
   if (!user) return null;
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -41,7 +49,7 @@ const UserMenu = () => {
           Perfil
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={signOut} className="text-red-600">
+        <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer">
           <LogOut className="w-4 h-4 mr-2" />
           Cerrar Sesión
         </DropdownMenuItem>
