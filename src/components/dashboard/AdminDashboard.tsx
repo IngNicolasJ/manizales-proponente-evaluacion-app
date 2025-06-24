@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -229,7 +230,7 @@ const AdminDashboard = () => {
                               </div>
                             </div>
                             {process.is_shared && (
-                              <Globe className="w-4 h-4 text-blue-500" title="Proceso compartido" />
+                              <Globe className="w-4 h-4 text-blue-500" aria-label="Proceso compartido" />
                             )}
                           </div>
                         </TableCell>
@@ -442,7 +443,7 @@ const AdminDashboard = () => {
                             </div>
                           </div>
                           {process.is_shared && (
-                            <Globe className="w-4 h-4 text-blue-500" title="Proceso compartido" />
+                            <Globe className="w-4 h-4 text-blue-500" aria-label="Proceso compartido" />
                           )}
                         </div>
                       </TableCell>

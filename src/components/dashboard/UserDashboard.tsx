@@ -349,7 +349,7 @@ const UserDashboard = () => {
                                 {process.process_name}
                               </div>
                             </div>
-                            <Globe className="w-4 h-4 text-blue-500" title="Proceso compartido" />
+                            <Globe className="w-4 h-4 text-blue-500" aria-label="Proceso compartido" />
                           </div>
                         </TableCell>
                         <TableCell>
