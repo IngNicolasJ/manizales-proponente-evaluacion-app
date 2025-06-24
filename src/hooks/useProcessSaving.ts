@@ -18,45 +18,76 @@ export const useProcessSaving = () => {
       try {
         console.log('💾 Guardando datos del proceso:', processData);
 
-        const { data, error } = await supabase
+        // Primero intentar actualizar si ya existe
+        const { data: existingProcess } = await supabase
           .from('process_data')
-          .upsert({
-            user_id: user.id,
-            process_number: processData.processNumber,
-            process_name: processData.processObject,
-            closing_date: processData.closingDate,
-            experience: processData.experience || {},
-            scoring_criteria: processData.scoring || {},
-            updated_at: new Date().toISOString()
-          })
-          .select()
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('process_number', processData.processNumber)
           .single();
 
-        if (error) {
-          console.error('❌ Error guardando proceso:', error);
-          throw error;
+        let processId;
+
+        if (existingProcess) {
+          // Actualizar proceso existente
+          const { data, error } = await supabase
+            .from('process_data')
+            .update({
+              process_name: processData.processObject,
+              closing_date: processData.closingDate,
+              experience: processData.experience || {},
+              scoring_criteria: processData.scoring || {},
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingProcess.id)
+            .select()
+            .single();
+
+          if (error) throw error;
+          processId = existingProcess.id;
+          console.log('✅ Proceso actualizado exitosamente:', data);
+        } else {
+          // Crear nuevo proceso
+          const { data, error } = await supabase
+            .from('process_data')
+            .insert({
+              user_id: user.id,
+              process_number: processData.processNumber,
+              process_name: processData.processObject,
+              closing_date: processData.closingDate,
+              experience: processData.experience || {},
+              scoring_criteria: processData.scoring || {},
+              updated_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+          processId = data.id;
+          console.log('✅ Proceso creado exitosamente:', data);
         }
 
-        console.log('✅ Proceso guardado exitosamente:', data);
-        
         // Guardar el ID del proceso en el store para uso inmediato
-        if (data && data.id) {
-          localStorage.setItem('current_process_id', data.id);
-          console.log('📝 Process ID guardado:', data.id);
+        if (processId) {
+          localStorage.setItem('current_process_id', processId);
+          console.log('📝 Process ID guardado:', processId);
           
           // Disparar guardado de proponentes inmediatamente si existen
           if (proponents.length > 0) {
-            await saveProponents(data.id);
+            await saveProponents(processId);
           }
         }
 
       } catch (error) {
         console.error('❌ Error al guardar proceso:', error);
-        toast({
-          title: "Error al guardar",
-          description: "No se pudo guardar el proceso automáticamente",
-          variant: "destructive"
-        });
+        // Solo mostrar toast de error si no es un error de duplicado esperado
+        if (!error.message?.includes('duplicate key')) {
+          toast({
+            title: "Error al guardar",
+            description: "No se pudo guardar el proceso automáticamente",
+            variant: "destructive"
+          });
+        }
       }
     };
 
@@ -73,7 +104,7 @@ export const useProcessSaving = () => {
       console.log('💾 Guardando proponentes:', proponents.length, 'para proceso:', processId);
 
       for (const proponent of proponents) {
-        // Convertir contractors a JSON compatible usando las propiedades correctas de la interfaz Contractor
+        // Convertir contractors a JSON compatible
         const contractorsJson = proponent.contractors?.map(contractor => ({
           name: contractor.name || '',
           order: contractor.order || 0,
@@ -114,6 +145,8 @@ export const useProcessSaving = () => {
             needs_subsanation: proponent.needsSubsanation || false,
             subsanation_details: proponent.subsanationDetails || null,
             updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,process_data_id,name'
           });
 
         if (error) {

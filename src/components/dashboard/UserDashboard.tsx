@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -66,11 +67,18 @@ const UserDashboard = () => {
       : 0;
     
     return {
-      proceso: process.process_number,
+      proceso: process.process_number || 'N/A',
       puntaje: Math.round(avgScore * 100) / 100,
       proponentes: processProponents.length
     };
   });
+
+  // Calcular estadísticas más robustas
+  const totalProcesses = processData.length;
+  const totalProponents = proponents.length;
+  const avgScore = totalProponents > 0 
+    ? proponents.reduce((sum, p) => sum + Number(p.total_score || 0), 0) / totalProponents 
+    : 0;
 
   if (loadingProcesses || loadingProponents) {
     return (
@@ -108,7 +116,7 @@ const UserDashboard = () => {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userStats?.totalProcesses || 0}</div>
+            <div className="text-2xl font-bold">{totalProcesses}</div>
             <p className="text-xs text-muted-foreground">
               Procesos que he creado
             </p>
@@ -121,7 +129,7 @@ const UserDashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userStats?.totalProponents || 0}</div>
+            <div className="text-2xl font-bold">{totalProponents}</div>
             <p className="text-xs text-muted-foreground">
               Total de evaluaciones realizadas
             </p>
@@ -134,7 +142,7 @@ const UserDashboard = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userStats?.avgScore || 0}</div>
+            <div className="text-2xl font-bold">{avgScore.toFixed(1)}</div>
             <p className="text-xs text-muted-foreground">
               Promedio de mis evaluaciones
             </p>
@@ -168,7 +176,7 @@ const UserDashboard = () => {
         </Card>
       )}
 
-      {/* Updated processes table with Continue button */}
+      {/* Tabla de procesos del usuario */}
       <Card>
         <CardHeader>
           <CardTitle>Mis Procesos</CardTitle>
@@ -202,20 +210,27 @@ const UserDashboard = () => {
                 {processData.map((process) => {
                   const processProponents = proponents.filter(p => p.process_data_id === process.id);
                   const avgScore = processProponents.length 
-                    ? processProponents.reduce((sum, p) => sum + Number(p.total_score), 0) / processProponents.length 
+                    ? processProponents.reduce((sum, p) => sum + Number(p.total_score || 0), 0) / processProponents.length 
                     : 0;
                   
                   return (
                     <TableRow key={process.id}>
                       <TableCell className="font-medium">
                         <div>
-                          <div className="font-semibold">Proceso {process.process_number}</div>
+                          <div className="font-semibold">
+                            Proceso {process.process_number || 'Sin número'}
+                          </div>
                           <div className="text-sm text-muted-foreground truncate max-w-xs">
-                            {process.process_name}
+                            {process.process_name || 'Sin nombre'}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{new Date(process.closing_date).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        {process.closing_date 
+                          ? new Date(process.closing_date).toLocaleDateString()
+                          : 'No definida'
+                        }
+                      </TableCell>
                       <TableCell>{processProponents.length}</TableCell>
                       <TableCell>{avgScore.toFixed(1)} pts</TableCell>
                       <TableCell>
