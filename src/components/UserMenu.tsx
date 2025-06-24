@@ -10,10 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, LogOut, Settings, Shield, ChevronDown } from 'lucide-react';
+import { User, LogOut, Settings, Shield, ChevronDown, RefreshCw } from 'lucide-react';
 
 const UserMenu = () => {
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, signOut, forceSignOut } = useAuth();
 
   if (!user) return null;
 
@@ -25,9 +25,28 @@ const UserMenu = () => {
     }
   };
 
+  const handleForceSignOut = async () => {
+    try {
+      await forceSignOut();
+    } catch (error) {
+      console.error('Error force signing out:', error);
+    }
+  };
+
   return (
     <div className="flex items-center space-x-3">
-      {/* Logout Button - More Visible */}
+      {/* Force Logout Button for troubleshooting */}
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={handleForceSignOut}
+        className="flex items-center space-x-2 text-orange-600 border-orange-200 hover:bg-orange-50 hover:border-orange-300"
+      >
+        <RefreshCw className="w-4 h-4" />
+        <span className="hidden md:inline">Reiniciar Sesión</span>
+      </Button>
+
+      {/* Regular Logout Button */}
       <Button 
         variant="outline" 
         size="sm" 
@@ -66,6 +85,10 @@ const UserMenu = () => {
             Perfil
           </DropdownMenuItem>
           <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleForceSignOut} className="text-orange-600 cursor-pointer focus:bg-orange-50 focus:text-orange-700">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Reiniciar Sesión
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer focus:bg-red-50 focus:text-red-700">
             <LogOut className="w-4 h-4 mr-2" />
             Cerrar Sesión

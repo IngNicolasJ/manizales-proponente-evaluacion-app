@@ -11,6 +11,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  forceSignOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -46,6 +47,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Función para limpiar completamente el estado
+  const clearAuthState = () => {
+    setUser(null);
+    setSession(null);
+    setIsAdmin(false);
+    setLoading(false);
+    console.log('AuthProvider: Auth state cleared');
+  };
+
   useEffect(() => {
     console.log('AuthProvider: Setting up auth');
     
@@ -62,12 +72,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await checkAdminRole(initialSession.user.id);
         }
         
-        // CRÍTICO: Establecer loading a false después de obtener la sesión inicial
         setLoading(false);
         console.log('AuthProvider: Initial loading complete, loading set to false');
       } catch (error) {
         console.error('Error getting initial session:', error);
-        setLoading(false);
+        clearAuthState();
       }
     };
 
@@ -75,6 +84,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('AuthProvider: Auth state changed:', event, session?.user?.email || 'none');
+        
+        if (event === 'SIGNED_OUT') {
+          clearAuthState();
+          return;
+        }
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -85,7 +99,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsAdmin(false);
         }
         
-        // CRÍTICO: Asegurar que loading siempre se ponga en false
         setLoading(false);
         console.log('AuthProvider: Auth state processed, loading set to false');
       }
@@ -123,7 +136,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    console.log('AuthProvider: Signing out...');
     await supabase.auth.signOut();
+  };
+
+  const forceSignOut = async () => {
+    console.log('AuthProvider: Force signing out...');
+    try {
+      // Limpiar localStorage
+      localStorage.removeItem('sb-iudzwslvdgknfmsikxpy-auth-token');
+      localStorage.clear();
+      
+      // Cerrar sesión en Supabase
+      await supabase.auth.signOut();
+      
+      // Limpiar estado inmediatamente
+      clearAuthState();
+      
+      // Recargar la página para asegurar limpieza completa
+      window.location.reload();
+    } catch (error) {
+      console.error('Error during force sign out:', error);
+      // Limpiar estado incluso si hay error
+      clearAuthState();
+      window.location.reload();
+    }
   };
 
   console.log('AuthProvider: Current state - loading:', loading, 'user:', user?.email || 'none', 'session:', !!session, 'isAdmin:', isAdmin);
@@ -135,7 +172,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAdmin,
     signUp,
     signIn,
-    signOut
+    signOut,
+    forceSignOut
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
