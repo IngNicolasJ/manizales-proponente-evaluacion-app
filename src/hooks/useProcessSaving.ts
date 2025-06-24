@@ -129,6 +129,7 @@ export const useProcessSaving = () => {
           classifierCodesMatch: contractor.classifierCodesMatch || false
         })) || [];
 
+        // Usar el nuevo índice único (user_id, process_data_id, name) para el upsert
         const { error } = await supabase
           .from('proponents')
           .upsert({
@@ -146,7 +147,8 @@ export const useProcessSaving = () => {
             subsanation_details: proponent.subsanationDetails || null,
             updated_at: new Date().toISOString()
           }, {
-            onConflict: 'user_id,process_data_id,name'
+            onConflict: 'user_id,process_data_id,name',
+            ignoreDuplicates: false
           });
 
         if (error) {
