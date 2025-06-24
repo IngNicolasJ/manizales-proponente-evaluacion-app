@@ -28,7 +28,7 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
   onCancel,
   initialValues
 }) => {
-  const { register, handleSubmit, control, watch, setValue, reset, formState: { errors } } = useForm<ProponentFormData>({
+  const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<ProponentFormData>({
     defaultValues: {
       name: initialValues?.name || '',
       isPlural: initialValues?.isPlural || false,
@@ -53,15 +53,6 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
 
   const watchedValues = watch();
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    handleSubmit(onSubmit)(e);
-  };
-
-  const handleCancel = () => {
-    reset();
-    onCancel();
-  };
-
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -73,7 +64,7 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleFormSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <ProponentBasicInfo
             register={register}
             watch={watch}
@@ -113,7 +104,7 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
             <Button
               type="button"
               variant="outline"
-              onClick={handleCancel}
+              onClick={onCancel}
             >
               <X className="w-4 h-4 mr-2" />
               Cancelar

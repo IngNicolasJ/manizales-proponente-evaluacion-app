@@ -15,7 +15,6 @@ export const ProponentScoringForm: React.FC = () => {
   const { processData, proponents, addProponent, updateProponent, setCurrentStep } = useAppStore();
   const [showForm, setShowForm] = useState(false);
   const [editingProponent, setEditingProponent] = useState<string | null>(null);
-  const [editingProponentData, setEditingProponentData] = useState<Partial<ProponentFormData> | undefined>();
 
   if (!processData) {
     return (
@@ -43,69 +42,13 @@ export const ProponentScoringForm: React.FC = () => {
 
   const handleEditProponent = (proponent: Proponent) => {
     setEditingProponent(proponent.id);
-    const formData: Partial<ProponentFormData> = {
-      name: proponent.name,
-      isPlural: proponent.isPlural,
-      rupRenewalDate: proponent.rup.renewalDate,
-      scoring: proponent.scoring,
-      partners: proponent.isPlural && proponent.partners ? proponent.partners.map(partner => ({
-        name: partner.name,
-        percentage: partner.percentage,
-        rupRenewalDate: ''
-      })) : []
-    };
-    setEditingProponentData(formData);
     setShowForm(true);
   };
 
-  const handleUpdateProponent = (data: ProponentFormData) => {
-    if (!editingProponent) return;
-
+  const handleAddProponent = (data: ProponentFormData) => {
     const rupComplies = data.isPlural 
       ? data.partners.every(partner => checkRupCompliance(partner.rupRenewalDate))
       : checkRupCompliance(data.rupRenewalDate);
-
-    const totalScore = 
-      data.scoring.womanEntrepreneurship +
-      data.scoring.mipyme +
-      data.scoring.disabled +
-      data.scoring.qualityFactor +
-      data.scoring.environmentalQuality +
-      data.scoring.nationalIndustrySupport;
-
-    const updatedProponent: Partial<Proponent> = {
-      name: data.name,
-      isPlural: data.isPlural,
-      partners: data.isPlural ? data.partners.map(partner => ({
-        name: partner.name || '',
-        percentage: partner.percentage || 0
-      })) : undefined,
-      rup: {
-        renewalDate: data.rupRenewalDate,
-        complies: rupComplies
-      },
-      scoring: data.scoring,
-      totalScore
-    };
-
-    updateProponent(editingProponent, updatedProponent);
-    
-    toast({
-      title: "Proponente actualizado",
-      description: "Los puntajes han sido actualizados correctamente",
-    });
-
-    handleFormCancel();
-  };
-
-  const handleAddProponent = (data: ProponentFormData) => {
-    let rupComplies = false;
-    
-    if (data.isPlural) {
-      rupComplies = data.partners.every(partner => checkRupCompliance(partner.rupRenewalDate));
-    } else {
-      rupComplies = checkRupCompliance(data.rupRenewalDate);
-    }
 
     const totalScore = 
       data.scoring.womanEntrepreneurship +
@@ -157,7 +100,49 @@ export const ProponentScoringForm: React.FC = () => {
       description: "El proponente ha sido agregado correctamente",
     });
 
-    handleFormCancel();
+    setShowForm(false);
+    setEditingProponent(null);
+  };
+
+  const handleUpdateProponent = (data: ProponentFormData) => {
+    if (!editingProponent) return;
+
+    const rupComplies = data.isPlural 
+      ? data.partners.every(partner => checkRupCompliance(partner.rupRenewalDate))
+      : checkRupCompliance(data.rupRenewalDate);
+
+    const totalScore = 
+      data.scoring.womanEntrepreneurship +
+      data.scoring.mipyme +
+      data.scoring.disabled +
+      data.scoring.qualityFactor +
+      data.scoring.environmentalQuality +
+      data.scoring.nationalIndustrySupport;
+
+    const updatedProponent: Partial<Proponent> = {
+      name: data.name,
+      isPlural: data.isPlural,
+      partners: data.isPlural ? data.partners.map(partner => ({
+        name: partner.name || '',
+        percentage: partner.percentage || 0
+      })) : undefined,
+      rup: {
+        renewalDate: data.rupRenewalDate,
+        complies: rupComplies
+      },
+      scoring: data.scoring,
+      totalScore
+    };
+
+    updateProponent(editingProponent, updatedProponent);
+    
+    toast({
+      title: "Proponente actualizado",
+      description: "Los puntajes han sido actualizados correctamente",
+    });
+
+    setShowForm(false);
+    setEditingProponent(null);
   };
 
   const onSubmit = (data: ProponentFormData) => {
@@ -171,12 +156,30 @@ export const ProponentScoringForm: React.FC = () => {
   const handleFormCancel = () => {
     setShowForm(false);
     setEditingProponent(null);
-    setEditingProponentData(undefined);
   };
 
   const handleShowForm = () => {
-    setEditingProponentData(undefined);
+    setEditingProponent(null);
     setShowForm(true);
+  };
+
+  const getInitialValues = (): Partial<ProponentFormData> | undefined => {
+    if (!editingProponent) return undefined;
+    
+    const proponent = proponents.find(p => p.id === editingProponent);
+    if (!proponent) return undefined;
+
+    return {
+      name: proponent.name,
+      isPlural: proponent.isPlural,
+      rupRenewalDate: proponent.rup.renewalDate,
+      scoring: proponent.scoring,
+      partners: proponent.isPlural && proponent.partners ? proponent.partners.map(partner => ({
+        name: partner.name,
+        percentage: partner.percentage,
+        rupRenewalDate: ''
+      })) : []
+    };
   };
 
   return (
@@ -216,7 +219,7 @@ export const ProponentScoringForm: React.FC = () => {
           checkRupCompliance={checkRupCompliance}
           onSubmit={onSubmit}
           onCancel={handleFormCancel}
-          initialValues={editingProponentData}
+          initialValues={getInitialValues()}
         />
       )}
 
