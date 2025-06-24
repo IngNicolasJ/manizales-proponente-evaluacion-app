@@ -1,3 +1,4 @@
+
 export interface ProcessData {
   processNumber: string;
   processObject: string;
@@ -74,6 +75,7 @@ export interface Proponent {
     qualityFactor: number;
     environmentalQuality: number;
     nationalIndustrySupport: number;
+    disabilityContributor?: string; // Socio que aporta certificado de discapacidad
     comments: Record<string, string>;
   };
   requirements: {

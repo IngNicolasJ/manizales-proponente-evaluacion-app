@@ -220,6 +220,7 @@ export const ProponentScoringForm: React.FC = () => {
           onSubmit={onSubmit}
           onCancel={handleFormCancel}
           initialValues={getInitialValues()}
+          proponents={proponents}
         />
       )}
 

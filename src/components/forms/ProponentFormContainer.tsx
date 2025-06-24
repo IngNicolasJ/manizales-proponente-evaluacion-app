@@ -9,7 +9,7 @@ import { PartnersSection } from '@/components/forms/PartnersSection';
 import { RupSection } from '@/components/forms/RupSection';
 import { ScoringSection } from '@/components/forms/ScoringSection';
 import { ProponentFormData } from '@/types/forms';
-import { ProcessData } from '@/types';
+import { ProcessData, Proponent } from '@/types';
 
 interface ProponentFormContainerProps {
   editingProponent: string | null;
@@ -18,6 +18,7 @@ interface ProponentFormContainerProps {
   onSubmit: (data: ProponentFormData) => void;
   onCancel: () => void;
   initialValues?: Partial<ProponentFormData>;
+  proponents: Proponent[];
 }
 
 export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
@@ -26,7 +27,8 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
   checkRupCompliance,
   onSubmit,
   onCancel,
-  initialValues
+  initialValues,
+  proponents
 }) => {
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<ProponentFormData>({
     defaultValues: {
@@ -41,6 +43,7 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
         qualityFactor: 0,
         environmentalQuality: 0,
         nationalIndustrySupport: 0,
+        disabilityContributor: undefined,
         comments: {}
       }
     }
@@ -52,6 +55,11 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
   });
 
   const watchedValues = watch();
+
+  // Encontrar el proponente actual para pasar al ScoringSection
+  const currentProponent = editingProponent 
+    ? proponents.find(p => p.id === editingProponent) 
+    : null;
 
   return (
     <Card className="mb-6">
@@ -98,6 +106,7 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
             watch={watch}
             setValue={setValue}
             processData={processData}
+            currentProponent={currentProponent}
           />
 
           <div className="flex justify-between">

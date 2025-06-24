@@ -15,6 +15,7 @@ export interface ProponentFormData {
     qualityFactor: number;
     environmentalQuality: number;
     nationalIndustrySupport: number;
+    disabilityContributor?: string; // Socio que aporta certificado de discapacidad
     comments: Record<string, string>;
   };
 }
