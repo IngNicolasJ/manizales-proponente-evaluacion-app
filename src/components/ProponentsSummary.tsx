@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,11 +8,49 @@ import { useAppStore } from '@/store/useAppStore';
 import { exportToExcel, exportToPDF } from '@/utils/exportUtils';
 import { Download, FileSpreadsheet, FileText, AlertTriangle, Edit, Users, CheckSquare, Settings, Info, FileCheck, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { useExperienceCalculation } from '@/hooks/useExperienceCalculation';
 
 export const ProponentsSummary: React.FC = () => {
   const { processData, proponents, setCurrentStep } = useAppStore();
   const [isExporting, setIsExporting] = useState(false);
+
+  // Helper function to calculate partner experience percentages for a specific proponent
+  const calculatePartnerExperiencePercentages = (proponent: any) => {
+    if (!proponent || !proponent.isPlural || !proponent.partners || !proponent.contractors.length) {
+      return {};
+    }
+
+    const totalExperience = proponent.contractors.reduce((sum: number, contractor: any) => {
+      return sum + (contractor.adjustedValue || 0);
+    }, 0);
+
+    if (totalExperience === 0) return {};
+
+    const partnerContributions: Record<string, number> = {};
+    
+    proponent.partners.forEach((partner: any) => {
+      const partnerContracts = proponent.contractors.filter(
+        (contractor: any) => contractor.experienceContributor === partner.name
+      );
+      
+      const partnerExperience = partnerContracts.reduce((sum: number, contractor: any) => {
+        return sum + (contractor.adjustedValue || 0);
+      }, 0);
+      
+      const percentage = (partnerExperience / totalExperience) * 100;
+      partnerContributions[partner.name] = percentage;
+    });
+
+    return partnerContributions;
+  };
+
+  const getPartnerExperiencePercentage = (proponent: any, partnerName: string): number => {
+    const percentages = calculatePartnerExperiencePercentages(proponent);
+    return percentages[partnerName] || 0;
+  };
+
+  const canPartnerReceiveDisabilityScore = (proponent: any, partnerName: string): boolean => {
+    return getPartnerExperiencePercentage(proponent, partnerName) >= 40;
+  };
 
   if (!processData) {
     return (
@@ -367,12 +406,11 @@ export const ProponentsSummary: React.FC = () => {
             <div className="space-y-4">
               {sortedProponents.map((proponent, index) => {
                 const compliance = checkRequirementsCompliance(proponent);
-                const { getPartnerExperiencePercentage, canPartnerReceiveDisabilityScore } = useExperienceCalculation(proponent);
                 
                 // Información sobre discapacidad
                 const hasDisabilityScore = proponent.scoring.disabled > 0;
                 const disabilityContributor = proponent.scoring.disabilityContributor;
-                const disabilityContributorMeetsThreshold = disabilityContributor ? canPartnerReceiveDisabilityScore(disabilityContributor) : false;
+                const disabilityContributorMeetsThreshold = disabilityContributor ? canPartnerReceiveDisabilityScore(proponent, disabilityContributor) : false;
                 
                 return (
                   <div
@@ -467,7 +505,7 @@ export const ProponentsSummary: React.FC = () => {
                             <span className="font-medium">Socio que aporta certificado:</span> {disabilityContributor}
                           </p>
                           <p className="mb-1">
-                            <span className="font-medium">Experiencia aportada:</span> {getPartnerExperiencePercentage(disabilityContributor).toFixed(1)}%
+                            <span className="font-medium">Experiencia aportada:</span> {getPartnerExperiencePercentage(proponent, disabilityContributor).toFixed(1)}%
                           </p>
                           <div className="flex items-center space-x-2">
                             {disabilityContributorMeetsThreshold ? (
