@@ -71,7 +71,7 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
                     <SelectValue placeholder="Seleccionar socio" />
                   </SelectTrigger>
                   <SelectContent>
-                    {watchedValues.partners?.map((partner) => (
+                    {watchedValues.partners?.filter(partner => partner.name && partner.name.trim() !== '').map((partner) => (
                       <SelectItem key={partner.name} value={partner.name}>
                         {partner.name} ({getPartnerExperiencePercentage(partner.name).toFixed(1)}% experiencia)
                       </SelectItem>
