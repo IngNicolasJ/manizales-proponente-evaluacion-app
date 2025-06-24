@@ -1,15 +1,13 @@
+
 import React from 'react';
 import { UseFormSetValue, UseFormWatch } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScoringSelect } from '@/components/ScoringSelect';
 import { ProponentFormData } from '@/types/forms';
 import { ProcessData, Proponent } from '@/types';
-import { useExperienceCalculation } from '@/hooks/useExperienceCalculation';
-import { AlertTriangle, CheckCircle } from 'lucide-react';
 
 interface ScoringSectionProps {
   watch: UseFormWatch<ProponentFormData>;
@@ -25,7 +23,6 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
   currentProponent
 }) => {
   const watchedValues = watch();
-  const { getPartnerExperiencePercentage, canPartnerReceiveDisabilityScore } = useExperienceCalculation(currentProponent);
 
   const getScoringComment = (criterionKey: string): string => {
     return watchedValues.scoring?.comments?.[criterionKey] || '';
@@ -41,9 +38,7 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
     const isPlural = watchedValues.isPlural;
     const selectedContributor = watchedValues.scoring?.disabilityContributor;
     
-    const canAssignScore = !isPlural || (selectedContributor && canPartnerReceiveDisabilityScore(selectedContributor));
     const requiresComment = currentValue === 0;
-
     const customOptions = maxValue > 0 ? [0, maxValue] : [0];
 
     return (
@@ -54,83 +49,39 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
           {isPlural && (
             <div className="space-y-3">
               <div className="space-y-2">
-                <Label className="text-sm">¿Qué socio aporta el certificado de discapacidad?</Label>
+                <Label className="text-sm">¿Qué socio aporta el certificado de discapacidad? (Opcional)</Label>
                 <Select
                   value={selectedContributor || ''}
-                  onValueChange={(value) => {
-                    setValue('scoring.disabilityContributor', value);
-                    // Si el socio no cumple el 40%, resetear puntaje a 0
-                    if (!canPartnerReceiveDisabilityScore(value)) {
-                      setValue('scoring.disabled', 0);
-                    }
-                  }}
+                  onValueChange={(value) => setValue('scoring.disabilityContributor', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar socio" />
+                    <SelectValue placeholder="Seleccionar socio (opcional)" />
                   </SelectTrigger>
                   <SelectContent>
                     {watchedValues.partners?.filter(partner => partner.name && partner.name.trim() !== '').map((partner) => (
                       <SelectItem key={partner.name} value={partner.name}>
-                        {partner.name} ({getPartnerExperiencePercentage(partner.name).toFixed(1)}% experiencia)
+                        {partner.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-
-              {selectedContributor && (
-                <Alert className={canAssignScore ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}>
-                  <div className="flex items-center space-x-2">
-                    {canAssignScore ? (
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                    )}
-                    <AlertDescription className={canAssignScore ? "text-green-800" : "text-red-800"}>
-                      {canAssignScore ? (
-                        `${selectedContributor} aporta ${getPartnerExperiencePercentage(selectedContributor).toFixed(1)}% de la experiencia (≥40% requerido). Puede recibir puntaje.`
-                      ) : (
-                        `${selectedContributor} aporta ${getPartnerExperiencePercentage(selectedContributor).toFixed(1)}% de la experiencia. Requiere ≥40% para recibir puntaje.`
-                      )}
-                    </AlertDescription>
-                  </div>
-                </Alert>
-              )}
             </div>
           )}
 
           <ScoringSelect
             value={currentValue}
-            onChange={(value) => {
-              // Para proponentes plurales, validar que el socio esté seleccionado y cumpla requisitos
-              if (isPlural && value > 0) {
-                if (!selectedContributor) {
-                  // No permitir puntaje sin seleccionar socio
-                  return;
-                }
-                if (!canPartnerReceiveDisabilityScore(selectedContributor)) {
-                  // No permitir puntaje si no cumple 40%
-                  return;
-                }
-              }
-              setValue('scoring.disabled', value);
-            }}
+            onChange={(value) => setValue('scoring.disabled', value)}
             maxValue={maxValue}
             customOptions={customOptions}
             placeholder="Seleccionar puntaje"
-            disabled={isPlural && (!selectedContributor || !canAssignScore)}
           />
           
           <p className="text-xs text-muted-foreground">
             Opciones: 0 o {maxValue}
-            {isPlural && !selectedContributor && (
-              <span className="text-red-600 block">
-                * Debe seleccionar el socio que aporta el certificado
-              </span>
-            )}
-            {isPlural && selectedContributor && !canAssignScore && (
-              <span className="text-red-600 block">
-                * El socio seleccionado debe aportar ≥40% de la experiencia
+            {isPlural && (
+              <span className="text-blue-600 block">
+                * La validación del 40% de experiencia se verificará en los requisitos habilitantes
               </span>
             )}
           </p>
