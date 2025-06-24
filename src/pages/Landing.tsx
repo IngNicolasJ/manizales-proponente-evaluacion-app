@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Users, CheckSquare, BarChart3, Settings, ArrowRight, Star, Shield, Clock } from 'lucide-react';
+import { FileText, CheckSquare, BarChart3, Settings, ArrowRight, Star, Shield, Clock } from 'lucide-react';
 
 const Landing = () => {
   const features = [
@@ -53,14 +53,18 @@ const Landing = () => {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-primary-foreground" />
+          <div className="flex justify-between items-center h-20">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <img 
+                  src="/lovable-uploads/cfad49f5-3e5e-4183-a35a-c449717caf3d.png" 
+                  alt="Alcaldía de Manizales" 
+                  className="h-12 w-auto object-contain"
+                />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">Alcaldía de Manizales</h1>
-                <p className="text-sm text-muted-foreground">Sistema de Evaluación de Proponentes</p>
+              <div className="border-l border-gray-300 pl-4">
+                <h1 className="text-xl font-bold text-foreground">Sistema de Evaluación</h1>
+                <p className="text-sm text-muted-foreground">Alcaldía de Manizales</p>
               </div>
             </div>
             <Link to="/app">
@@ -235,9 +239,11 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-3 mb-4">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-primary-foreground" />
-              </div>
+              <img 
+                src="/lovable-uploads/cfad49f5-3e5e-4183-a35a-c449717caf3d.png" 
+                alt="Alcaldía de Manizales" 
+                className="h-8 w-auto object-contain"
+              />
               <span className="font-semibold">Alcaldía de Manizales</span>
             </div>
             <p className="text-muted-foreground">

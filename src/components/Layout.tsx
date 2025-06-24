@@ -3,7 +3,7 @@ import React from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { FileText, Users, CheckSquare, BarChart3, Settings, RotateCcw } from 'lucide-react';
+import { FileText, CheckSquare, BarChart3, Settings, RotateCcw } from 'lucide-react';
 import UserMenu from '@/components/UserMenu';
 
 interface LayoutProps {
@@ -31,14 +31,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-primary-foreground" />
+          <div className="flex justify-between items-center h-20">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <img 
+                  src="/lovable-uploads/cfad49f5-3e5e-4183-a35a-c449717caf3d.png" 
+                  alt="Alcaldía de Manizales" 
+                  className="h-12 w-auto object-contain"
+                />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">Alcaldía de Manizales</h1>
-                <p className="text-sm text-muted-foreground">Sistema de Evaluación de Proponentes</p>
+              <div className="border-l border-gray-300 pl-4">
+                <h1 className="text-xl font-bold text-foreground">Sistema de Evaluación</h1>
+                <p className="text-sm text-muted-foreground">Alcaldía de Manizales</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
