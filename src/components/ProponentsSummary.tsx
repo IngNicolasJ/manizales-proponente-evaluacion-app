@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAppStore } from '@/store/useAppStore';
 import { exportToExcel, exportToPDF } from '@/utils/exportUtils';
-import { Download, FileSpreadsheet, FileText, AlertTriangle, Edit, Users, CheckSquare, Settings, Info, FileCheck } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText, AlertTriangle, Edit, Users, CheckSquare, Settings, Info, FileCheck, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export const ProponentsSummary: React.FC = () => {
@@ -88,6 +88,45 @@ export const ProponentsSummary: React.FC = () => {
 
   const sortedProponents = [...proponents].sort((a, b) => b.totalScore - a.totalScore);
   const proponentsWithSubsanation = proponents.filter(p => p.needsSubsanation);
+
+  const checkRequirementsCompliance = (proponent: any) => {
+    const requirements = proponent.requirements;
+    const additionalSpecific = Array.isArray(processData?.experience.additionalSpecific) 
+      ? processData.experience.additionalSpecific 
+      : [];
+
+    const compliance = {
+      generalExperience: requirements.generalExperience || false,
+      specificExperience: requirements.specificExperience || false,
+      professionalCard: requirements.professionalCard || false,
+      rupComplies: proponent.rup?.complies || false,
+      additionalSpecific: additionalSpecific.map((criteria, index) => {
+        const reqItem = Array.isArray(requirements.additionalSpecificExperience) 
+          ? requirements.additionalSpecificExperience[index]
+          : null;
+        return {
+          name: criteria.name,
+          complies: reqItem?.complies || false,
+          amount: reqItem?.amount || 0,
+          required: criteria.value
+        };
+      })
+    };
+
+    const allBasicRequirementsMet = compliance.generalExperience && 
+                                   compliance.specificExperience && 
+                                   compliance.professionalCard && 
+                                   compliance.rupComplies;
+
+    const allAdditionalRequirementsMet = compliance.additionalSpecific.every(req => req.complies);
+
+    return {
+      ...compliance,
+      allBasicRequirementsMet,
+      allAdditionalRequirementsMet,
+      overallCompliance: allBasicRequirementsMet && allAdditionalRequirementsMet
+    };
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -326,89 +365,153 @@ export const ProponentsSummary: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {sortedProponents.map((proponent, index) => (
-                <div
-                  key={proponent.id}
-                  className={`p-4 border rounded-lg ${
-                    index === 0 ? 'border-green-200 bg-green-50' : 
-                    proponent.needsSubsanation ? 'border-orange-200 bg-orange-50' : 
-                    'border-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        index === 0 ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'
-                      }`}>
-                        {index + 1}
-                      </div>
-                      <div>
-                        <h4 className="font-semibold">{proponent.name}</h4>
-                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                          <span>Puntaje: <strong>{proponent.totalScore.toFixed(2)}</strong></span>
-                          {proponent.isPlural && (
-                            <Badge variant="outline">
-                              Plural ({proponent.partners?.length || 0} socios)
-                            </Badge>
-                          )}
-                          {proponent.needsSubsanation && (
-                            <Badge variant="destructive">Requiere subsanación</Badge>
-                          )}
+              {sortedProponents.map((proponent, index) => {
+                const compliance = checkRequirementsCompliance(proponent);
+                
+                return (
+                  <div
+                    key={proponent.id}
+                    className={`p-4 border rounded-lg ${
+                      index === 0 ? 'border-green-200 bg-green-50' : 
+                      proponent.needsSubsanation ? 'border-orange-200 bg-orange-50' : 
+                      'border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                          index === 0 ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold">{proponent.name}</h4>
+                          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                            <span>Puntaje: <strong>{proponent.totalScore.toFixed(2)}</strong></span>
+                            {proponent.isPlural && (
+                              <Badge variant="outline">
+                                Plural ({proponent.partners?.length || 0} socios)
+                              </Badge>
+                            )}
+                            {proponent.needsSubsanation && (
+                              <Badge variant="destructive">Requiere subsanación</Badge>
+                            )}
+                            {/* Compliance status */}
+                            <div className="flex items-center space-x-1">
+                              {compliance.overallCompliance ? (
+                                <div className="flex items-center space-x-1 text-green-600">
+                                  <CheckCircle className="w-4 h-4" />
+                                  <span className="text-xs font-medium">Cumple requisitos</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center space-x-1 text-red-600">
+                                  <XCircle className="w-4 h-4" />
+                                  <span className="text-xs font-medium">No cumple requisitos</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentStep(2)}
+                        className="flex items-center space-x-1"
+                      >
+                        <Edit className="w-4 h-4" />
+                        <span>Editar</span>
+                      </Button>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setCurrentStep(2)}
-                      className="flex items-center space-x-1"
-                    >
-                      <Edit className="w-4 h-4" />
-                      <span>Editar</span>
-                    </Button>
-                  </div>
-                  
-                  {/* Scoring breakdown */}
-                  <div className="mt-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
-                    <div className="text-center">
-                      <p className="text-muted-foreground">Mujer</p>
-                      <p className="font-semibold">{proponent.scoring.womanEntrepreneurship}</p>
+                    
+                    {/* Scoring breakdown */}
+                    <div className="mt-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
+                      <div className="text-center">
+                        <p className="text-muted-foreground">Mujer</p>
+                        <p className="font-semibold">{proponent.scoring.womanEntrepreneurship}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-muted-foreground">MIPYME</p>
+                        <p className="font-semibold">{proponent.scoring.mipyme}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-muted-foreground">Discapacidad</p>
+                        <p className="font-semibold">{proponent.scoring.disabled}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-muted-foreground">Calidad</p>
+                        <p className="font-semibold">{proponent.scoring.qualityFactor}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-muted-foreground">Ambiental</p>
+                        <p className="font-semibold">{proponent.scoring.environmentalQuality}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-muted-foreground">Nacional</p>
+                        <p className="font-semibold">{proponent.scoring.nationalIndustrySupport}</p>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <p className="text-muted-foreground">MIPYME</p>
-                      <p className="font-semibold">{proponent.scoring.mipyme}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-muted-foreground">Discapacidad</p>
-                      <p className="font-semibold">{proponent.scoring.disabled}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-muted-foreground">Calidad</p>
-                      <p className="font-semibold">{proponent.scoring.qualityFactor}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-muted-foreground">Ambiental</p>
-                      <p className="font-semibold">{proponent.scoring.environmentalQuality}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-muted-foreground">Nacional</p>
-                      <p className="font-semibold">{proponent.scoring.nationalIndustrySupport}</p>
-                    </div>
-                  </div>
 
-                  {/* Subsanation details */}
-                  {proponent.needsSubsanation && proponent.subsanationDetails && (
-                    <div className="mt-3 p-3 bg-orange-100 rounded border-l-4 border-orange-400">
-                      <p className="text-sm font-semibold text-orange-800 mb-1">Detalles de subsanación:</p>
-                      <ul className="text-sm text-orange-700 list-disc list-inside space-y-1">
-                        {proponent.subsanationDetails.map((detail, idx) => (
-                          <li key={idx}>{detail}</li>
-                        ))}
-                      </ul>
+                    {/* Requirements compliance details */}
+                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                      <h5 className="text-sm font-semibold mb-2 flex items-center space-x-2">
+                        <CheckSquare className="w-4 h-4" />
+                        <span>Cumplimiento de Requisitos Habilitantes</span>
+                      </h5>
+                      
+                      {/* Basic requirements */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 text-xs">
+                        <div className={`flex items-center space-x-1 ${compliance.generalExperience ? 'text-green-600' : 'text-red-600'}`}>
+                          {compliance.generalExperience ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                          <span>Exp. General</span>
+                        </div>
+                        <div className={`flex items-center space-x-1 ${compliance.specificExperience ? 'text-green-600' : 'text-red-600'}`}>
+                          {compliance.specificExperience ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                          <span>Exp. Específica</span>
+                        </div>
+                        <div className={`flex items-center space-x-1 ${compliance.professionalCard ? 'text-green-600' : 'text-red-600'}`}>
+                          {compliance.professionalCard ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                          <span>Tarj. Profesional</span>
+                        </div>
+                        <div className={`flex items-center space-x-1 ${compliance.rupComplies ? 'text-green-600' : 'text-red-600'}`}>
+                          {compliance.rupComplies ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                          <span>RUP Vigente</span>
+                        </div>
+                      </div>
+
+                      {/* Additional specific requirements */}
+                      {compliance.additionalSpecific.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium mb-2">Experiencia Específica Adicional:</p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                            {compliance.additionalSpecific.map((req, idx) => (
+                              <div key={idx} className={`flex items-center justify-between p-2 rounded ${req.complies ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                <div className="flex items-center space-x-1">
+                                  {req.complies ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                                  <span>{req.name}</span>
+                                </div>
+                                <span className="text-xs">{req.amount.toFixed(2)} / {req.required}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {/* Subsanation details */}
+                    {proponent.needsSubsanation && proponent.subsanationDetails && (
+                      <div className="mt-3 p-3 bg-orange-100 rounded border-l-4 border-orange-400">
+                        <p className="text-sm font-semibold text-orange-800 mb-1">Detalles de subsanación:</p>
+                        <ul className="text-sm text-orange-700 list-disc list-inside space-y-1">
+                          {proponent.subsanationDetails.map((detail, idx) => (
+                            <li key={idx}>{detail}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
