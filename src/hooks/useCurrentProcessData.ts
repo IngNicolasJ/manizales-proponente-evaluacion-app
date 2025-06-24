@@ -38,7 +38,7 @@ export const useCurrentProcessData = () => {
         if (processData) {
           console.log('✅ Process data loaded:', processData);
           
-          // Convertir los datos del proceso al formato esperado
+          // Convertir los datos del proceso al formato esperado con type assertions
           const formattedProcessData: ProcessData = {
             processNumber: processData.process_number,
             processObject: processData.process_name,
@@ -46,7 +46,7 @@ export const useCurrentProcessData = () => {
             totalContractValue: 0, // Este valor no se guarda en la BD actualmente
             minimumSalary: 0, // Este valor no se guarda en la BD actualmente
             processType: 'licitacion', // Valor por defecto
-            scoring: processData.scoring_criteria || {
+            scoring: (processData.scoring_criteria as any) || {
               womanEntrepreneurship: 0,
               mipyme: 0,
               disabled: 0,
@@ -54,7 +54,7 @@ export const useCurrentProcessData = () => {
               environmentalQuality: 0,
               nationalIndustrySupport: 0
             },
-            experience: processData.experience || {
+            experience: (processData.experience as any) || {
               general: '',
               specific: '',
               additionalSpecific: [],
@@ -85,14 +85,27 @@ export const useCurrentProcessData = () => {
             id: p.id,
             name: p.name,
             isPlural: p.is_plural,
-            partners: p.partners,
-            rup: p.rup,
-            scoring: p.scoring,
-            requirements: p.requirements,
-            contractors: p.contractors || [],
+            partners: (p.partners as any) || null,
+            rup: (p.rup as any) || { renewalDate: '', complies: false },
+            scoring: (p.scoring as any) || {
+              womanEntrepreneurship: 0,
+              mipyme: 0,
+              disabled: 0,
+              qualityFactor: 0,
+              environmentalQuality: 0,
+              nationalIndustrySupport: 0,
+              comments: {}
+            },
+            requirements: (p.requirements as any) || {
+              generalExperience: false,
+              specificExperience: false,
+              professionalCard: false,
+              additionalSpecificExperience: []
+            },
+            contractors: (p.contractors as any) || [],
             totalScore: Number(p.total_score),
             needsSubsanation: p.needs_subsanation,
-            subsanationDetails: p.subsanation_details
+            subsanationDetails: p.subsanation_details || []
           }));
 
           setProponents(formattedProponents);
