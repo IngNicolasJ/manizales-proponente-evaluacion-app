@@ -1,119 +1,144 @@
 
 import React from 'react';
-import { useAppStore } from '@/store/useAppStore';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { FileText, CheckSquare, BarChart3, Settings, RotateCcw, Home } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import UserMenu from '@/components/UserMenu';
+import { Badge } from '@/components/ui/badge';
+import { useAppStore } from '@/store/useAppStore';
+import { UserMenu } from '@/components/UserMenu';
+import { useProcessSaving } from '@/hooks/useProcessSaving';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { currentStep, setCurrentStep, resetProcess, processData } = useAppStore();
-  const navigate = useNavigate();
+export const Layout = ({ children }: LayoutProps) => {
+  const { currentStep, processData, proponents } = useAppStore();
+  
+  // Hook para guardado automático
+  useProcessSaving();
 
-  const steps = [
-    { id: 1, title: 'Datos de entrada', icon: Settings },
-    { id: 2, title: 'Puntaje', icon: BarChart3 },
-    { id: 3, title: 'Requisitos habilitantes', icon: CheckSquare },
-    { id: 4, title: 'Resumen de proponentes', icon: FileText }
-  ];
-
-  const handleStepClick = (stepId: number) => {
-    if (stepId === 1 || (processData && stepId <= 4)) {
-      setCurrentStep(stepId);
+  const getStepTitle = (step: number) => {
+    switch (step) {
+      case 1:
+        return 'Datos del Proceso';
+      case 2:
+        return 'Información de Proponentes';
+      case 3:
+        return 'Requisitos y Experiencia';
+      case 4:
+        return 'Resumen y Puntuación';
+      default:
+        return 'Evaluación de Procesos';
     }
   };
 
-  const handleDashboard = () => {
-    navigate('/dashboard');
+  const getStepDescription = (step: number) => {
+    switch (step) {
+      case 1:
+        return 'Configurar la información básica del proceso de contratación';
+      case 2:
+        return 'Agregar y gestionar los proponentes del proceso';
+      case 3:
+        return 'Verificar requisitos habilitantes y experiencia';
+      case 4:
+        return 'Revisar puntuaciones y generar resultados finales';
+      default:
+        return 'Sistema de evaluación de procesos de contratación';
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+          <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center">
-                <img 
-                  src="/lovable-uploads/cfad49f5-3e5e-4183-a35a-c449717caf3d.png" 
-                  alt="Alcaldía de Manizales" 
-                  className="h-12 w-auto object-contain"
-                />
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">EA</span>
+                </div>
+                <div>
+                  <h1 className="text-lg font-semibold text-gray-900">
+                    Evaluador de Alcaldía
+                  </h1>
+                  <p className="text-xs text-gray-500">
+                    Sistema de Evaluación de Procesos
+                  </p>
+                </div>
               </div>
-              <div className="border-l border-gray-300 pl-4">
-                <h1 className="text-xl font-bold text-foreground">Sistema de Evaluación</h1>
-                <p className="text-sm text-muted-foreground">Alcaldía de Manizales</p>
-              </div>
+              
+              {processData && (
+                <div className="hidden md:flex items-center space-x-2 ml-8">
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    Proceso {processData.processNumber}
+                  </Badge>
+                  <span className="text-sm text-gray-500">|</span>
+                  <span className="text-sm text-gray-600 max-w-xs truncate">
+                    {processData.processName}
+                  </span>
+                </div>
+              )}
             </div>
+
             <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                onClick={handleDashboard}
-                className="flex items-center space-x-2"
-              >
-                <Home className="w-4 h-4" />
-                <span>Dashboard</span>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={resetProcess}
-                className="flex items-center space-x-2"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>Reiniciar proceso</span>
-              </Button>
+              {proponents.length > 0 && (
+                <Badge variant="secondary" className="hidden sm:flex">
+                  {proponents.length} Proponente{proponents.length !== 1 ? 's' : ''}
+                </Badge>
+              )}
               <UserMenu />
             </div>
           </div>
         </div>
       </header>
 
-      {/* Navigation */}
-      <nav className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-1 py-3">
-            {steps.map((step) => {
-              const Icon = step.icon;
-              const isActive = currentStep === step.id;
-              const isDisabled = step.id > 1 && !processData;
-              
-              return (
-                <button
-                  key={step.id}
-                  onClick={() => handleStepClick(step.id)}
-                  disabled={isDisabled}
-                  className={`
-                    flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
-                    ${isActive 
-                      ? 'bg-primary text-primary-foreground shadow-sm' 
-                      : isDisabled 
-                        ? 'text-muted-foreground cursor-not-allowed opacity-50'
-                        : 'text-foreground hover:bg-muted'
-                    }
-                  `}
+      {/* Progress Indicator */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-1">
+                Paso {currentStep}: {getStepTitle(currentStep)}
+              </h2>
+              <p className="text-sm text-gray-600">
+                {getStepDescription(currentStep)}
+              </p>
+            </div>
+            
+            <div className="flex space-x-2">
+              {[1, 2, 3, 4].map((step) => (
+                <div
+                  key={step}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                    step === currentStep
+                      ? 'bg-primary text-white'
+                      : step < currentStep
+                      ? 'bg-green-100 text-green-600'
+                      : 'bg-gray-100 text-gray-400'
+                  }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span className="hidden sm:block">{step.title}</span>
-                  <span className="sm:hidden">{step.id}</span>
-                </button>
-              );
-            })}
+                  {step < currentStep ? '✓' : step}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </nav>
+      </div>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card className="animate-fade-in">
+        <Card className="bg-white shadow-sm">
           {children}
         </Card>
       </main>
+
+      {/* Auto-save indicator */}
+      <div className="fixed bottom-4 right-4">
+        <div className="bg-green-100 text-green-700 px-3 py-2 rounded-lg text-sm flex items-center space-x-2 shadow-sm">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span>Guardado automático activo</span>
+        </div>
+      </div>
     </div>
   );
 };

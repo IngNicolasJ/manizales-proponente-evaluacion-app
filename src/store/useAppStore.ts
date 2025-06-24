@@ -19,7 +19,10 @@ export const useAppStore = create<AppStore>()(
       proponents: [],
       currentStep: 1,
       
-      setProcessData: (data) => set({ processData: data }),
+      setProcessData: (data) => {
+        console.log('🔄 Setting process data in store:', data);
+        set({ processData: data });
+      },
       
       addProponent: (proponent) => 
         set((state) => ({ 
@@ -38,13 +41,20 @@ export const useAppStore = create<AppStore>()(
           proponents: state.proponents.filter((p) => p.id !== id)
         })),
       
-      setCurrentStep: (step) => set({ currentStep: step }),
+      setCurrentStep: (step) => {
+        console.log('🔄 Setting current step:', step);
+        set({ currentStep: step });
+      },
       
-      resetProcess: () => set({
-        processData: null,
-        proponents: [],
-        currentStep: 1
-      })
+      resetProcess: () => {
+        console.log('🔄 Resetting process');
+        localStorage.removeItem('current_process_id');
+        set({
+          processData: null,
+          proponents: [],
+          currentStep: 1
+        });
+      }
     }),
     {
       name: 'alcaldia-evaluation-storage'

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -7,20 +6,48 @@ import { Button } from '@/components/ui/button';
 import { useProcessData, useProponents, useUserStats } from '@/hooks/useSupabaseData';
 import { useAppStore } from '@/store/useAppStore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { FileText, Users, TrendingUp, Plus, Eye } from 'lucide-react';
+import { FileText, Users, TrendingUp, Plus, Eye, Play } from 'lucide-react';
 import { ProcessDetailModal } from './ProcessDetailModal';
+import { useNavigate } from 'react-router-dom';
 
 const UserDashboard = () => {
   const { data: processData = [], isLoading: loadingProcesses } = useProcessData();
   const { data: proponents = [], isLoading: loadingProponents } = useProponents();
   const { data: userStats } = useUserStats();
-  const { setCurrentStep, resetProcess } = useAppStore();
+  const { setCurrentStep, resetProcess, setProcessData } = useAppStore();
   const [selectedProcess, setSelectedProcess] = useState<any>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleNewProcess = () => {
     resetProcess();
     setCurrentStep(1);
+    navigate('/app');
+  };
+
+  const handleContinueProcess = (process: any) => {
+    console.log('🔄 Continuing process:', process);
+    
+    // Cargar los datos del proceso en el store
+    setProcessData({
+      processNumber: process.process_number,
+      processName: process.process_name,
+      closingDate: process.closing_date,
+      experience: process.experience,
+      scoringCriteria: process.scoring_criteria
+    });
+
+    // Obtener los proponentes de este proceso
+    const processProponents = proponents.filter(p => p.process_data_id === process.id);
+    
+    // Si hay proponentes, ir al paso 4 (resumen), si no, ir al paso 2 (agregar proponentes)
+    if (processProponents.length > 0) {
+      setCurrentStep(4);
+    } else {
+      setCurrentStep(2);
+    }
+    
+    navigate('/app');
   };
 
   const handleViewProcess = (process: any) => {
@@ -138,7 +165,7 @@ const UserDashboard = () => {
         </Card>
       )}
 
-      {/* Updated processes table */}
+      {/* Updated processes table with Continue button */}
       <Card>
         <CardHeader>
           <CardTitle>Mis Procesos</CardTitle>
@@ -194,15 +221,26 @@ const UserDashboard = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewProcess(process)}
-                          className="flex items-center space-x-1"
-                        >
-                          <Eye className="w-4 h-4" />
-                          <span>Ver Detalles</span>
-                        </Button>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleContinueProcess(process)}
+                            className="flex items-center space-x-1"
+                          >
+                            <Play className="w-4 h-4" />
+                            <span>Continuar</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewProcess(process)}
+                            className="flex items-center space-x-1"
+                          >
+                            <Eye className="w-4 h-4" />
+                            <span>Ver</span>
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
