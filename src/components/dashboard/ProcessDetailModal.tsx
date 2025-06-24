@@ -73,7 +73,14 @@ export const ProcessDetailModal: React.FC<ProcessDetailModalProps> = ({
                   <DollarSign className="w-4 h-4 text-muted-foreground" />
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Valor Total del Contrato</label>
-                    <p>{process.scoring_criteria?.totalContractValue ? formatCurrency(process.scoring_criteria.totalContractValue) : 'N/A'}</p>
+                    <p>{process.total_contract_value ? formatCurrency(Number(process.total_contract_value)) : 'No definido'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <DollarSign className="w-4 h-4 text-muted-foreground" />
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Salario Mínimo</label>
+                    <p>{process.minimum_salary ? formatCurrency(Number(process.minimum_salary)) : 'No definido'}</p>
                   </div>
                 </div>
               </div>

@@ -29,13 +29,16 @@ const UserDashboard = () => {
   const handleContinueProcess = (process: any) => {
     console.log('🔄 Continuing process:', process);
     
-    // Cargar los datos del proceso en el store
+    // IMPORTANTE: Establecer el process_id ANTES de cargar los datos
+    localStorage.setItem('current_process_id', process.id);
+    
+    // Cargar los datos del proceso en el store con valores reales
     setProcessData({
       processNumber: process.process_number,
       processObject: process.process_name,
       closingDate: process.closing_date,
-      totalContractValue: 0,
-      minimumSalary: 0,
+      totalContractValue: Number(process.total_contract_value) || 0,
+      minimumSalary: Number(process.minimum_salary) || 0,
       processType: 'licitacion',
       scoring: process.scoring_criteria || {},
       experience: process.experience || {}
@@ -57,6 +60,15 @@ const UserDashboard = () => {
   const handleViewProcess = (process: any) => {
     setSelectedProcess(process);
     setIsDetailModalOpen(true);
+  };
+
+  // Función para formatear valores monetarios
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+    }).format(value);
   };
 
   // Datos para el gráfico de puntajes por proceso
@@ -200,6 +212,7 @@ const UserDashboard = () => {
                 <TableRow>
                   <TableHead>Proceso</TableHead>
                   <TableHead>Fecha de Cierre</TableHead>
+                  <TableHead>Valor del Contrato</TableHead>
                   <TableHead>Proponentes</TableHead>
                   <TableHead>Puntaje Promedio</TableHead>
                   <TableHead>Estado</TableHead>
@@ -230,6 +243,14 @@ const UserDashboard = () => {
                           ? new Date(process.closing_date).toLocaleDateString()
                           : 'No definida'
                         }
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {process.total_contract_value 
+                            ? formatCurrency(Number(process.total_contract_value))
+                            : 'No definido'
+                          }
+                        </div>
                       </TableCell>
                       <TableCell>{processProponents.length}</TableCell>
                       <TableCell>{avgScore.toFixed(1)} pts</TableCell>
