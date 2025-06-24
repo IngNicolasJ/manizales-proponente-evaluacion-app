@@ -12,21 +12,26 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   console.log('ProtectedRoute - loading:', loading, 'user:', user);
 
+  // Show loading spinner while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground text-lg">Verificando autenticación...</p>
         </div>
       </div>
     );
   }
 
+  // If not loading and no user, redirect to auth
   if (!user) {
+    console.log('ProtectedRoute: No user found, redirecting to /auth');
     return <Navigate to="/auth" replace />;
   }
 
+  // User is authenticated, render children
+  console.log('ProtectedRoute: User authenticated, rendering app');
   return <>{children}</>;
 };
 

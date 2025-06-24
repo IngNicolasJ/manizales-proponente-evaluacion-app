@@ -30,94 +30,86 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
+    console.log('AuthProvider: Initializing auth state');
 
+    // Initialize auth state
     const initializeAuth = async () => {
       try {
-        // First, get current session
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        // Get current session
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         
-        if (mounted) {
-          setSession(currentSession);
-          setUser(currentSession?.user ?? null);
-          
-          if (currentSession?.user) {
-            // Check if user is admin
-            try {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', currentSession.user.id)
-                .single();
-              
-              if (mounted) {
-                setIsAdmin(profile?.role === 'admin');
-              }
-            } catch (error) {
-              console.error('Error fetching user profile:', error);
-              if (mounted) {
-                setIsAdmin(false);
-              }
-            }
-          } else {
-            if (mounted) {
-              setIsAdmin(false);
-            }
+        if (error) {
+          console.error('Error getting session:', error);
+        }
+
+        console.log('AuthProvider: Initial session:', currentSession);
+        
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        
+        if (currentSession?.user) {
+          // Check if user is admin
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('id', currentSession.user.id)
+              .single();
+            
+            setIsAdmin(profile?.role === 'admin');
+            console.log('AuthProvider: User is admin:', profile?.role === 'admin');
+          } catch (error) {
+            console.error('Error fetching user profile:', error);
+            setIsAdmin(false);
           }
-          
-          if (mounted) {
-            setLoading(false);
-          }
+        } else {
+          setIsAdmin(false);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
-        if (mounted) {
-          setLoading(false);
-        }
+      } finally {
+        setLoading(false);
+        console.log('AuthProvider: Loading complete');
       }
     };
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session);
+        console.log('AuthProvider: Auth state changed:', event, session);
         
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            // Check if user is admin
-            try {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', session.user.id)
-                .single();
-              
-              if (mounted) {
-                setIsAdmin(profile?.role === 'admin');
-              }
-            } catch (error) {
-              console.error('Error fetching user profile:', error);
-              if (mounted) {
-                setIsAdmin(false);
-              }
-            }
-          } else {
-            if (mounted) {
-              setIsAdmin(false);
-            }
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Check if user is admin
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('id', session.user.id)
+              .single();
+            
+            setIsAdmin(profile?.role === 'admin');
+          } catch (error) {
+            console.error('Error fetching user profile:', error);
+            setIsAdmin(false);
           }
+        } else {
+          setIsAdmin(false);
+        }
+        
+        // Only set loading to false on initial session check
+        if (event === 'INITIAL_SESSION') {
+          setLoading(false);
         }
       }
     );
 
-    // Initialize auth
+    // Initialize auth only once
     initializeAuth();
 
     return () => {
-      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -149,6 +141,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     await supabase.auth.signOut();
   };
+
+  console.log('AuthProvider: Current state - loading:', loading, 'user:', user, 'session:', session);
 
   const value = {
     user,
