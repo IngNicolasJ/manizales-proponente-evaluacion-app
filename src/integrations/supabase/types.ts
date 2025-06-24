@@ -36,12 +36,140 @@ export type Database = {
         }
         Relationships: []
       }
+      process_data: {
+        Row: {
+          closing_date: string
+          created_at: string
+          experience: Json
+          id: string
+          process_name: string
+          process_number: string
+          scoring_criteria: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          closing_date: string
+          created_at?: string
+          experience: Json
+          id?: string
+          process_name: string
+          process_number: string
+          scoring_criteria: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          closing_date?: string
+          created_at?: string
+          experience?: Json
+          id?: string
+          process_name?: string
+          process_number?: string
+          scoring_criteria?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      proponents: {
+        Row: {
+          contractors: Json
+          created_at: string
+          id: string
+          is_plural: boolean
+          name: string
+          needs_subsanation: boolean
+          partners: Json | null
+          process_data_id: string
+          requirements: Json
+          rup: Json
+          scoring: Json
+          subsanation_details: string[] | null
+          total_score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contractors?: Json
+          created_at?: string
+          id?: string
+          is_plural?: boolean
+          name: string
+          needs_subsanation?: boolean
+          partners?: Json | null
+          process_data_id: string
+          requirements: Json
+          rup: Json
+          scoring: Json
+          subsanation_details?: string[] | null
+          total_score?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contractors?: Json
+          created_at?: string
+          id?: string
+          is_plural?: boolean
+          name?: string
+          needs_subsanation?: boolean
+          partners?: Json | null
+          process_data_id?: string
+          requirements?: Json
+          rup?: Json
+          scoring?: Json
+          subsanation_details?: string[] | null
+          total_score?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proponents_process_data_id_fkey"
+            columns: ["process_data_id"]
+            isOneToOne: false
+            referencedRelation: "process_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
