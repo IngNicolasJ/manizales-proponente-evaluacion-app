@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,7 +28,7 @@ export const ProcessShareModal: React.FC<ProcessShareModalProps> = ({
   const [loadingAccess, setLoadingAccess] = useState(false);
   const { toast } = useToast();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen && process) {
       loadProcessAccess();
     }
