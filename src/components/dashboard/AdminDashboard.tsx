@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -30,13 +31,17 @@ const AdminDashboard = () => {
   const handleContinueProcess = (process: any) => {
     console.log('🔄 Continuing process:', process);
     
-    // Cargar los datos del proceso en el store
+    // CRÍTICO: Establecer el process_id en localStorage ANTES de cargar datos y navegar
+    localStorage.setItem('current_process_id', process.id);
+    console.log('📝 Process ID establecido en localStorage:', process.id);
+    
+    // Cargar los datos del proceso en el store con los valores reales de la BD
     setProcessData({
       processNumber: process.process_number,
       processObject: process.process_name,
       closingDate: process.closing_date,
-      totalContractValue: 0,
-      minimumSalary: 0,
+      totalContractValue: Number(process.total_contract_value) || 0,
+      minimumSalary: Number(process.minimum_salary) || 0,
       processType: 'licitacion',
       scoring: process.scoring_criteria || {},
       experience: process.experience || {}
@@ -144,6 +149,7 @@ const AdminDashboard = () => {
                   <TableRow>
                     <TableHead>Proceso</TableHead>
                     <TableHead>Fecha de Cierre</TableHead>
+                    <TableHead>Valor Contrato</TableHead>
                     <TableHead>Proponentes</TableHead>
                     <TableHead>Puntaje Promedio</TableHead>
                     <TableHead>Estado</TableHead>
@@ -168,6 +174,14 @@ const AdminDashboard = () => {
                           </div>
                         </TableCell>
                         <TableCell>{new Date(process.closing_date).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          {new Intl.NumberFormat('es-CO', {
+                            style: 'currency',
+                            currency: 'COP',
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                          }).format(Number(process.total_contract_value) || 0)}
+                        </TableCell>
                         <TableCell>{processProponents.length}</TableCell>
                         <TableCell>{avgScore.toFixed(1)} pts</TableCell>
                         <TableCell>

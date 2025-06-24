@@ -38,13 +38,13 @@ export const useCurrentProcessData = () => {
         if (processData) {
           console.log('✅ Process data loaded:', processData);
           
-          // Convertir los datos del proceso al formato esperado con type assertions
+          // Convertir los datos del proceso al formato esperado incluyendo valores reales
           const formattedProcessData: ProcessData = {
             processNumber: processData.process_number,
             processObject: processData.process_name,
             closingDate: processData.closing_date,
-            totalContractValue: 0, // Este valor no se guarda en la BD actualmente
-            minimumSalary: 0, // Este valor no se guarda en la BD actualmente
+            totalContractValue: Number(processData.total_contract_value) || 0,
+            minimumSalary: Number(processData.minimum_salary) || 0,
             processType: 'licitacion', // Valor por defecto
             scoring: (processData.scoring_criteria as any) || {
               womanEntrepreneurship: 0,

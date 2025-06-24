@@ -75,9 +75,11 @@ export type Database = {
           created_at: string
           experience: Json
           id: string
+          minimum_salary: number | null
           process_name: string
           process_number: string
           scoring_criteria: Json
+          total_contract_value: number | null
           updated_at: string
           user_id: string
         }
@@ -86,9 +88,11 @@ export type Database = {
           created_at?: string
           experience: Json
           id?: string
+          minimum_salary?: number | null
           process_name: string
           process_number: string
           scoring_criteria: Json
+          total_contract_value?: number | null
           updated_at?: string
           user_id: string
         }
@@ -97,9 +101,11 @@ export type Database = {
           created_at?: string
           experience?: Json
           id?: string
+          minimum_salary?: number | null
           process_name?: string
           process_number?: string
           scoring_criteria?: Json
+          total_contract_value?: number | null
           updated_at?: string
           user_id?: string
         }

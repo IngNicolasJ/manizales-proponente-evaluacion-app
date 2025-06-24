@@ -29,12 +29,14 @@ export const useProcessSaving = () => {
         let processId;
 
         if (existingProcess) {
-          // Actualizar proceso existente
+          // Actualizar proceso existente incluyendo valores del contrato
           const { data, error } = await supabase
             .from('process_data')
             .update({
               process_name: processData.processObject,
               closing_date: processData.closingDate,
+              total_contract_value: processData.totalContractValue,
+              minimum_salary: processData.minimumSalary,
               experience: processData.experience || {},
               scoring_criteria: processData.scoring || {},
               updated_at: new Date().toISOString()
@@ -47,7 +49,7 @@ export const useProcessSaving = () => {
           processId = existingProcess.id;
           console.log('✅ Proceso actualizado exitosamente:', data);
         } else {
-          // Crear nuevo proceso
+          // Crear nuevo proceso incluyendo valores del contrato
           const { data, error } = await supabase
             .from('process_data')
             .insert({
@@ -55,6 +57,8 @@ export const useProcessSaving = () => {
               process_number: processData.processNumber,
               process_name: processData.processObject,
               closing_date: processData.closingDate,
+              total_contract_value: processData.totalContractValue,
+              minimum_salary: processData.minimumSalary,
               experience: processData.experience || {},
               scoring_criteria: processData.scoring || {},
               updated_at: new Date().toISOString()
