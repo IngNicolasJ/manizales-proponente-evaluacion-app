@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
 
-  console.log('ProtectedRoute - loading:', loading, 'user:', user);
+  console.log('ProtectedRoute - loading:', loading, 'user:', user?.email);
 
   // Show loading spinner while checking authentication
   if (loading) {

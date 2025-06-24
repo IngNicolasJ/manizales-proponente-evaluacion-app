@@ -30,53 +30,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    console.log('AuthProvider: Initializing auth state');
-
-    // Initialize auth state
-    const initializeAuth = async () => {
-      try {
-        // Get current session
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-        }
-
-        console.log('AuthProvider: Initial session:', currentSession);
-        
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        
-        if (currentSession?.user) {
-          // Check if user is admin
-          try {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('id', currentSession.user.id)
-              .single();
-            
-            setIsAdmin(profile?.role === 'admin');
-            console.log('AuthProvider: User is admin:', profile?.role === 'admin');
-          } catch (error) {
-            console.error('Error fetching user profile:', error);
-            setIsAdmin(false);
-          }
-        } else {
-          setIsAdmin(false);
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-      } finally {
-        setLoading(false);
-        console.log('AuthProvider: Loading complete');
-      }
-    };
+    console.log('AuthProvider: Setting up auth listener');
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('AuthProvider: Auth state changed:', event, session);
+        console.log('AuthProvider: Auth state changed:', event, session?.user?.email);
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -91,6 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               .single();
             
             setIsAdmin(profile?.role === 'admin');
+            console.log('AuthProvider: User is admin:', profile?.role === 'admin');
           } catch (error) {
             console.error('Error fetching user profile:', error);
             setIsAdmin(false);
@@ -99,15 +59,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsAdmin(false);
         }
         
-        // Only set loading to false on initial session check
-        if (event === 'INITIAL_SESSION') {
-          setLoading(false);
-        }
+        // Set loading to false after processing auth state
+        setLoading(false);
+        console.log('AuthProvider: Loading set to false');
       }
     );
 
-    // Initialize auth only once
-    initializeAuth();
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      console.log('AuthProvider: Initial session check:', initialSession?.user?.email);
+      // The onAuthStateChange will handle setting the state
+      // Just trigger it if there's a session
+      if (!initialSession) {
+        setLoading(false);
+        console.log('AuthProvider: No initial session, loading set to false');
+      }
+    });
 
     return () => {
       subscription.unsubscribe();
@@ -142,7 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   };
 
-  console.log('AuthProvider: Current state - loading:', loading, 'user:', user, 'session:', session);
+  console.log('AuthProvider: Current state - loading:', loading, 'user:', user?.email, 'session:', !!session);
 
   const value = {
     user,
