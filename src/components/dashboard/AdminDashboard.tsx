@@ -1,15 +1,23 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useAllProcessData, useAllProponents } from '@/hooks/useSupabaseData';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Users, FileText, TrendingUp, Award } from 'lucide-react';
+import { Users, FileText, TrendingUp, Award, Eye } from 'lucide-react';
+import { ProcessDetailModal } from './ProcessDetailModal';
 
 const AdminDashboard = () => {
   const { data: allProcessData = [], isLoading: loadingProcesses } = useAllProcessData();
   const { data: allProponents = [], isLoading: loadingProponents } = useAllProponents();
+  const [selectedProcess, setSelectedProcess] = useState<any>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  const handleViewProcess = (process: any) => {
+    setSelectedProcess(process);
+    setIsDetailModalOpen(true);
+  };
 
   // Calcular estadísticas generales
   const totalUsers = new Set(allProcessData.map(p => p.user_id)).size;
@@ -181,6 +189,7 @@ const AdminDashboard = () => {
                 <TableHead>Fecha de Cierre</TableHead>
                 <TableHead>Proponentes</TableHead>
                 <TableHead>Estado</TableHead>
+                <TableHead>Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -190,8 +199,10 @@ const AdminDashboard = () => {
                   <TableRow key={process.id}>
                     <TableCell className="font-medium">
                       <div>
-                        <div className="font-semibold">{process.process_name}</div>
-                        <div className="text-sm text-muted-foreground">{process.process_number}</div>
+                        <div className="font-semibold">Proceso {process.process_number}</div>
+                        <div className="text-sm text-muted-foreground truncate max-w-xs">
+                          {process.process_name}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>{process.profiles?.email || 'N/A'}</TableCell>
@@ -202,6 +213,17 @@ const AdminDashboard = () => {
                         {proponentCount > 0 ? "Con Evaluaciones" : "Sin Evaluaciones"}
                       </Badge>
                     </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewProcess(process)}
+                        className="flex items-center space-x-1"
+                      >
+                        <Eye className="w-4 h-4" />
+                        <span>Ver</span>
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -209,6 +231,14 @@ const AdminDashboard = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Process Detail Modal */}
+      <ProcessDetailModal
+        process={selectedProcess}
+        proponents={allProponents}
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+      />
     </div>
   );
 };

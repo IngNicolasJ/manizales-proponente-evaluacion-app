@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -7,17 +7,25 @@ import { Button } from '@/components/ui/button';
 import { useProcessData, useProponents, useUserStats } from '@/hooks/useSupabaseData';
 import { useAppStore } from '@/store/useAppStore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { FileText, Users, TrendingUp, Plus } from 'lucide-react';
+import { FileText, Users, TrendingUp, Plus, Eye } from 'lucide-react';
+import { ProcessDetailModal } from './ProcessDetailModal';
 
 const UserDashboard = () => {
   const { data: processData = [], isLoading: loadingProcesses } = useProcessData();
   const { data: proponents = [], isLoading: loadingProponents } = useProponents();
   const { data: userStats } = useUserStats();
   const { setCurrentStep, resetProcess } = useAppStore();
+  const [selectedProcess, setSelectedProcess] = useState<any>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const handleNewProcess = () => {
     resetProcess();
     setCurrentStep(1);
+  };
+
+  const handleViewProcess = (process: any) => {
+    setSelectedProcess(process);
+    setIsDetailModalOpen(true);
   };
 
   // Datos para el gráfico de puntajes por proceso
@@ -130,7 +138,7 @@ const UserDashboard = () => {
         </Card>
       )}
 
-      {/* Tabla de mis procesos */}
+      {/* Updated processes table */}
       <Card>
         <CardHeader>
           <CardTitle>Mis Procesos</CardTitle>
@@ -157,6 +165,7 @@ const UserDashboard = () => {
                   <TableHead>Proponentes</TableHead>
                   <TableHead>Puntaje Promedio</TableHead>
                   <TableHead>Estado</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -170,8 +179,10 @@ const UserDashboard = () => {
                     <TableRow key={process.id}>
                       <TableCell className="font-medium">
                         <div>
-                          <div className="font-semibold">{process.process_name}</div>
-                          <div className="text-sm text-muted-foreground">{process.process_number}</div>
+                          <div className="font-semibold">Proceso {process.process_number}</div>
+                          <div className="text-sm text-muted-foreground truncate max-w-xs">
+                            {process.process_name}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>{new Date(process.closing_date).toLocaleDateString()}</TableCell>
@@ -182,6 +193,17 @@ const UserDashboard = () => {
                           {processProponents.length > 0 ? "Con Evaluaciones" : "Sin Evaluaciones"}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewProcess(process)}
+                          className="flex items-center space-x-1"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span>Ver Detalles</span>
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -190,6 +212,14 @@ const UserDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Process Detail Modal */}
+      <ProcessDetailModal
+        process={selectedProcess}
+        proponents={proponents}
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+      />
     </div>
   );
 };
