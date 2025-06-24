@@ -4,6 +4,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { FileText, Users, CheckSquare, BarChart3, Settings, RotateCcw } from 'lucide-react';
+import UserMenu from '@/components/UserMenu';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -40,14 +41,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <p className="text-sm text-muted-foreground">Sistema de Evaluación de Proponentes</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              onClick={resetProcess}
-              className="flex items-center space-x-2"
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span>Reiniciar proceso</span>
-            </Button>
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                onClick={resetProcess}
+                className="flex items-center space-x-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Reiniciar proceso</span>
+              </Button>
+              <UserMenu />
+            </div>
           </div>
         </div>
       </header>
