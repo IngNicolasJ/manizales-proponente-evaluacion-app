@@ -1,9 +1,13 @@
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store/useAppStore';
 import UserMenu from '@/components/UserMenu';
 import { useProcessSaving } from '@/hooks/useProcessSaving';
+import { useNavigate } from 'react-router-dom';
+import { LayoutDashboard } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,6 +15,7 @@ interface LayoutProps {
 
 export const Layout = ({ children }: LayoutProps) => {
   const { currentStep, processData, proponents } = useAppStore();
+  const navigate = useNavigate();
   
   // Hook para guardado automático
   useProcessSaving();
@@ -85,6 +90,15 @@ export const Layout = ({ children }: LayoutProps) => {
                   {proponents.length} Proponente{proponents.length !== 1 ? 's' : ''}
                 </Badge>
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center space-x-2"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                <span>Dashboard</span>
+              </Button>
               <UserMenu />
             </div>
           </div>

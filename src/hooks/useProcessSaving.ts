@@ -25,8 +25,8 @@ export const useProcessSaving = () => {
             process_number: processData.processNumber,
             process_name: processData.processObject,
             closing_date: processData.closingDate,
-            experience: processData.experience,
-            scoring_criteria: processData.scoring,
+            experience: processData.experience || {},
+            scoring_criteria: processData.scoring || {},
             updated_at: new Date().toISOString()
           }, {
             onConflict: 'user_id,process_number'
