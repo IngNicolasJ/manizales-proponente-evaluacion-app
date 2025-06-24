@@ -32,15 +32,31 @@ export const useSupabaseData = () => {
         .single();
 
       if (processDataResult) {
+        // Cast the Json types to the expected interfaces
+        const experienceData = processDataResult.experience as any;
+        const scoringData = processDataResult.scoring_criteria as any;
+
         const transformedProcessData: ProcessData = {
           processNumber: processDataResult.process_number,
           processObject: processDataResult.process_name,
           closingDate: processDataResult.closing_date,
-          totalContractValue: processDataResult.experience.totalContractValue || 0,
-          minimumSalary: processDataResult.experience.minimumSalary || 0,
-          processType: processDataResult.experience.processType || 'licitacion',
-          scoring: processDataResult.scoring_criteria,
-          experience: processDataResult.experience
+          totalContractValue: experienceData?.totalContractValue || 0,
+          minimumSalary: experienceData?.minimumSalary || 0,
+          processType: experienceData?.processType || 'licitacion',
+          scoring: scoringData || {
+            womanEntrepreneurship: 0,
+            mipyme: 0,
+            disabled: 0,
+            qualityFactor: 0,
+            environmentalQuality: 0,
+            nationalIndustrySupport: 0
+          },
+          experience: experienceData || {
+            general: '',
+            specific: '',
+            additionalSpecific: [],
+            classifierCodes: []
+          }
         };
         setProcessData(transformedProcessData);
 
@@ -55,11 +71,11 @@ export const useSupabaseData = () => {
             id: p.id,
             name: p.name,
             isPlural: p.is_plural,
-            partners: p.partners,
-            rup: p.rup,
-            scoring: p.scoring,
-            requirements: p.requirements,
-            contractors: p.contractors,
+            partners: p.partners as any,
+            rup: p.rup as any,
+            scoring: p.scoring as any,
+            requirements: p.requirements as any,
+            contractors: p.contractors as any,
             totalScore: Number(p.total_score),
             needsSubsanation: p.needs_subsanation,
             subsanationDetails: p.subsanation_details
@@ -90,8 +106,8 @@ export const useSupabaseData = () => {
             totalContractValue: data.totalContractValue,
             minimumSalary: data.minimumSalary,
             processType: data.processType
-          },
-          scoring_criteria: data.scoring,
+          } as any,
+          scoring_criteria: data.scoring as any,
           updated_at: new Date().toISOString()
         })
         .select()
@@ -119,11 +135,11 @@ export const useSupabaseData = () => {
           process_data_id: processDataId,
           name: proponent.name,
           is_plural: proponent.isPlural,
-          partners: proponent.partners,
-          rup: proponent.rup,
-          scoring: proponent.scoring,
-          requirements: proponent.requirements,
-          contractors: proponent.contractors,
+          partners: proponent.partners as any,
+          rup: proponent.rup as any,
+          scoring: proponent.scoring as any,
+          requirements: proponent.requirements as any,
+          contractors: proponent.contractors as any,
           total_score: proponent.totalScore,
           needs_subsanation: proponent.needsSubsanation,
           subsanation_details: proponent.subsanationDetails,
