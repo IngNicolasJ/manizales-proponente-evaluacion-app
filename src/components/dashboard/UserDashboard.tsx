@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useProcessData, useProponents, useUserStats } from '@/hooks/useSupabaseData';
 import { useAppStore } from '@/store/useAppStore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Users, FileText, TrendingUp, Award, Eye, Play, Plus, Globe, Trash2 } from 'lucide-react';
+import { Users, FileText, Award, Eye, Play, Plus, Globe, Trash2 } from 'lucide-react';
 import { ProcessDetailModal } from './ProcessDetailModal';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
@@ -481,7 +481,7 @@ const UserDashboard = () => {
                 Eliminar
               </AlertDialogAction>
             </AlertDialogFooter>
-          </AlertDialog>
+          </AlertDialogContent>
         </AlertDialog>
       </div>
     </Layout>
