@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -48,6 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     console.log('AuthProvider: Setting up auth');
+    let isMounted = true;
 
     // Get initial session first
     const getInitialSession = async () => {
@@ -55,18 +55,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         console.log('AuthProvider: Initial session:', initialSession?.user?.email || 'none');
         
-        setSession(initialSession);
-        setUser(initialSession?.user ?? null);
-        
-        if (initialSession?.user) {
-          await checkAdminRole(initialSession.user.id);
+        if (isMounted) {
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+          
+          if (initialSession?.user) {
+            await checkAdminRole(initialSession.user.id);
+          }
+          
+          setLoading(false);
+          console.log('AuthProvider: Initial loading complete');
         }
-        
-        setLoading(false);
-        console.log('AuthProvider: Initial loading complete');
       } catch (error) {
         console.error('Error getting initial session:', error);
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -75,29 +79,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (event, session) => {
         console.log('AuthProvider: Auth state changed:', event, session?.user?.email || 'none');
         
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await checkAdminRole(session.user.id);
-        } else {
-          setIsAdmin(false);
-        }
-        
-        // Only set loading to false if it's still true (avoid unnecessary re-renders)
-        setLoading(prevLoading => {
-          if (prevLoading) {
-            console.log('AuthProvider: Setting loading to false via auth change');
-            return false;
+        if (isMounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            await checkAdminRole(session.user.id);
+          } else {
+            setIsAdmin(false);
           }
-          return prevLoading;
-        });
+          
+          // Asegurar que loading se ponga en false
+          setLoading(false);
+          console.log('AuthProvider: Auth state processed, loading set to false');
+        }
       }
     );
 
     getInitialSession();
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -130,7 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   };
 
-  console.log('AuthProvider: Current state - loading:', loading, 'user:', user?.email || 'none', 'session:', !!session);
+  console.log('AuthProvider: Current state - loading:', loading, 'user:', user?.email || 'none', 'session:', !!session, 'isAdmin:', isAdmin);
 
   const value = {
     user,

@@ -3,7 +3,8 @@ import React from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { FileText, CheckSquare, BarChart3, Settings, RotateCcw } from 'lucide-react';
+import { FileText, CheckSquare, BarChart3, Settings, RotateCcw, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import UserMenu from '@/components/UserMenu';
 
 interface LayoutProps {
@@ -12,6 +13,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { currentStep, setCurrentStep, resetProcess, processData } = useAppStore();
+  const navigate = useNavigate();
 
   const steps = [
     { id: 1, title: 'Datos de entrada', icon: Settings },
@@ -24,6 +26,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (stepId === 1 || (processData && stepId <= 4)) {
       setCurrentStep(stepId);
     }
+  };
+
+  const handleDashboard = () => {
+    navigate('/dashboard');
   };
 
   return (
@@ -46,6 +52,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                onClick={handleDashboard}
+                className="flex items-center space-x-2"
+              >
+                <Home className="w-4 h-4" />
+                <span>Dashboard</span>
+              </Button>
               <Button
                 variant="outline"
                 onClick={resetProcess}

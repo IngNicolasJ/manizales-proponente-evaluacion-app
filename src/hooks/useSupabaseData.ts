@@ -1,198 +1,138 @@
 
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { ProcessData, Proponent } from '@/types';
 
-export const useSupabaseData = () => {
+export const useProcessData = () => {
   const { user } = useAuth();
-  const [processData, setProcessData] = useState<ProcessData | null>(null);
-  const [proponents, setProponents] = useState<Proponent[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user]);
-
-  const loadData = async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-
-      // Load process data
-      const { data: processDataResult } = await supabase
+  
+  return useQuery({
+    queryKey: ['process-data', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
         .from('process_data')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (processDataResult) {
-        // Cast the Json types to the expected interfaces
-        const experienceData = processDataResult.experience as any;
-        const scoringData = processDataResult.scoring_criteria as any;
-
-        const transformedProcessData: ProcessData = {
-          processNumber: processDataResult.process_number,
-          processObject: processDataResult.process_name,
-          closingDate: processDataResult.closing_date,
-          totalContractValue: experienceData?.totalContractValue || 0,
-          minimumSalary: experienceData?.minimumSalary || 0,
-          processType: experienceData?.processType || 'licitacion',
-          scoring: scoringData || {
-            womanEntrepreneurship: 0,
-            mipyme: 0,
-            disabled: 0,
-            qualityFactor: 0,
-            environmentalQuality: 0,
-            nationalIndustrySupport: 0
-          },
-          experience: experienceData || {
-            general: '',
-            specific: '',
-            additionalSpecific: [],
-            classifierCodes: []
-          }
-        };
-        setProcessData(transformedProcessData);
-
-        // Load proponents for this process
-        const { data: proponentsResult } = await supabase
-          .from('proponents')
-          .select('*')
-          .eq('process_data_id', processDataResult.id);
-
-        if (proponentsResult) {
-          const transformedProponents: Proponent[] = proponentsResult.map(p => ({
-            id: p.id,
-            name: p.name,
-            isPlural: p.is_plural,
-            partners: p.partners as any,
-            rup: p.rup as any,
-            scoring: p.scoring as any,
-            requirements: p.requirements as any,
-            contractors: p.contractors as any,
-            totalScore: Number(p.total_score),
-            needsSubsanation: p.needs_subsanation,
-            subsanationDetails: p.subsanation_details
-          }));
-          setProponents(transformedProponents);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const saveProcessData = async (data: ProcessData) => {
-    if (!user) return;
-
-    try {
-      const { data: result, error } = await supabase
-        .from('process_data')
-        .upsert({
-          user_id: user.id,
-          process_name: data.processObject,
-          process_number: data.processNumber,
-          closing_date: data.closingDate,
-          experience: {
-            ...data.experience,
-            totalContractValue: data.totalContractValue,
-            minimumSalary: data.minimumSalary,
-            processType: data.processType
-          } as any,
-          scoring_criteria: data.scoring as any,
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
+        .order('created_at', { ascending: false });
       
-      setProcessData(data);
-      return result;
-    } catch (error) {
-      console.error('Error saving process data:', error);
-      throw error;
-    }
-  };
-
-  const saveProponent = async (proponent: Proponent, processDataId: string) => {
-    if (!user) return;
-
-    try {
-      const { data: result, error } = await supabase
-        .from('proponents')
-        .upsert({
-          id: proponent.id,
-          user_id: user.id,
-          process_data_id: processDataId,
-          name: proponent.name,
-          is_plural: proponent.isPlural,
-          partners: proponent.partners as any,
-          rup: proponent.rup as any,
-          scoring: proponent.scoring as any,
-          requirements: proponent.requirements as any,
-          contractors: proponent.contractors as any,
-          total_score: proponent.totalScore,
-          needs_subsanation: proponent.needsSubsanation,
-          subsanation_details: proponent.subsanationDetails,
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
       if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+};
 
-      // Update local state
-      setProponents(prev => {
-        const existing = prev.find(p => p.id === proponent.id);
-        if (existing) {
-          return prev.map(p => p.id === proponent.id ? proponent : p);
-        } else {
-          return [...prev, proponent];
-        }
-      });
-
-      return result;
-    } catch (error) {
-      console.error('Error saving proponent:', error);
-      throw error;
-    }
-  };
-
-  const deleteProponent = async (proponentId: string) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
+export const useProponents = () => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['proponents', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
         .from('proponents')
-        .delete()
-        .eq('id', proponentId)
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+};
+
+export const useAllProcessData = () => {
+  const { user, isAdmin } = useAuth();
+  
+  return useQuery({
+    queryKey: ['all-process-data'],
+    queryFn: async () => {
+      if (!user || !isAdmin) return [];
+      
+      const { data, error } = await supabase
+        .from('process_data')
+        .select(`
+          *,
+          profiles!process_data_user_id_fkey (
+            email,
+            full_name
+          )
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user && isAdmin,
+  });
+};
+
+export const useAllProponents = () => {
+  const { user, isAdmin } = useAuth();
+  
+  return useQuery({
+    queryKey: ['all-proponents'],
+    queryFn: async () => {
+      if (!user || !isAdmin) return [];
+      
+      const { data, error } = await supabase
+        .from('proponents')
+        .select(`
+          *,
+          profiles!proponents_user_id_fkey (
+            email,
+            full_name
+          ),
+          process_data!proponents_process_data_id_fkey (
+            process_name,
+            process_number
+          )
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user && isAdmin,
+  });
+};
+
+export const useUserStats = () => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['user-stats', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      // Obtener datos de procesos del usuario
+      const { data: processData } = await supabase
+        .from('process_data')
+        .select('id')
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      // Obtener datos de proponentes del usuario
+      const { data: proponentsData } = await supabase
+        .from('proponents')
+        .select('total_score')
+        .eq('user_id', user.id);
 
-      setProponents(prev => prev.filter(p => p.id !== proponentId));
-    } catch (error) {
-      console.error('Error deleting proponent:', error);
-      throw error;
-    }
-  };
+      const totalProcesses = processData?.length || 0;
+      const totalProponents = proponentsData?.length || 0;
+      const avgScore = proponentsData?.length 
+        ? proponentsData.reduce((sum, p) => sum + Number(p.total_score), 0) / proponentsData.length 
+        : 0;
 
-  return {
-    processData,
-    proponents,
-    loading,
-    saveProcessData,
-    saveProponent,
-    deleteProponent,
-    refreshData: loadData
-  };
+      return {
+        totalProcesses,
+        totalProponents,
+        avgScore: Math.round(avgScore * 100) / 100
+      };
+    },
+    enabled: !!user,
+  });
 };

@@ -36,6 +36,39 @@ export type Database = {
         }
         Relationships: []
       }
+      evaluation_stats: {
+        Row: {
+          avg_score: number | null
+          created_at: string
+          id: string
+          last_activity: string | null
+          total_processes: number
+          total_proponents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_score?: number | null
+          created_at?: string
+          id?: string
+          last_activity?: string | null
+          total_processes?: number
+          total_proponents?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_score?: number | null
+          created_at?: string
+          id?: string
+          last_activity?: string | null
+          total_processes?: number
+          total_proponents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       process_data: {
         Row: {
           closing_date: string
