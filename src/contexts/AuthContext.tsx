@@ -29,52 +29,73 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const checkAdminRole = async (userId: string) => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+      
+      const adminStatus = profile?.role === 'admin';
+      setIsAdmin(adminStatus);
+      console.log('AuthProvider: User is admin:', adminStatus);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      setIsAdmin(false);
+    }
+  };
+
   useEffect(() => {
-    console.log('AuthProvider: Setting up auth listener');
+    console.log('AuthProvider: Setting up auth');
+
+    // Get initial session first
+    const getInitialSession = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        console.log('AuthProvider: Initial session:', initialSession?.user?.email || 'none');
+        
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+        
+        if (initialSession?.user) {
+          await checkAdminRole(initialSession.user.id);
+        }
+        
+        setLoading(false);
+        console.log('AuthProvider: Initial loading complete');
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+        setLoading(false);
+      }
+    };
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('AuthProvider: Auth state changed:', event, session?.user?.email);
+        console.log('AuthProvider: Auth state changed:', event, session?.user?.email || 'none');
         
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Check if user is admin
-          try {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('id', session.user.id)
-              .single();
-            
-            setIsAdmin(profile?.role === 'admin');
-            console.log('AuthProvider: User is admin:', profile?.role === 'admin');
-          } catch (error) {
-            console.error('Error fetching user profile:', error);
-            setIsAdmin(false);
-          }
+          await checkAdminRole(session.user.id);
         } else {
           setIsAdmin(false);
         }
         
-        // Set loading to false after processing auth state
-        setLoading(false);
-        console.log('AuthProvider: Loading set to false');
+        // Only set loading to false if it's still true (avoid unnecessary re-renders)
+        setLoading(prevLoading => {
+          if (prevLoading) {
+            console.log('AuthProvider: Setting loading to false via auth change');
+            return false;
+          }
+          return prevLoading;
+        });
       }
     );
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      console.log('AuthProvider: Initial session check:', initialSession?.user?.email);
-      // The onAuthStateChange will handle setting the state
-      // Just trigger it if there's a session
-      if (!initialSession) {
-        setLoading(false);
-        console.log('AuthProvider: No initial session, loading set to false');
-      }
-    });
+    getInitialSession();
 
     return () => {
       subscription.unsubscribe();
@@ -109,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   };
 
-  console.log('AuthProvider: Current state - loading:', loading, 'user:', user?.email, 'session:', !!session);
+  console.log('AuthProvider: Current state - loading:', loading, 'user:', user?.email || 'none', 'session:', !!session);
 
   const value = {
     user,
