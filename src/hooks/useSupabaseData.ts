@@ -57,7 +57,7 @@ export const useAllProcessData = () => {
         .from('process_data')
         .select(`
           *,
-          profiles!process_data_user_id_fkey (
+          profiles!inner(
             email,
             full_name
           )
@@ -83,11 +83,11 @@ export const useAllProponents = () => {
         .from('proponents')
         .select(`
           *,
-          profiles!proponents_user_id_fkey (
+          profiles!inner(
             email,
             full_name
           ),
-          process_data!proponents_process_data_id_fkey (
+          process_data!inner(
             process_name,
             process_number
           )
