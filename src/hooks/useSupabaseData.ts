@@ -53,19 +53,31 @@ export const useAllProcessData = () => {
     queryFn: async () => {
       if (!user || !isAdmin) return [];
       
-      const { data, error } = await supabase
+      // First get all process data
+      const { data: processData, error: processError } = await supabase
         .from('process_data')
-        .select(`
-          *,
-          profiles!inner(
-            email,
-            full_name
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data || [];
+      if (processError) throw processError;
+      
+      // Then get all profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email, full_name');
+      
+      if (profilesError) throw profilesError;
+      
+      // Manually join the data
+      const joinedData = processData?.map(process => {
+        const profile = profiles?.find(p => p.id === process.user_id);
+        return {
+          ...process,
+          profiles: profile || null
+        };
+      }) || [];
+      
+      return joinedData;
     },
     enabled: !!user && isAdmin,
   });
@@ -79,23 +91,40 @@ export const useAllProponents = () => {
     queryFn: async () => {
       if (!user || !isAdmin) return [];
       
-      const { data, error } = await supabase
+      // Get all proponents
+      const { data: proponents, error: proponentsError } = await supabase
         .from('proponents')
-        .select(`
-          *,
-          profiles!inner(
-            email,
-            full_name
-          ),
-          process_data!inner(
-            process_name,
-            process_number
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data || [];
+      if (proponentsError) throw proponentsError;
+      
+      // Get all profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email, full_name');
+      
+      if (profilesError) throw profilesError;
+      
+      // Get all process data
+      const { data: processData, error: processError } = await supabase
+        .from('process_data')
+        .select('id, process_name, process_number');
+      
+      if (processError) throw processError;
+      
+      // Manually join the data
+      const joinedData = proponents?.map(proponent => {
+        const profile = profiles?.find(p => p.id === proponent.user_id);
+        const process = processData?.find(p => p.id === proponent.process_data_id);
+        return {
+          ...proponent,
+          profiles: profile || null,
+          process_data: process || null
+        };
+      }) || [];
+      
+      return joinedData;
     },
     enabled: !!user && isAdmin,
   });
