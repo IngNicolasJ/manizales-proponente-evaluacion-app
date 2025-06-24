@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UseFormSetValue, UseFormWatch } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
@@ -42,7 +41,6 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
     const isPlural = watchedValues.isPlural;
     const selectedContributor = watchedValues.scoring?.disabilityContributor;
     
-    // Para proponentes plurales, validar el porcentaje de experiencia
     const canAssignScore = !isPlural || (selectedContributor && canPartnerReceiveDisabilityScore(selectedContributor));
     const requiresComment = currentValue === 0;
 
@@ -104,16 +102,23 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
           <ScoringSelect
             value={currentValue}
             onChange={(value) => {
-              // Solo permitir puntaje > 0 si cumple condiciones
-              if (value > 0 && !canAssignScore) {
-                return; // No permitir asignación
+              // Para proponentes plurales, validar que el socio esté seleccionado y cumpla requisitos
+              if (isPlural && value > 0) {
+                if (!selectedContributor) {
+                  // No permitir puntaje sin seleccionar socio
+                  return;
+                }
+                if (!canPartnerReceiveDisabilityScore(selectedContributor)) {
+                  // No permitir puntaje si no cumple 40%
+                  return;
+                }
               }
               setValue('scoring.disabled', value);
             }}
             maxValue={maxValue}
             customOptions={customOptions}
             placeholder="Seleccionar puntaje"
-            disabled={!canAssignScore && currentValue === 0}
+            disabled={isPlural && (!selectedContributor || !canAssignScore)}
           />
           
           <p className="text-xs text-muted-foreground">
@@ -121,6 +126,11 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
             {isPlural && !selectedContributor && (
               <span className="text-red-600 block">
                 * Debe seleccionar el socio que aporta el certificado
+              </span>
+            )}
+            {isPlural && selectedContributor && !canAssignScore && (
+              <span className="text-red-600 block">
+                * El socio seleccionado debe aportar ≥40% de la experiencia
               </span>
             )}
           </p>

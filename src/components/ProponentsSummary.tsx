@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { exportToExcel, exportToPDF } from '@/utils/exportUtils';
 import { Download, FileSpreadsheet, FileText, AlertTriangle, Edit, Users, CheckSquare, Settings, Info, FileCheck, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useExperienceCalculation } from '@/hooks/useExperienceCalculation';
 
 export const ProponentsSummary: React.FC = () => {
   const { processData, proponents, setCurrentStep } = useAppStore();
@@ -367,6 +367,12 @@ export const ProponentsSummary: React.FC = () => {
             <div className="space-y-4">
               {sortedProponents.map((proponent, index) => {
                 const compliance = checkRequirementsCompliance(proponent);
+                const { getPartnerExperiencePercentage, canPartnerReceiveDisabilityScore } = useExperienceCalculation(proponent);
+                
+                // Información sobre discapacidad
+                const hasDisabilityScore = proponent.scoring.disabled > 0;
+                const disabilityContributor = proponent.scoring.disabilityContributor;
+                const disabilityContributorMeetsThreshold = disabilityContributor ? canPartnerReceiveDisabilityScore(disabilityContributor) : false;
                 
                 return (
                   <div
@@ -451,6 +457,31 @@ export const ProponentsSummary: React.FC = () => {
                         <p className="font-semibold">{proponent.scoring.nationalIndustrySupport}</p>
                       </div>
                     </div>
+
+                    {/* Información específica sobre discapacidad para proponentes plurales */}
+                    {proponent.isPlural && hasDisabilityScore && disabilityContributor && (
+                      <div className="mt-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                        <h5 className="text-sm font-semibold mb-2 text-blue-900">Información de Discapacidad</h5>
+                        <div className="text-sm text-blue-800">
+                          <p className="mb-1">
+                            <span className="font-medium">Socio que aporta certificado:</span> {disabilityContributor}
+                          </p>
+                          <p className="mb-1">
+                            <span className="font-medium">Experiencia aportada:</span> {getPartnerExperiencePercentage(disabilityContributor).toFixed(1)}%
+                          </p>
+                          <div className="flex items-center space-x-2">
+                            {disabilityContributorMeetsThreshold ? (
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <XCircle className="w-4 h-4 text-red-600" />
+                            )}
+                            <span className={`font-medium ${disabilityContributorMeetsThreshold ? 'text-green-700' : 'text-red-700'}`}>
+                              {disabilityContributorMeetsThreshold ? 'Cumple' : 'No cumple'} el umbral del 40% de experiencia
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Requirements compliance details */}
                     <div className="mt-4 p-3 bg-gray-50 rounded-lg">
