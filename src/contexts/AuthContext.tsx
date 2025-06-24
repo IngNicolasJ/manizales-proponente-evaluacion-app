@@ -30,65 +30,97 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const checkAdminRole = async (userId: string): Promise<boolean> => {
-    try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .single();
-      
-      return profile?.role === 'admin' || false;
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      return false;
-    }
-  };
-
   useEffect(() => {
-    console.log('🚀 AuthProvider v3.0: Initializing...');
+    console.log('🚀 AuthProvider v4.0: Starting initialization...');
     
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('🔍 Initial session check:', session?.user?.email || 'none');
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const adminStatus = await checkAdminRole(session.user.id);
-        setIsAdmin(adminStatus);
-        console.log('👑 User is admin:', adminStatus);
-      } else {
-        setIsAdmin(false);
-      }
-      
-      setLoading(false);
-      console.log('✅ Initial auth check complete - loading set to false');
-    });
+    let mounted = true;
 
-    // Listen for auth changes
+    const initializeAuth = async () => {
+      try {
+        console.log('🔍 Getting initial session...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('❌ Error getting session:', error);
+        }
+
+        if (mounted) {
+          console.log('📝 Setting initial state - user:', session?.user?.email || 'none');
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          // Check admin role if user exists
+          if (session?.user) {
+            try {
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+              
+              const adminStatus = profile?.role === 'admin';
+              setIsAdmin(adminStatus);
+              console.log('👑 Admin status:', adminStatus);
+            } catch (error) {
+              console.error('Error checking admin role:', error);
+              setIsAdmin(false);
+            }
+          } else {
+            setIsAdmin(false);
+          }
+          
+          // ALWAYS set loading to false after initial check
+          setLoading(false);
+          console.log('✅ Initial auth check complete - loading: false');
+        }
+      } catch (error) {
+        console.error('❌ Error in initializeAuth:', error);
+        if (mounted) {
+          setLoading(false);
+          console.log('✅ Auth error handled - loading: false');
+        }
+      }
+    };
+
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔄 Auth state changed:', event, session?.user?.email || 'none');
         
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          const adminStatus = await checkAdminRole(session.user.id);
-          setIsAdmin(adminStatus);
-        } else {
-          setIsAdmin(false);
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            try {
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', session.user.id)
+                .single();
+              
+              const adminStatus = profile?.role === 'admin';
+              setIsAdmin(adminStatus);
+            } catch (error) {
+              console.error('Error checking admin role:', error);
+              setIsAdmin(false);
+            }
+          } else {
+            setIsAdmin(false);
+          }
+          
+          // ALWAYS ensure loading is false after state change
+          setLoading(false);
+          console.log('✅ Auth state change complete - loading: false');
         }
-        
-        // Always ensure loading is false after auth state change
-        setLoading(false);
-        console.log('✅ Auth state change complete - loading set to false');
       }
     );
 
+    // Initialize auth
+    initializeAuth();
+
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -142,7 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  console.log('📊 AuthProvider state - loading:', loading, 'user:', user?.email || 'none');
+  console.log('📊 AuthProvider v4.0 state - loading:', loading, 'user:', user?.email || 'none');
 
   const value = {
     user,

@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
 
-  console.log('🛡️ ProtectedRoute v3.0 - loading:', loading, 'user:', user?.email || 'none');
+  console.log('🛡️ ProtectedRoute v4.0 - loading:', loading, 'user:', user?.email || 'none');
 
   // Show loading screen while checking auth
   if (loading) {
@@ -18,8 +18,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground text-lg">🔄 Verificando autenticación v3.0...</p>
-          <p className="text-xs text-muted-foreground mt-2">Si ves este mensaje por más de 5 segundos, hay un problema</p>
+          <p className="text-muted-foreground text-lg">🔄 Verificando autenticación v4.0...</p>
+          <p className="text-xs text-muted-foreground mt-2">Casi listo...</p>
         </div>
       </div>
     );
