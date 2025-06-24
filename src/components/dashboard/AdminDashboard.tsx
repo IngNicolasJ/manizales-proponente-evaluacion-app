@@ -1,18 +1,59 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useAllProcessData, useAllProponents } from '@/hooks/useSupabaseData';
+import { useAllProcessData, useAllProponents, useProcessData, useProponents } from '@/hooks/useSupabaseData';
+import { useAppStore } from '@/store/useAppStore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Users, FileText, TrendingUp, Award, Eye } from 'lucide-react';
+import { Users, FileText, TrendingUp, Award, Eye, Play, Plus } from 'lucide-react';
 import { ProcessDetailModal } from './ProcessDetailModal';
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const { data: allProcessData = [], isLoading: loadingProcesses } = useAllProcessData();
   const { data: allProponents = [], isLoading: loadingProponents } = useAllProponents();
+  const { data: myProcessData = [], isLoading: loadingMyProcesses } = useProcessData();
+  const { data: myProponents = [], isLoading: loadingMyProponents } = useProponents();
+  const { setCurrentStep, resetProcess, setProcessData } = useAppStore();
   const [selectedProcess, setSelectedProcess] = useState<any>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleNewProcess = () => {
+    resetProcess();
+    setCurrentStep(1);
+    navigate('/app');
+  };
+
+  const handleContinueProcess = (process: any) => {
+    console.log('🔄 Continuing process:', process);
+    
+    // Cargar los datos del proceso en el store
+    setProcessData({
+      processNumber: process.process_number,
+      processObject: process.process_name,
+      closingDate: process.closing_date,
+      totalContractValue: 0,
+      minimumSalary: 0,
+      processType: 'licitacion',
+      scoring: process.scoring_criteria || {},
+      experience: process.experience || {}
+    });
+
+    // Obtener los proponentes de este proceso
+    const processProponents = myProponents.filter(p => p.process_data_id === process.id);
+    
+    // Si hay proponentes, ir al paso 4 (resumen), si no, ir al paso 2 (agregar proponentes)
+    if (processProponents.length > 0) {
+      setCurrentStep(4);
+    } else {
+      setCurrentStep(2);
+    }
+    
+    navigate('/app');
+  };
 
   const handleViewProcess = (process: any) => {
     setSelectedProcess(process);
@@ -65,10 +106,102 @@ const AdminDashboard = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard Administrativo</h1>
-        <p className="text-muted-foreground">Resumen general de evaluaciones y usuarios</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard Administrativo</h1>
+          <p className="text-muted-foreground">Resumen general de evaluaciones y usuarios</p>
+        </div>
+        <Button onClick={handleNewProcess} className="flex items-center space-x-2">
+          <Plus className="w-4 h-4" />
+          <span>Nuevo Proceso</span>
+        </Button>
       </div>
+
+      {/* Mis Procesos como Admin */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Mis Procesos</CardTitle>
+          <CardDescription>Procesos que he creado como administrador</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {myProcessData.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-muted-foreground mb-2">
+                No tienes procesos creados
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Comienza creando tu primer proceso de evaluación
+              </p>
+              <Button onClick={handleNewProcess}>Crear Primer Proceso</Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Proceso</TableHead>
+                  <TableHead>Fecha de Cierre</TableHead>
+                  <TableHead>Proponentes</TableHead>
+                  <TableHead>Puntaje Promedio</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {myProcessData.map((process) => {
+                  const processProponents = myProponents.filter(p => p.process_data_id === process.id);
+                  const avgScore = processProponents.length 
+                    ? processProponents.reduce((sum, p) => sum + Number(p.total_score), 0) / processProponents.length 
+                    : 0;
+                  
+                  return (
+                    <TableRow key={process.id}>
+                      <TableCell className="font-medium">
+                        <div>
+                          <div className="font-semibold">Proceso {process.process_number}</div>
+                          <div className="text-sm text-muted-foreground truncate max-w-xs">
+                            {process.process_name}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{new Date(process.closing_date).toLocaleDateString()}</TableCell>
+                      <TableCell>{processProponents.length}</TableCell>
+                      <TableCell>{avgScore.toFixed(1)} pts</TableCell>
+                      <TableCell>
+                        <Badge variant={processProponents.length > 0 ? "default" : "secondary"}>
+                          {processProponents.length > 0 ? "Con Evaluaciones" : "Sin Evaluaciones"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleContinueProcess(process)}
+                            className="flex items-center space-x-1"
+                          >
+                            <Play className="w-4 h-4" />
+                            <span>Continuar</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewProcess(process)}
+                            className="flex items-center space-x-1"
+                          >
+                            <Eye className="w-4 h-4" />
+                            <span>Ver</span>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Métricas generales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -174,11 +307,11 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
-      {/* Tabla de procesos recientes */}
+      {/* Tabla de procesos recientes de todos los usuarios */}
       <Card>
         <CardHeader>
-          <CardTitle>Procesos Recientes</CardTitle>
-          <CardDescription>Últimos procesos creados en el sistema</CardDescription>
+          <CardTitle>Todos los Procesos del Sistema</CardTitle>
+          <CardDescription>Últimos procesos creados por todos los usuarios</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
