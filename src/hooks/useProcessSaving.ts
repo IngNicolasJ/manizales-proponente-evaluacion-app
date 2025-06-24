@@ -96,12 +96,12 @@ export const useProcessSaving = () => {
     return () => clearTimeout(timeoutId);
   }, [processData, user, toast]);
 
-  // Función para guardar proponentes
+  // Función para guardar proponentes - ASEGURAR que se asocien al proceso correcto
   const saveProponents = async (processId: string) => {
     if (!proponents.length || !user) return;
 
     try {
-      console.log('💾 Guardando proponentes:', proponents.length, 'para proceso:', processId);
+      console.log('💾 Guardando proponentes:', proponents.length, 'para proceso específico:', processId);
 
       for (const proponent of proponents) {
         // Convertir contractors a JSON compatible
@@ -129,12 +129,13 @@ export const useProcessSaving = () => {
           classifierCodesMatch: contractor.classifierCodesMatch || false
         })) || [];
 
-        // Usar el nuevo índice único (user_id, process_data_id, name) para el upsert
+        // IMPORTANTE: Usar el processId específico para asociar el proponente
         const { error } = await supabase
           .from('proponents')
           .upsert({
+            id: proponent.id, // Usar el ID del proponente para evitar duplicados
             user_id: user.id,
-            process_data_id: processId,
+            process_data_id: processId, // CRÍTICO: Asociar al proceso correcto
             name: proponent.name,
             is_plural: proponent.isPlural || false,
             partners: proponent.partners || null,
@@ -147,7 +148,7 @@ export const useProcessSaving = () => {
             subsanation_details: proponent.subsanationDetails || null,
             updated_at: new Date().toISOString()
           }, {
-            onConflict: 'user_id,process_data_id,name',
+            onConflict: 'id',
             ignoreDuplicates: false
           });
 
@@ -157,7 +158,7 @@ export const useProcessSaving = () => {
         }
       }
 
-      console.log('✅ Proponentes guardados exitosamente');
+      console.log('✅ Proponentes guardados exitosamente para proceso:', processId);
 
     } catch (error) {
       console.error('❌ Error al guardar proponentes:', error);

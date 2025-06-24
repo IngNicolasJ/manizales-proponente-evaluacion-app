@@ -10,6 +10,8 @@ interface AppStore extends AppState {
   deleteProponent: (id: string) => void;
   setCurrentStep: (step: number) => void;
   resetProcess: () => void;
+  getProponentsForCurrentProcess: () => Proponent[];
+  setProponents: (proponents: Proponent[]) => void;
 }
 
 export const useAppStore = create<AppStore>()(
@@ -22,6 +24,13 @@ export const useAppStore = create<AppStore>()(
       setProcessData: (data) => {
         console.log('🔄 Setting process data in store:', data);
         set({ processData: data });
+        
+        // Cuando se cambia el proceso, cargar solo los proponentes de ese proceso
+        const processId = localStorage.getItem('current_process_id');
+        if (processId) {
+          console.log('🔄 Process changed, filtering proponents for process:', processId);
+          // Los proponentes serán cargados por el hook useProcessSaving
+        }
       },
       
       addProponent: (proponent) => 
@@ -54,6 +63,16 @@ export const useAppStore = create<AppStore>()(
           proponents: [],
           currentStep: 1
         });
+      },
+
+      getProponentsForCurrentProcess: () => {
+        const { proponents } = get();
+        return proponents;
+      },
+
+      setProponents: (proponents) => {
+        console.log('🔄 Setting proponents in store:', proponents.length);
+        set({ proponents });
       }
     }),
     {

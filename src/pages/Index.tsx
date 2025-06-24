@@ -6,9 +6,13 @@ import { ProponentScoringForm } from '@/components/ProponentScoringForm';
 import { RequirementsForm } from '@/components/RequirementsForm';
 import { ProponentsSummary } from '@/components/ProponentsSummary';
 import { useAppStore } from '@/store/useAppStore';
+import { useCurrentProcessData } from '@/hooks/useCurrentProcessData';
 
 const Index = () => {
   const { currentStep } = useAppStore();
+  
+  // Cargar los datos del proceso actual al montar el componente
+  useCurrentProcessData();
 
   const renderCurrentStep = () => {
     switch (currentStep) {
