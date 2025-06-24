@@ -31,17 +31,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    console.log('🚀 AuthProvider v4.0: Starting initialization...');
+    console.log('🚀 AuthProvider v5.0: Starting initialization...');
     
     let mounted = true;
+    let timeoutId: NodeJS.Timeout;
 
     const initializeAuth = async () => {
       try {
-        console.log('🔍 Getting initial session...');
+        console.log('🔍 Testing Supabase connection...');
+        
+        // Test basic Supabase connectivity first
+        const startTime = Date.now();
+        console.log('📡 Attempting to get session...');
+        
         const { data: { session }, error } = await supabase.auth.getSession();
+        const endTime = Date.now();
+        
+        console.log(`⏱️ Session request took ${endTime - startTime}ms`);
         
         if (error) {
           console.error('❌ Error getting session:', error);
+          console.error('❌ Error details:', {
+            message: error.message,
+            status: (error as any)?.status,
+            statusCode: (error as any)?.statusCode
+          });
+        } else {
+          console.log('✅ Session request successful');
         }
 
         if (mounted) {
@@ -52,29 +68,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Check admin role if user exists
           if (session?.user) {
             try {
-              const { data: profile } = await supabase
+              console.log('👑 Checking admin role...');
+              const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('role')
                 .eq('id', session.user.id)
                 .single();
               
-              const adminStatus = profile?.role === 'admin';
-              setIsAdmin(adminStatus);
-              console.log('👑 Admin status:', adminStatus);
+              if (profileError) {
+                console.error('❌ Error checking admin role:', profileError);
+                setIsAdmin(false);
+              } else {
+                const adminStatus = profile?.role === 'admin';
+                setIsAdmin(adminStatus);
+                console.log('👑 Admin status:', adminStatus);
+              }
             } catch (error) {
-              console.error('Error checking admin role:', error);
+              console.error('❌ Exception checking admin role:', error);
               setIsAdmin(false);
             }
           } else {
             setIsAdmin(false);
           }
           
-          // ALWAYS set loading to false after initial check
           setLoading(false);
-          console.log('✅ Initial auth check complete - loading: false');
+          console.log('✅ Auth initialization complete v5.0');
         }
       } catch (error) {
-        console.error('❌ Error in initializeAuth:', error);
+        console.error('❌ Critical error in initializeAuth:', error);
+        console.error('❌ Error stack:', (error as Error)?.stack);
         if (mounted) {
           setLoading(false);
           console.log('✅ Auth error handled - loading: false');
@@ -83,6 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     // Set up auth state listener
+    console.log('🔄 Setting up auth state listener...');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔄 Auth state changed:', event, session?.user?.email || 'none');
@@ -102,30 +125,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               const adminStatus = profile?.role === 'admin';
               setIsAdmin(adminStatus);
             } catch (error) {
-              console.error('Error checking admin role:', error);
+              console.error('Error checking admin role in state change:', error);
               setIsAdmin(false);
             }
           } else {
             setIsAdmin(false);
           }
           
-          // ALWAYS ensure loading is false after state change
           setLoading(false);
-          console.log('✅ Auth state change complete - loading: false');
+          console.log('✅ Auth state change complete v5.0');
         }
       }
     );
+
+    // Set a timeout to force loading to false after 10 seconds
+    timeoutId = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('⚠️ Auth initialization timeout - forcing loading to false');
+        setLoading(false);
+      }
+    }, 10000);
 
     // Initialize auth
     initializeAuth();
 
     return () => {
       mounted = false;
+      clearTimeout(timeoutId);
       subscription.unsubscribe();
+      console.log('🧹 Auth provider cleanup complete');
     };
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string) => {
+    console.log('📝 Attempting sign up for:', email);
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -138,14 +171,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
     });
+    
+    if (error) {
+      console.error('❌ Sign up error:', error);
+    } else {
+      console.log('✅ Sign up successful');
+    }
+    
     return { error };
   };
 
   const signIn = async (email: string, password: string) => {
+    console.log('🔑 Attempting sign in for:', email);
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
+    
+    if (error) {
+      console.error('❌ Sign in error:', error);
+    } else {
+      console.log('✅ Sign in successful');
+    }
+    
     return { error };
   };
 
@@ -174,7 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  console.log('📊 AuthProvider v4.0 state - loading:', loading, 'user:', user?.email || 'none');
+  console.log('📊 AuthProvider v5.0 state - loading:', loading, 'user:', user?.email || 'none');
 
   const value = {
     user,

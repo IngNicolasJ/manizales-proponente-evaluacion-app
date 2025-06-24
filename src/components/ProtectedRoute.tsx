@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
 
-  console.log('🛡️ ProtectedRoute v4.0 - loading:', loading, 'user:', user?.email || 'none');
+  console.log('🛡️ ProtectedRoute v5.0 - loading:', loading, 'user:', user?.email || 'none');
 
   // Show loading screen while checking auth
   if (loading) {
@@ -18,8 +18,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground text-lg">🔄 Verificando autenticación v4.0...</p>
-          <p className="text-xs text-muted-foreground mt-2">Casi listo...</p>
+          <p className="text-muted-foreground text-lg">🔄 Verificando autenticación v5.0...</p>
+          <p className="text-xs text-muted-foreground mt-2">Diagnosticando conexión con Supabase...</p>
+          <div className="mt-4 text-xs text-muted-foreground">
+            <p>Si esto toma más de 10 segundos, puede haber un problema de conectividad</p>
+          </div>
         </div>
       </div>
     );
