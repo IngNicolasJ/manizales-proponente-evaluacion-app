@@ -69,12 +69,60 @@ export type Database = {
         }
         Relationships: []
       }
+      process_access: {
+        Row: {
+          granted_at: string
+          granted_by: string
+          id: string
+          process_data_id: string
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          granted_by: string
+          id?: string
+          process_data_id: string
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          granted_by?: string
+          id?: string
+          process_data_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_access_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "process_access_process_data_id_fkey"
+            columns: ["process_data_id"]
+            isOneToOne: false
+            referencedRelation: "process_data"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "process_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       process_data: {
         Row: {
           closing_date: string
           created_at: string
+          created_by_admin: boolean | null
           experience: Json
           id: string
+          is_shared: boolean | null
           minimum_salary: number | null
           process_name: string
           process_number: string
@@ -86,8 +134,10 @@ export type Database = {
         Insert: {
           closing_date: string
           created_at?: string
+          created_by_admin?: boolean | null
           experience: Json
           id?: string
+          is_shared?: boolean | null
           minimum_salary?: number | null
           process_name: string
           process_number: string
@@ -99,8 +149,10 @@ export type Database = {
         Update: {
           closing_date?: string
           created_at?: string
+          created_by_admin?: boolean | null
           experience?: Json
           id?: string
+          is_shared?: boolean | null
           minimum_salary?: number | null
           process_name?: string
           process_number?: string

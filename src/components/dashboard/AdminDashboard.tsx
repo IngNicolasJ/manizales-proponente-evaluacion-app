@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -7,19 +6,35 @@ import { Button } from '@/components/ui/button';
 import { useAllProcessData, useAllProponents, useProcessData, useProponents } from '@/hooks/useSupabaseData';
 import { useAppStore } from '@/store/useAppStore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Users, FileText, TrendingUp, Award, Eye, Play, Plus } from 'lucide-react';
+import { Users, FileText, TrendingUp, Award, Eye, Play, Plus, Trash2, Share2, Globe } from 'lucide-react';
 import { ProcessDetailModal } from './ProcessDetailModal';
+import { ProcessShareModal } from './ProcessShareModal';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
+import { useProcessManagement } from '@/hooks/useProcessManagement';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const AdminDashboard = () => {
-  const { data: allProcessData = [], isLoading: loadingProcesses } = useAllProcessData();
+  const { data: allProcessData = [], isLoading: loadingProcesses, refetch: refetchAllProcesses } = useAllProcessData();
   const { data: allProponents = [], isLoading: loadingProponents } = useAllProponents();
-  const { data: myProcessData = [], isLoading: loadingMyProcesses } = useProcessData();
+  const { data: myProcessData = [], isLoading: loadingMyProcesses, refetch: refetchMyProcesses } = useProcessData();
   const { data: myProponents = [], isLoading: loadingMyProponents } = useProponents();
   const { setCurrentStep, resetProcess, setProcessData } = useAppStore();
+  const { deleteProcess, markProcessAsShared, loading: managementLoading } = useProcessManagement();
   const [selectedProcess, setSelectedProcess] = useState<any>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [processToDelete, setProcessToDelete] = useState<any>(null);
   const navigate = useNavigate();
 
   const handleNewProcess = () => {
@@ -65,6 +80,37 @@ const AdminDashboard = () => {
     setIsDetailModalOpen(true);
   };
 
+  const handleShareProcess = (process: any) => {
+    setSelectedProcess(process);
+    setIsShareModalOpen(true);
+  };
+
+  const handleDeleteClick = (process: any) => {
+    setProcessToDelete(process);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!processToDelete) return;
+
+    const success = await deleteProcess(processToDelete.id, processToDelete.process_number);
+    if (success) {
+      refetchMyProcesses();
+      refetchAllProcesses();
+    }
+    
+    setDeleteDialogOpen(false);
+    setProcessToDelete(null);
+  };
+
+  const handleToggleSharing = async (process: any) => {
+    const success = await markProcessAsShared(process.id, !process.is_shared);
+    if (success) {
+      refetchMyProcesses();
+      refetchAllProcesses();
+    }
+  };
+
   // Calcular estadísticas generales
   const totalUsers = new Set(allProcessData.map(p => p.user_id)).size;
   const totalProcesses = allProcessData.length;
@@ -93,6 +139,15 @@ const AdminDashboard = () => {
   ];
 
   const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e'];
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value);
+  };
 
   if (loadingProcesses || loadingProponents) {
     return (
@@ -166,21 +221,21 @@ const AdminDashboard = () => {
                     return (
                       <TableRow key={process.id}>
                         <TableCell className="font-medium">
-                          <div>
-                            <div className="font-semibold">Proceso {process.process_number}</div>
-                            <div className="text-sm text-muted-foreground truncate max-w-xs">
-                              {process.process_name}
+                          <div className="flex items-center space-x-2">
+                            <div>
+                              <div className="font-semibold">Proceso {process.process_number}</div>
+                              <div className="text-sm text-muted-foreground truncate max-w-xs">
+                                {process.process_name}
+                              </div>
                             </div>
+                            {process.is_shared && (
+                              <Globe className="w-4 h-4 text-blue-500" title="Proceso compartido" />
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>{new Date(process.closing_date).toLocaleDateString()}</TableCell>
                         <TableCell>
-                          {new Intl.NumberFormat('es-CO', {
-                            style: 'currency',
-                            currency: 'COP',
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 0
-                          }).format(Number(process.total_contract_value) || 0)}
+                          {formatCurrency(Number(process.total_contract_value) || 0)}
                         </TableCell>
                         <TableCell>{processProponents.length}</TableCell>
                         <TableCell>{avgScore.toFixed(1)} pts</TableCell>
@@ -190,7 +245,7 @@ const AdminDashboard = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex space-x-2">
+                          <div className="flex space-x-1">
                             <Button
                               variant="default"
                               size="sm"
@@ -208,6 +263,37 @@ const AdminDashboard = () => {
                             >
                               <Eye className="w-4 h-4" />
                               <span>Ver</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleToggleSharing(process)}
+                              disabled={managementLoading}
+                              className="flex items-center space-x-1"
+                            >
+                              <Globe className="w-4 h-4" />
+                              <span>{process.is_shared ? 'Privado' : 'Compartir'}</span>
+                            </Button>
+                            {process.is_shared && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleShareProcess(process)}
+                                className="flex items-center space-x-1"
+                              >
+                                <Share2 className="w-4 h-4" />
+                                <span>Gestionar</span>
+                              </Button>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteClick(process)}
+                              disabled={managementLoading}
+                              className="flex items-center space-x-1 text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              <span>Eliminar</span>
                             </Button>
                           </div>
                         </TableCell>
@@ -348,11 +434,16 @@ const AdminDashboard = () => {
                   return (
                     <TableRow key={process.id}>
                       <TableCell className="font-medium">
-                        <div>
-                          <div className="font-semibold">Proceso {process.process_number}</div>
-                          <div className="text-sm text-muted-foreground truncate max-w-xs">
-                            {process.process_name}
+                        <div className="flex items-center space-x-2">
+                          <div>
+                            <div className="font-semibold">Proceso {process.process_number}</div>
+                            <div className="text-sm text-muted-foreground truncate max-w-xs">
+                              {process.process_name}
+                            </div>
                           </div>
+                          {process.is_shared && (
+                            <Globe className="w-4 h-4 text-blue-500" title="Proceso compartido" />
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>{process.profiles?.email || 'N/A'}</TableCell>
@@ -389,6 +480,39 @@ const AdminDashboard = () => {
           isOpen={isDetailModalOpen}
           onClose={() => setIsDetailModalOpen(false)}
         />
+
+        {/* Process Share Modal */}
+        <ProcessShareModal
+          process={selectedProcess}
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          onUpdate={() => {
+            refetchMyProcesses();
+            refetchAllProcesses();
+          }}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar proceso?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción eliminará permanentemente el proceso "{processToDelete?.process_number}" 
+                y todos los proponentes asociados. Esta acción no se puede deshacer.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteConfirm}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );

@@ -13,19 +13,42 @@ export const useProcessData = () => {
       
       console.log('📊 Fetching process data for user:', user.id);
       
-      const { data, error } = await supabase
+      // Obtener procesos propios Y procesos compartidos
+      const { data: ownProcesses, error: ownError } = await supabase
         .from('process_data')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       
-      if (error) {
-        console.error('❌ Error fetching process data:', error);
-        throw error;
+      if (ownError) {
+        console.error('❌ Error fetching own process data:', ownError);
+        throw ownError;
       }
+
+      // Obtener procesos compartidos a través de process_access
+      const { data: sharedProcesses, error: sharedError } = await supabase
+        .from('process_access')
+        .select(`
+          process_data (*)
+        `)
+        .eq('user_id', user.id);
+
+      if (sharedError) {
+        console.error('❌ Error fetching shared process data:', sharedError);
+        throw sharedError;
+      }
+
+      // Combinar procesos propios y compartidos
+      const allProcesses = [
+        ...(ownProcesses || []),
+        ...(sharedProcesses?.map(item => ({
+          ...item.process_data,
+          is_shared_with_me: true
+        })) || [])
+      ];
       
-      console.log('✅ Process data fetched:', data?.length || 0, 'records');
-      return data || [];
+      console.log('✅ Process data fetched:', allProcesses.length, 'records');
+      return allProcesses;
     },
     enabled: !!user,
     retry: 2,
