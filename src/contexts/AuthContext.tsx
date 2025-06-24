@@ -38,71 +38,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', userId)
         .single();
       
-      const adminStatus = profile?.role === 'admin';
-      console.log('AuthProvider: User is admin:', adminStatus);
-      return adminStatus;
+      return profile?.role === 'admin' || false;
     } catch (error) {
       console.error('Error fetching user profile:', error);
       return false;
     }
   };
 
-  const clearAuthState = () => {
-    setUser(null);
-    setSession(null);
-    setIsAdmin(false);
-    console.log('AuthProvider: Auth state cleared');
-  };
-
-  const processAuthState = async (session: Session | null) => {
-    console.log('AuthProvider: Processing auth state:', session?.user?.email || 'none');
-    
-    setSession(session);
-    setUser(session?.user ?? null);
-    
-    if (session?.user) {
-      const adminStatus = await checkAdminRole(session.user.id);
-      setIsAdmin(adminStatus);
-    } else {
-      setIsAdmin(false);
-    }
-    
-    setLoading(false);
-    console.log('AuthProvider: Auth processing complete, loading set to false');
-  };
-
   useEffect(() => {
-    console.log('AuthProvider: Setting up auth');
+    console.log('AuthProvider: Initializing...');
     
-    // Set up auth state listener
+    // Get initial session immediately
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log('AuthProvider: Initial session check:', session?.user?.email || 'none');
+      
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        const adminStatus = await checkAdminRole(session.user.id);
+        setIsAdmin(adminStatus);
+        console.log('AuthProvider: User is admin:', adminStatus);
+      } else {
+        setIsAdmin(false);
+      }
+      
+      setLoading(false);
+      console.log('AuthProvider: Initial loading complete');
+    });
+
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('AuthProvider: Auth state changed:', event, session?.user?.email || 'none');
+        console.log('AuthProvider: Auth state changed:', event);
         
-        if (event === 'SIGNED_OUT') {
-          clearAuthState();
-          setLoading(false);
-          return;
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          const adminStatus = await checkAdminRole(session.user.id);
+          setIsAdmin(adminStatus);
+        } else {
+          setIsAdmin(false);
         }
         
-        await processAuthState(session);
+        // Only set loading to false if we're not in the initial load
+        if (!loading) {
+          setLoading(false);
+        }
       }
     );
-
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        console.log('AuthProvider: Initial session:', initialSession?.user?.email || 'none');
-        await processAuthState(initialSession);
-      } catch (error) {
-        console.error('Error getting initial session:', error);
-        clearAuthState();
-        setLoading(false);
-      }
-    };
-
-    getInitialSession();
 
     return () => {
       subscription.unsubscribe();
@@ -141,21 +126,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const forceSignOut = async () => {
     console.log('AuthProvider: Force signing out...');
     try {
-      localStorage.removeItem('sb-iudzwslvdgknfmsikxpy-auth-token');
       localStorage.clear();
       await supabase.auth.signOut();
-      clearAuthState();
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
       setLoading(false);
-      window.location.reload();
+      window.location.href = '/auth';
     } catch (error) {
       console.error('Error during force sign out:', error);
-      clearAuthState();
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
       setLoading(false);
-      window.location.reload();
+      window.location.href = '/auth';
     }
   };
 
-  console.log('AuthProvider: Current state - loading:', loading, 'user:', user?.email || 'none', 'session:', !!session, 'isAdmin:', isAdmin);
+  console.log('AuthProvider: Current state - loading:', loading, 'user:', user?.email || 'none');
 
   const value = {
     user,

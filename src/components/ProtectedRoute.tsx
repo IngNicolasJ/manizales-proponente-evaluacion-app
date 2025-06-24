@@ -10,9 +10,9 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
 
-  console.log('ProtectedRoute - loading:', loading, 'user:', user?.email);
+  console.log('ProtectedRoute - loading:', loading, 'user:', user?.email || 'none');
 
-  // Show loading spinner while checking authentication
+  // Show loading only while actually loading
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5">
@@ -25,7 +25,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   // If not loading and no user, redirect to auth
-  if (!user) {
+  if (!loading && !user) {
     console.log('ProtectedRoute: No user found, redirecting to /auth');
     return <Navigate to="/auth" replace />;
   }

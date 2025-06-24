@@ -17,14 +17,15 @@ const Auth = () => {
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  console.log('Auth page - loading:', loading, 'user:', user);
+  console.log('Auth page - loading:', loading, 'user:', user?.email || 'none');
 
   // If already authenticated, redirect to app
   if (!loading && user) {
+    console.log('Auth: User authenticated, redirecting to /app');
     return <Navigate to="/app" replace />;
   }
 
-  // Show loading while checking auth state
+  // Show loading only while actually checking auth state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
