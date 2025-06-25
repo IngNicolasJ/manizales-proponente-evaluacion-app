@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -78,12 +77,21 @@ const UserDashboard = () => {
   };
 
   const handleDeleteClick = (process: any) => {
+    // Verificar que el proceso se pueda eliminar antes de mostrar el diálogo
+    if (!process.is_deletable) {
+      console.warn('⚠️ Attempted to delete non-deletable process:', process.process_number);
+      return;
+    }
+    
     setProcessToDelete(process);
     setDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
-    if (!processToDelete) return;
+    if (!processToDelete || !processToDelete.is_deletable) {
+      console.error('❌ Cannot delete process - insufficient permissions');
+      return;
+    }
 
     const success = await deleteProcess(processToDelete.id, processToDelete.process_number);
     if (success) {
@@ -103,9 +111,9 @@ const UserDashboard = () => {
     }).format(value);
   };
 
-  // Separar procesos propios de compartidos
-  const ownProcesses = processData.filter(p => !p.is_shared);
-  const sharedProcesses = processData.filter(p => p.is_shared);
+  // Separar procesos CORRECTAMENTE basado en la propiedad is_deletable
+  const ownProcesses = processData.filter(p => p.is_deletable === true);
+  const sharedProcesses = processData.filter(p => p.is_shared_with_me === true || p.is_deletable === false);
 
   // Datos para el gráfico de puntajes por proceso
   const processScoreData = processData.map(process => {
@@ -292,16 +300,19 @@ const UserDashboard = () => {
                               <Eye className="w-4 h-4" />
                               <span>Ver</span>
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteClick(process)}
-                              disabled={managementLoading}
-                              className="flex items-center space-x-1 text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                              <span>Eliminar</span>
-                            </Button>
+                            {/* Solo mostrar botón de eliminar si el proceso es eliminable */}
+                            {process.is_deletable && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteClick(process)}
+                                disabled={managementLoading}
+                                className="flex items-center space-x-1 text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                <span>Eliminar</span>
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -321,7 +332,7 @@ const UserDashboard = () => {
                 <Globe className="w-5 h-5" />
                 <span>Procesos Compartidos Conmigo</span>
               </CardTitle>
-              <CardDescription>Procesos en los que tienes acceso para evaluación</CardDescription>
+              <CardDescription>Procesos en los que tienes acceso para evaluación (solo lectura)</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -392,6 +403,7 @@ const UserDashboard = () => {
                               <Eye className="w-4 h-4" />
                               <span>Ver</span>
                             </Button>
+                            {/* NO mostrar botón de eliminar para procesos compartidos */}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -477,6 +489,7 @@ const UserDashboard = () => {
               <AlertDialogAction 
                 onClick={handleDeleteConfirm}
                 className="bg-red-600 hover:bg-red-700"
+                disabled={!processToDelete?.is_deletable}
               >
                 Eliminar
               </AlertDialogAction>

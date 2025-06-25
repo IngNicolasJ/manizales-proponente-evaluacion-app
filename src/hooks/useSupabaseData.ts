@@ -13,7 +13,7 @@ export const useProcessData = () => {
       
       console.log('📊 Fetching process data for user:', user.id);
       
-      // Obtener procesos propios Y procesos compartidos
+      // Obtener SOLO procesos propios del usuario
       const { data: ownProcesses, error: ownError } = await supabase
         .from('process_data')
         .select('*')
@@ -25,29 +25,47 @@ export const useProcessData = () => {
         throw ownError;
       }
 
-      // Obtener procesos compartidos a través de process_access
-      const { data: sharedProcesses, error: sharedError } = await supabase
-        .from('process_access')
-        .select(`
-          process_data (*)
-        `)
-        .eq('user_id', user.id);
+      // Solo obtener procesos compartidos si no hay error en los propios
+      let sharedProcesses = [];
+      try {
+        const { data: sharedData, error: sharedError } = await supabase
+          .from('process_access')
+          .select(`
+            process_data (*)
+          `)
+          .eq('user_id', user.id);
 
-      if (sharedError) {
-        console.error('❌ Error fetching shared process data:', sharedError);
-        throw sharedError;
+        if (sharedError) {
+          console.warn('⚠️ Error fetching shared process data:', sharedError);
+        } else {
+          sharedProcesses = sharedData?.map(item => ({
+            ...item.process_data,
+            is_shared_with_me: true,
+            is_deletable: false // Los procesos compartidos NO se pueden eliminar
+          })) || [];
+        }
+      } catch (error) {
+        console.warn('⚠️ Error in shared processes query:', error);
       }
+
+      // Marcar procesos propios como eliminables
+      const ownProcessesWithDeletable = (ownProcesses || []).map(process => ({
+        ...process,
+        is_deletable: true // Los procesos propios SÍ se pueden eliminar
+      }));
 
       // Combinar procesos propios y compartidos
       const allProcesses = [
-        ...(ownProcesses || []),
-        ...(sharedProcesses?.map(item => ({
-          ...item.process_data,
-          is_shared_with_me: true
-        })) || [])
+        ...ownProcessesWithDeletable,
+        ...sharedProcesses
       ];
       
-      console.log('✅ Process data fetched:', allProcesses.length, 'records');
+      console.log('✅ Process data fetched:', {
+        ownProcesses: ownProcessesWithDeletable.length,
+        sharedProcesses: sharedProcesses.length,
+        total: allProcesses.length
+      });
+      
       return allProcesses;
     },
     enabled: !!user,
