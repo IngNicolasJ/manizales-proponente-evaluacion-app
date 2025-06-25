@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const UserDashboard = () => {
-  // Usar queries separadas para procesos propios y compartidos
   const { data: ownProcessData = [], isLoading: loadingOwnProcesses, refetch: refetchProcesses } = useProcessData();
   const { data: sharedProcessData = [], isLoading: loadingSharedProcesses } = useSharedProcessData();
   const { data: proponentsData = [], isLoading: loadingProponents } = useProponents();
@@ -49,10 +48,8 @@ const UserDashboard = () => {
   const handleContinueProcess = (process: any) => {
     console.log('🔄 Continuing process:', process);
     
-    // IMPORTANTE: Establecer el process_id ANTES de cargar los datos
     localStorage.setItem('current_process_id', process.id);
     
-    // Cargar los datos del proceso en el store con valores reales
     setProcessData({
       processNumber: process.process_number,
       processObject: process.process_name,
@@ -64,10 +61,8 @@ const UserDashboard = () => {
       experience: process.experience || {}
     });
 
-    // Obtener los proponentes de este proceso
     const processProponents = proponentsData.filter(p => p.process_data_id === process.id);
     
-    // Si hay proponentes, ir al paso 4 (resumen), si no, ir al paso 2 (agregar proponentes)
     if (processProponents.length > 0) {
       setCurrentStep(4);
     } else {
@@ -83,7 +78,6 @@ const UserDashboard = () => {
   };
 
   const handleDeleteClick = (process: any) => {
-    // SOLO permitir eliminar procesos propios
     if (!process.is_own_process || !process.is_deletable) {
       console.warn('⚠️ Attempted to delete non-deletable process:', process.process_number);
       return;
@@ -108,7 +102,6 @@ const UserDashboard = () => {
     setProcessToDelete(null);
   };
 
-  // Función para formatear valores monetarios
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
@@ -130,7 +123,6 @@ const UserDashboard = () => {
     };
   });
 
-  // Distribución de puntajes
   const scoreDistribution = [
     { name: '0-25', value: proponentsData.filter(p => Number(p.total_score) <= 25).length },
     { name: '26-50', value: proponentsData.filter(p => Number(p.total_score) > 25 && Number(p.total_score) <= 50).length },
@@ -216,8 +208,11 @@ const UserDashboard = () => {
         {/* Mis Procesos (SOLO procesos propios) */}
         <Card>
           <CardHeader>
-            <CardTitle>Mis Procesos</CardTitle>
-            <CardDescription>Procesos que has creado y que puedes gestionar</CardDescription>
+            <CardTitle className="flex items-center space-x-2">
+              <FileText className="w-5 h-5" />
+              <span>Mis Procesos</span>
+            </CardTitle>
+            <CardDescription>Procesos que has creado y que puedes gestionar completamente</CardDescription>
           </CardHeader>
           <CardContent>
             {ownProcessData.length === 0 ? (
@@ -302,7 +297,6 @@ const UserDashboard = () => {
                               <Eye className="w-4 h-4" />
                               <span>Ver</span>
                             </Button>
-                            {/* SOLO mostrar botón de eliminar para procesos propios */}
                             <Button
                               variant="outline"
                               size="sm"
@@ -324,17 +318,27 @@ const UserDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Procesos Compartidos Conmigo (SOLO si hay procesos compartidos) */}
-        {sharedProcessData.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Globe className="w-5 h-5" />
-                <span>Procesos Compartidos Conmigo</span>
-              </CardTitle>
-              <CardDescription>Procesos en los que tienes acceso para evaluación (solo lectura)</CardDescription>
-            </CardHeader>
-            <CardContent>
+        {/* Procesos Compartidos Conmigo */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Globe className="w-5 h-5" />
+              <span>Procesos Compartidos Conmigo</span>
+            </CardTitle>
+            <CardDescription>Procesos en los que tienes acceso para evaluación (solo lectura)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {sharedProcessData.length === 0 ? (
+              <div className="text-center py-8">
+                <Globe className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-muted-foreground mb-2">
+                  No tienes procesos compartidos
+                </h3>
+                <p className="text-muted-foreground">
+                  Cuando un administrador comparta procesos contigo, aparecerán aquí
+                </p>
+              </div>
+            ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -403,7 +407,6 @@ const UserDashboard = () => {
                               <Eye className="w-4 h-4" />
                               <span>Ver</span>
                             </Button>
-                            {/* NO mostrar botón de eliminar para procesos compartidos */}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -411,9 +414,9 @@ const UserDashboard = () => {
                   })}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
 
         {/* Gráficos - solo mostrar si hay datos */}
         {allProcessData.length > 0 && (

@@ -4,10 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAllProcessData, useAllProponents, useProcessData, useProponents } from '@/hooks/useSupabaseData';
 import { useAppStore } from '@/store/useAppStore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Users, FileText, TrendingUp, Award, Eye, Play, Plus, Trash2, Share2, Globe } from 'lucide-react';
+import { Users, FileText, TrendingUp, Award, Eye, Play, Plus, Trash2, Share2, Globe, Filter } from 'lucide-react';
 import { ProcessDetailModal } from './ProcessDetailModal';
 import { ProcessShareModal } from './ProcessShareModal';
 import { useNavigate } from 'react-router-dom';
@@ -36,6 +37,7 @@ const AdminDashboard = () => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [processToDelete, setProcessToDelete] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<string>('todos');
   const navigate = useNavigate();
 
   const handleNewProcess = () => {
@@ -47,11 +49,9 @@ const AdminDashboard = () => {
   const handleContinueProcess = (process: any) => {
     console.log('🔄 Continuing process:', process);
     
-    // CRÍTICO: Establecer el process_id en localStorage ANTES de cargar datos y navegar
     localStorage.setItem('current_process_id', process.id);
     console.log('📝 Process ID establecido en localStorage:', process.id);
     
-    // Cargar los datos del proceso en el store con los valores reales de la BD
     setProcessData({
       processNumber: process.process_number,
       processObject: process.process_name,
@@ -63,10 +63,8 @@ const AdminDashboard = () => {
       experience: process.experience || {}
     });
 
-    // Obtener los proponentes de este proceso
     const processProponents = myProponents.filter(p => p.process_data_id === process.id);
     
-    // Si hay proponentes, ir al paso 4 (resumen), si no, ir al paso 2 (agregar proponentes)
     if (processProponents.length > 0) {
       setCurrentStep(4);
     } else {
@@ -111,6 +109,19 @@ const AdminDashboard = () => {
       refetchAllProcesses();
     }
   };
+
+  // Obtener lista única de usuarios
+  const uniqueUsers = Array.from(
+    new Set(allProcessData.map(p => p.profiles?.email).filter(Boolean))
+  ).map(email => ({
+    email,
+    name: email?.split('@')[0] || 'Usuario desconocido'
+  }));
+
+  // Filtrar procesos según el usuario seleccionado
+  const filteredProcesses = selectedUser === 'todos' 
+    ? allProcessData 
+    : allProcessData.filter(p => p.profiles?.email === selectedUser);
 
   // Calcular estadísticas generales
   const totalUsers = new Set(allProcessData.map(p => p.user_id)).size;
@@ -411,11 +422,34 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        {/* Tabla de procesos recientes de todos los usuarios */}
+        {/* Tabla de procesos del sistema con filtro */}
         <Card>
           <CardHeader>
-            <CardTitle>Todos los Procesos del Sistema</CardTitle>
-            <CardDescription>Últimos procesos creados por todos los usuarios</CardDescription>
+            <CardTitle className="flex items-center justify-between">
+              <span>Todos los Procesos del Sistema</span>
+              <div className="flex items-center space-x-2">
+                <Filter className="w-4 h-4 text-muted-foreground" />
+                <Select value={selectedUser} onValueChange={setSelectedUser}>
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder="Seleccionar usuario" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos los usuarios</SelectItem>
+                    {uniqueUsers.map(user => (
+                      <SelectItem key={user.email} value={user.email || ''}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardTitle>
+            <CardDescription>
+              {selectedUser === 'todos' 
+                ? 'Mostrando todos los procesos del sistema' 
+                : `Mostrando procesos de ${uniqueUsers.find(u => u.email === selectedUser)?.name}`
+              } ({filteredProcesses.length} procesos)
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -424,13 +458,14 @@ const AdminDashboard = () => {
                   <TableHead>Proceso</TableHead>
                   <TableHead>Usuario</TableHead>
                   <TableHead>Fecha de Cierre</TableHead>
+                  <TableHead>Valor del Contrato</TableHead>
                   <TableHead>Proponentes</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {allProcessData.slice(0, 10).map((process) => {
+                {filteredProcesses.slice(0, 15).map((process) => {
                   const proponentCount = allProponents.filter(p => p.process_data_id === process.id).length;
                   return (
                     <TableRow key={process.id}>
@@ -447,8 +482,23 @@ const AdminDashboard = () => {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>{process.profiles?.email || 'N/A'}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="font-medium">
+                            {process.profiles?.email?.split('@')[0] || 'N/A'}
+                          </div>
+                          <div className="text-muted-foreground text-xs">
+                            {process.profiles?.email || 'N/A'}
+                          </div>
+                        </div>
+                      </TableCell>
                       <TableCell>{new Date(process.closing_date).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        {process.total_contract_value 
+                          ? formatCurrency(Number(process.total_contract_value))
+                          : 'No definido'
+                        }
+                      </TableCell>
                       <TableCell>{proponentCount}</TableCell>
                       <TableCell>
                         <Badge variant={proponentCount > 0 ? "default" : "secondary"}>
@@ -471,6 +521,11 @@ const AdminDashboard = () => {
                 })}
               </TableBody>
             </Table>
+            {filteredProcesses.length > 15 && (
+              <div className="text-center text-sm text-muted-foreground mt-4">
+                Mostrando 15 de {filteredProcesses.length} procesos
+              </div>
+            )}
           </CardContent>
         </Card>
 
