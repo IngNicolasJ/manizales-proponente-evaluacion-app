@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trophy, Users, FileText, Calendar, DollarSign, ArrowLeft, Edit, FileExcel, FilePdf2 } from 'lucide-react';
+import { Trophy, Users, FileText, Calendar, DollarSign, ArrowLeft, Edit, FileSpreadsheet, Download } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { Proponent } from '@/types';
 import { exportToExcel, exportToPDF } from '@/utils/exportUtils';
@@ -82,11 +82,11 @@ export const ProponentsSummary: React.FC<ProponentsSummaryProps> = ({
           {proponents.length > 0 && (
             <>
               <Button variant="outline" onClick={handleExportExcel}>
-                <FileExcel className="w-4 h-4 mr-2" />
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
                 Exportar Excel
               </Button>
               <Button variant="outline" onClick={handleExportPDF}>
-                <FilePdf2 className="w-4 h-4 mr-2" />
+                <Download className="w-4 h-4 mr-2" />
                 Exportar PDF
               </Button>
             </>
