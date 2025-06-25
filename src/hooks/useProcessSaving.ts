@@ -71,15 +71,10 @@ export const useProcessSaving = () => {
           console.log('✅ Proceso creado exitosamente:', data);
         }
 
-        // Guardar el ID del proceso en el store para uso inmediato
+        // CRÍTICO: Guardar el ID del proceso en localStorage inmediatamente
         if (processId) {
           localStorage.setItem('current_process_id', processId);
-          console.log('📝 Process ID guardado:', processId);
-          
-          // Disparar guardado de proponentes inmediatamente si existen
-          if (proponents.length > 0) {
-            await saveProponents(processId);
-          }
+          console.log('📝 Process ID guardado en localStorage:', processId);
         }
 
       } catch (error) {
@@ -100,13 +95,32 @@ export const useProcessSaving = () => {
     return () => clearTimeout(timeoutId);
   }, [processData, user, toast]);
 
-  // Función para guardar proponentes - ASEGURAR que se asocien al proceso correcto
-  const saveProponents = async (processId: string) => {
-    if (!proponents.length || !user) return;
+  // Función para guardar proponentes - CRÍTICO: asociar al proceso correcto
+  const saveProponents = async (specificProcessId: string) => {
+    if (!proponents.length || !user || !specificProcessId) {
+      console.log('⏳ No hay proponentes, usuario o processId para guardar:', { 
+        proponentsLength: proponents.length, 
+        hasUser: !!user, 
+        processId: specificProcessId 
+      });
+      return;
+    }
 
     try {
-      console.log('💾 Guardando proponentes:', proponents.length, 'para proceso específico:', processId);
+      console.log('💾 Guardando proponentes para proceso específico:', specificProcessId, 'Total proponentes:', proponents.length);
 
+      // IMPORTANTE: Limpiar proponentes existentes de este proceso y usuario antes de insertar
+      const { error: deleteError } = await supabase
+        .from('proponents')
+        .delete()
+        .eq('process_data_id', specificProcessId)
+        .eq('user_id', user.id);
+
+      if (deleteError) {
+        console.warn('⚠️ Error limpiando proponentes previos (puede ser normal):', deleteError);
+      }
+
+      // Insertar solo los proponentes actuales para este proceso específico
       for (const proponent of proponents) {
         // Convertir contractors a JSON compatible
         const contractorsJson = proponent.contractors?.map(contractor => ({
@@ -133,13 +147,13 @@ export const useProcessSaving = () => {
           classifierCodesMatch: contractor.classifierCodesMatch || false
         })) || [];
 
-        // IMPORTANTE: Usar el processId específico para asociar el proponente
+        // CRÍTICO: Asegurar asociación correcta al proceso específico
         const { error } = await supabase
           .from('proponents')
-          .upsert({
-            id: proponent.id, // Usar el ID del proponente para evitar duplicados
+          .insert({
+            id: proponent.id,
             user_id: user.id,
-            process_data_id: processId, // CRÍTICO: Asociar al proceso correcto
+            process_data_id: specificProcessId, // ESTE ES EL FIX PRINCIPAL
             name: proponent.name,
             is_plural: proponent.isPlural || false,
             partners: proponent.partners || null,
@@ -151,9 +165,6 @@ export const useProcessSaving = () => {
             needs_subsanation: proponent.needsSubsanation || false,
             subsanation_details: proponent.subsanationDetails || null,
             updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'id',
-            ignoreDuplicates: false
           });
 
         if (error) {
@@ -162,7 +173,7 @@ export const useProcessSaving = () => {
         }
       }
 
-      console.log('✅ Proponentes guardados exitosamente para proceso:', processId);
+      console.log('✅ Proponentes guardados exitosamente para proceso:', specificProcessId);
 
     } catch (error) {
       console.error('❌ Error al guardar proponentes:', error);
@@ -174,24 +185,45 @@ export const useProcessSaving = () => {
     }
   };
 
-  // Guardar proponentes cuando cambien (solo si ya tenemos un process_id)
+  // Guardar proponentes cuando cambien - SOLO si tenemos el process_id correcto
   useEffect(() => {
     if (!proponents.length || !user) return;
 
     const saveProponentsDelayed = async () => {
-      const processId = localStorage.getItem('current_process_id');
-      if (!processId) {
+      const currentProcessId = localStorage.getItem('current_process_id');
+      if (!currentProcessId) {
         console.log('⏳ No hay process_id disponible, esperando...');
         return;
       }
 
-      await saveProponents(processId);
+      // VERIFICACIÓN ADICIONAL: Solo guardar si el proceso actual coincide
+      if (processData?.processNumber) {
+        // Verificar que el proceso en localStorage es el correcto
+        try {
+          const { data: processCheck } = await supabase
+            .from('process_data')
+            .select('process_number')
+            .eq('id', currentProcessId)
+            .eq('user_id', user.id)
+            .single();
+
+          if (processCheck?.process_number !== processData.processNumber) {
+            console.warn('⚠️ Process ID en localStorage no coincide con proceso actual');
+            return;
+          }
+        } catch (error) {
+          console.error('❌ Error verificando proceso:', error);
+          return;
+        }
+      }
+
+      await saveProponents(currentProcessId);
     };
 
     // Debounce para evitar muchas llamadas
     const timeoutId = setTimeout(saveProponentsDelayed, 1000);
     return () => clearTimeout(timeoutId);
-  }, [proponents, user, toast]);
+  }, [proponents, user, processData?.processNumber, toast]);
 
   return {
     // Función para forzar guardado manual si es necesario

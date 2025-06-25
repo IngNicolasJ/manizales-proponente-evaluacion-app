@@ -27,8 +27,7 @@ export const useCurrentProcessData = () => {
           .from('process_data')
           .select('*')
           .eq('id', processId)
-          .eq('user_id', user.id)
-          .single();
+          .single(); // Removido el filtro de user_id para procesos compartidos
 
         if (processError) {
           console.error('❌ Error loading process data:', processError);
@@ -65,12 +64,12 @@ export const useCurrentProcessData = () => {
           setProcessData(formattedProcessData);
         }
 
-        // Cargar proponentes del proceso
+        // CRÍTICO: Cargar SOLO los proponentes del proceso específico Y del usuario actual
         const { data: proponentsData, error: proponentsError } = await supabase
           .from('proponents')
           .select('*')
           .eq('process_data_id', processId)
-          .eq('user_id', user.id);
+          .eq('user_id', user.id); // FILTRO CRÍTICO: Solo proponentes del usuario actual
 
         if (proponentsError) {
           console.error('❌ Error loading proponents:', proponentsError);
@@ -78,7 +77,7 @@ export const useCurrentProcessData = () => {
         }
 
         if (proponentsData) {
-          console.log('✅ Proponents loaded for process:', proponentsData.length);
+          console.log('✅ Proponents loaded for process and user:', proponentsData.length, 'Process ID:', processId, 'User ID:', user.id);
           
           // Convertir los datos de los proponentes al formato esperado
           const formattedProponents: Proponent[] = proponentsData.map(p => ({
