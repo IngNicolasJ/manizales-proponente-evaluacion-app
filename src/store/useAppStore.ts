@@ -12,7 +12,7 @@ interface AppStore extends AppState {
   resetProcess: () => void;
   getProponentsForCurrentProcess: () => Proponent[];
   setProponents: (proponents: Proponent[]) => void;
-  clearProponents: () => void; // Nueva función para limpiar proponentes
+  clearProponents: () => void;
 }
 
 export const useAppStore = create<AppStore>()(
@@ -23,7 +23,7 @@ export const useAppStore = create<AppStore>()(
       currentStep: 1,
       
       setProcessData: (data) => {
-        console.log('🔄 Setting process data in store:', data);
+        console.log('🔄 Setting process data in store:', data?.processNumber);
         
         // CRÍTICO: Limpiar proponentes al cambiar de proceso
         const currentProcessId = localStorage.getItem('current_process_id');
@@ -37,9 +37,18 @@ export const useAppStore = create<AppStore>()(
       
       addProponent: (proponent) => {
         console.log('➕ Adding proponent to store:', proponent.name);
-        set((state) => ({ 
-          proponents: [...state.proponents, proponent]
-        }));
+        set((state) => {
+          // Verificar que no exista ya un proponente con el mismo ID
+          const existingIndex = state.proponents.findIndex(p => p.id === proponent.id);
+          if (existingIndex >= 0) {
+            console.log('⚠️ Proponent already exists, updating instead of adding:', proponent.name);
+            const updatedProponents = [...state.proponents];
+            updatedProponents[existingIndex] = proponent;
+            return { proponents: updatedProponents };
+          } else {
+            return { proponents: [...state.proponents, proponent] };
+          }
+        });
       },
       
       updateProponent: (id, updates) => {
@@ -80,7 +89,10 @@ export const useAppStore = create<AppStore>()(
       },
 
       setProponents: (proponents) => {
-        console.log('🔄 Setting proponents in store:', proponents.length);
+        console.log('🔄 Setting proponents in store:', proponents.length, 'proponents');
+        if (proponents.length > 0) {
+          console.log('📋 Proponents being set:', proponents.map(p => ({ id: p.id, name: p.name })));
+        }
         set({ proponents });
       },
 
@@ -90,7 +102,12 @@ export const useAppStore = create<AppStore>()(
       }
     }),
     {
-      name: 'alcaldia-evaluation-storage'
+      name: 'alcaldia-evaluation-storage',
+      // Mejorar la configuración de persistencia
+      partialize: (state) => ({
+        currentStep: state.currentStep,
+        // No persistir processData ni proponents para evitar estados inconsistentes
+      }),
     }
   )
 );

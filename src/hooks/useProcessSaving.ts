@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,14 +9,20 @@ export const useProcessSaving = () => {
   const { processData, proponents } = useAppStore();
   const { user } = useAuth();
   const { toast } = useToast();
+  const lastSavedProcessRef = useRef<string | null>(null);
+  const lastSavedProponentsRef = useRef<string>('');
 
   // Guardar datos del proceso cuando cambien
   useEffect(() => {
     if (!processData || !user || !processData.processNumber) return;
 
+    // Evitar guardado duplicado del mismo proceso
+    const processKey = `${processData.processNumber}-${user.id}`;
+    if (lastSavedProcessRef.current === processKey) return;
+
     const saveProcessData = async () => {
       try {
-        console.log('💾 Guardando datos del proceso:', processData);
+        console.log('💾 Guardando datos del proceso:', processData.processNumber);
 
         // Primero intentar actualizar si ya existe
         const { data: existingProcess } = await supabase
@@ -29,7 +35,7 @@ export const useProcessSaving = () => {
         let processId;
 
         if (existingProcess) {
-          // Actualizar proceso existente incluyendo valores del contrato
+          // Actualizar proceso existente
           const { data, error } = await supabase
             .from('process_data')
             .update({
@@ -49,7 +55,7 @@ export const useProcessSaving = () => {
           processId = existingProcess.id;
           console.log('✅ Proceso actualizado exitosamente:', data);
         } else {
-          // Crear nuevo proceso incluyendo valores del contrato
+          // Crear nuevo proceso
           const { data, error } = await supabase
             .from('process_data')
             .insert({
@@ -74,12 +80,12 @@ export const useProcessSaving = () => {
         // CRÍTICO: Guardar el ID del proceso en localStorage inmediatamente
         if (processId) {
           localStorage.setItem('current_process_id', processId);
+          lastSavedProcessRef.current = processKey;
           console.log('📝 Process ID guardado en localStorage:', processId);
         }
 
       } catch (error) {
         console.error('❌ Error al guardar proceso:', error);
-        // Solo mostrar toast de error si no es un error de duplicado esperado
         if (!error.message?.includes('duplicate key')) {
           toast({
             title: "Error al guardar",
@@ -95,7 +101,7 @@ export const useProcessSaving = () => {
     return () => clearTimeout(timeoutId);
   }, [processData, user, toast]);
 
-  // Función para guardar proponentes - CRÍTICO: asociar al proceso correcto
+  // Función para guardar proponentes
   const saveProponents = async (specificProcessId: string) => {
     if (!proponents.length || !user || !specificProcessId) {
       console.log('⏳ No hay proponentes, usuario o processId para guardar:', { 
@@ -117,63 +123,69 @@ export const useProcessSaving = () => {
         .eq('user_id', user.id);
 
       if (deleteError) {
-        console.warn('⚠️ Error limpiando proponentes previos (puede ser normal):', deleteError);
+        console.warn('⚠️ Error limpiando proponentes previos:', deleteError);
       }
 
-      // Insertar solo los proponentes actuales para este proceso específico
+      // Insertar proponentes uno por uno para mejor control de errores
       for (const proponent of proponents) {
-        // Convertir contractors a JSON compatible
-        const contractorsJson = proponent.contractors?.map(contractor => ({
-          name: contractor.name || '',
-          order: contractor.order || 0,
-          rupConsecutive: contractor.rupConsecutive || '',
-          requiredExperience: contractor.requiredExperience || 'general',
-          contractingEntity: contractor.contractingEntity || '',
-          contractNumber: contractor.contractNumber || '',
-          object: contractor.object || '',
-          servicesCode: contractor.servicesCode || '',
-          executionForm: contractor.executionForm || 'I',
-          participationPercentage: contractor.participationPercentage || 0,
-          experienceContributor: contractor.experienceContributor || '',
-          totalValueSMMLV: contractor.totalValueSMMLV || 0,
-          adjustedValue: contractor.adjustedValue || 0,
-          additionalSpecificExperienceContribution: contractor.additionalSpecificExperienceContribution || [],
-          adjustedAdditionalSpecificValue: contractor.adjustedAdditionalSpecificValue || [],
-          contractType: contractor.contractType || 'public',
-          privateDocumentsComplete: contractor.privateDocumentsComplete || false,
-          contractComplies: contractor.contractComplies || false,
-          nonComplianceReason: contractor.nonComplianceReason || '',
-          selectedClassifierCodes: contractor.selectedClassifierCodes || [],
-          classifierCodesMatch: contractor.classifierCodesMatch || false
-        })) || [];
+        try {
+          // Convertir contractors a JSON compatible
+          const contractorsJson = proponent.contractors?.map(contractor => ({
+            name: contractor.name || '',
+            order: contractor.order || 0,
+            rupConsecutive: contractor.rupConsecutive || '',
+            requiredExperience: contractor.requiredExperience || 'general',
+            contractingEntity: contractor.contractingEntity || '',
+            contractNumber: contractor.contractNumber || '',
+            object: contractor.object || '',
+            servicesCode: contractor.servicesCode || '',
+            executionForm: contractor.executionForm || 'I',
+            participationPercentage: contractor.participationPercentage || 0,
+            experienceContributor: contractor.experienceContributor || '',
+            totalValueSMMLV: contractor.totalValueSMMLV || 0,
+            adjustedValue: contractor.adjustedValue || 0,
+            additionalSpecificExperienceContribution: contractor.additionalSpecificExperienceContribution || [],
+            adjustedAdditionalSpecificValue: contractor.adjustedAdditionalSpecificValue || [],
+            contractType: contractor.contractType || 'public',
+            privateDocumentsComplete: contractor.privateDocumentsComplete || false,
+            contractComplies: contractor.contractComplies || false,
+            nonComplianceReason: contractor.nonComplianceReason || '',
+            selectedClassifierCodes: contractor.selectedClassifierCodes || [],
+            classifierCodesMatch: contractor.classifierCodesMatch || false
+          })) || [];
 
-        // CRÍTICO: Asegurar asociación correcta al proceso específico
-        const { error } = await supabase
-          .from('proponents')
-          .insert({
-            id: proponent.id,
-            user_id: user.id,
-            process_data_id: specificProcessId, // ESTE ES EL FIX PRINCIPAL
-            name: proponent.name,
-            is_plural: proponent.isPlural || false,
-            partners: proponent.partners || null,
-            rup: proponent.rup || {},
-            contractors: contractorsJson,
-            scoring: proponent.scoring || {},
-            requirements: proponent.requirements || {},
-            total_score: proponent.totalScore || 0,
-            needs_subsanation: proponent.needsSubsanation || false,
-            subsanation_details: proponent.subsanationDetails || null,
-            updated_at: new Date().toISOString()
-          });
+          const { error } = await supabase
+            .from('proponents')
+            .insert({
+              id: proponent.id,
+              user_id: user.id,
+              process_data_id: specificProcessId,
+              name: proponent.name,
+              is_plural: proponent.isPlural || false,
+              partners: proponent.partners || null,
+              rup: proponent.rup || {},
+              contractors: contractorsJson,
+              scoring: proponent.scoring || {},
+              requirements: proponent.requirements || {},
+              total_score: proponent.totalScore || 0,
+              needs_subsanation: proponent.needsSubsanation || false,
+              subsanation_details: proponent.subsanationDetails || null,
+              updated_at: new Date().toISOString()
+            });
 
-        if (error) {
-          console.error('❌ Error guardando proponente:', proponent.name, error);
-          throw error;
+          if (error) {
+            console.error('❌ Error guardando proponente:', proponent.name, error);
+            throw error;
+          } else {
+            console.log('✅ Proponente guardado exitosamente:', proponent.name);
+          }
+        } catch (proponentError) {
+          console.error('❌ Error en proponente individual:', proponent.name, proponentError);
+          // Continuar con el siguiente proponente
         }
       }
 
-      console.log('✅ Proponentes guardados exitosamente para proceso:', specificProcessId);
+      console.log('✅ Proceso de guardado de proponentes completado para proceso:', specificProcessId);
 
     } catch (error) {
       console.error('❌ Error al guardar proponentes:', error);
@@ -185,20 +197,23 @@ export const useProcessSaving = () => {
     }
   };
 
-  // Guardar proponentes cuando cambien - SOLO si tenemos el process_id correcto
+  // Guardar proponentes cuando cambien
   useEffect(() => {
     if (!proponents.length || !user) return;
 
+    // Crear una clave única para estos proponentes
+    const proponentsKey = proponents.map(p => `${p.id}-${p.name}-${p.totalScore}`).join('|');
+    if (lastSavedProponentsRef.current === proponentsKey) return;
+
     const saveProponentsDelayed = async () => {
       const currentProcessId = localStorage.getItem('current_process_id');
-      if (!currentProcessId) {
-        console.log('⏳ No hay process_id disponible, esperando...');
+      if (!currentProcessId || currentProcessId === 'undefined' || currentProcessId === 'null') {
+        console.log('⏳ No hay process_id válido disponible, esperando...');
         return;
       }
 
       // VERIFICACIÓN ADICIONAL: Solo guardar si el proceso actual coincide
       if (processData?.processNumber) {
-        // Verificar que el proceso en localStorage es el correcto
         try {
           const { data: processCheck } = await supabase
             .from('process_data')
@@ -218,19 +233,19 @@ export const useProcessSaving = () => {
       }
 
       await saveProponents(currentProcessId);
+      lastSavedProponentsRef.current = proponentsKey;
     };
 
     // Debounce para evitar muchas llamadas
-    const timeoutId = setTimeout(saveProponentsDelayed, 1000);
+    const timeoutId = setTimeout(saveProponentsDelayed, 1500);
     return () => clearTimeout(timeoutId);
   }, [proponents, user, processData?.processNumber, toast]);
 
   return {
-    // Función para forzar guardado manual si es necesario
     forceSave: async () => {
       console.log('🔄 Forzando guardado manual...');
       const processId = localStorage.getItem('current_process_id');
-      if (processId && proponents.length > 0) {
+      if (processId && processId !== 'undefined' && processId !== 'null' && proponents.length > 0) {
         await saveProponents(processId);
       }
     }
