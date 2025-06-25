@@ -494,7 +494,7 @@ const UserDashboard = () => {
                 Eliminar
               </AlertDialogAction>
             </AlertDialogFooter>
-          </AlertDialog>
+          </AlertDialogContent>
         </AlertDialog>
       </div>
     </Layout>
