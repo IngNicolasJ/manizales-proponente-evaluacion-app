@@ -25,14 +25,23 @@ export const useAppStore = create<AppStore>()(
       setProcessData: (data) => {
         console.log('🔄 Setting process data in store:', data?.processNumber);
         
-        // CRÍTICO: Limpiar proponentes al cambiar de proceso
-        const currentProcessId = localStorage.getItem('current_process_id');
-        console.log('🔄 Process changed, clearing existing proponents. Current process ID:', currentProcessId);
+        // CRÍTICO: Limpiar proponentes al cambiar de proceso solo si es un proceso diferente
+        const currentProcess = get().processData;
+        const isNewProcess = !currentProcess || currentProcess.processNumber !== data.processNumber;
         
-        set({ 
-          processData: data,
-          proponents: [] // Limpiar proponentes cuando cambia el proceso
-        });
+        if (isNewProcess) {
+          const currentProcessId = localStorage.getItem('current_process_id');
+          console.log('🔄 New process detected, clearing existing proponents. Current process ID:', currentProcessId);
+          
+          set({ 
+            processData: data,
+            proponents: [] // Solo limpiar proponentes si es un proceso completamente nuevo
+          });
+        } else {
+          // Si es el mismo proceso, solo actualizar los datos sin limpiar proponentes
+          console.log('🔄 Updating existing process data without clearing proponents');
+          set({ processData: data });
+        }
       },
       
       addProponent: (proponent) => {
