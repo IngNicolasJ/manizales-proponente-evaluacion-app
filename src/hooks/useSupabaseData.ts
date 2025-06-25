@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +12,7 @@ export const useProcessData = () => {
       
       console.log('📊 Fetching process data for user:', user.id);
       
-      // Obtener SOLO procesos propios del usuario
+      // Obtener SOLO procesos propios del usuario (SIN procesos compartidos)
       const { data: ownProcesses, error: ownError } = await supabase
         .from('process_data')
         .select('*')
@@ -25,52 +24,73 @@ export const useProcessData = () => {
         throw ownError;
       }
 
-      // Solo obtener procesos compartidos si no hay error en los propios
-      let sharedProcesses = [];
-      try {
-        const { data: sharedData, error: sharedError } = await supabase
-          .from('process_access')
-          .select(`
-            process_data (*)
-          `)
-          .eq('user_id', user.id);
-
-        if (sharedError) {
-          console.warn('⚠️ Error fetching shared process data:', sharedError);
-        } else {
-          sharedProcesses = sharedData?.map(item => ({
-            ...item.process_data,
-            is_shared_with_me: true,
-            is_deletable: false // Los procesos compartidos NO se pueden eliminar
-          })) || [];
-        }
-      } catch (error) {
-        console.warn('⚠️ Error in shared processes query:', error);
-      }
-
-      // Marcar procesos propios como eliminables
-      const ownProcessesWithDeletable = (ownProcesses || []).map(process => ({
+      // Marcar procesos propios como eliminables y NO compartidos
+      const ownProcessesWithFlags = (ownProcesses || []).map(process => ({
         ...process,
-        is_deletable: true // Los procesos propios SÍ se pueden eliminar
+        is_deletable: true, // Los procesos propios SÍ se pueden eliminar
+        is_shared_with_me: false, // Los procesos propios NO son compartidos
+        is_own_process: true // Marcador adicional para claridad
       }));
 
-      // Combinar procesos propios y compartidos
-      const allProcesses = [
-        ...ownProcessesWithDeletable,
-        ...sharedProcesses
-      ];
-      
-      console.log('✅ Process data fetched:', {
-        ownProcesses: ownProcessesWithDeletable.length,
-        sharedProcesses: sharedProcesses.length,
-        total: allProcesses.length
+      console.log('✅ Own process data fetched:', {
+        ownProcesses: ownProcessesWithFlags.length,
+        processes: ownProcessesWithFlags.map(p => ({ id: p.id, number: p.process_number, deletable: p.is_deletable }))
       });
       
-      return allProcesses;
+      return ownProcessesWithFlags;
     },
     enabled: !!user,
     retry: 2,
     staleTime: 30000, // 30 seconds
+  });
+};
+
+// Nueva query separada SOLO para procesos compartidos
+export const useSharedProcessData = () => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['shared-process-data', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      console.log('📊 Fetching shared process data for user:', user.id);
+      
+      // Obtener SOLO procesos compartidos (donde el usuario tiene acceso pero NO es propietario)
+      const { data: sharedData, error: sharedError } = await supabase
+        .from('process_access')
+        .select(`
+          process_data (*)
+        `)
+        .eq('user_id', user.id);
+
+      if (sharedError) {
+        console.error('❌ Error fetching shared process data:', sharedError);
+        throw sharedError;
+      }
+
+      // Procesar procesos compartidos
+      const sharedProcesses = (sharedData || []).map(item => {
+        if (!item.process_data) return null;
+        
+        return {
+          ...item.process_data,
+          is_shared_with_me: true, // Marcado como compartido
+          is_deletable: false, // Los procesos compartidos NO se pueden eliminar
+          is_own_process: false // NO es proceso propio
+        };
+      }).filter(Boolean); // Filtrar elementos nulos
+
+      console.log('✅ Shared process data fetched:', {
+        sharedProcesses: sharedProcesses.length,
+        processes: sharedProcesses.map(p => ({ id: p.id, number: p.process_number, shared: p.is_shared_with_me }))
+      });
+      
+      return sharedProcesses;
+    },
+    enabled: !!user,
+    retry: 2,
+    staleTime: 30000,
   });
 };
 

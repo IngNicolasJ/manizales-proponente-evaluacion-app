@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useProcessData, useProponents, useUserStats } from '@/hooks/useSupabaseData';
+import { useProcessData, useSharedProcessData, useProponents, useUserStats } from '@/hooks/useSupabaseData';
 import { useAppStore } from '@/store/useAppStore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Users, FileText, Award, Eye, Play, Plus, Globe, Trash2 } from 'lucide-react';
@@ -23,7 +24,9 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const UserDashboard = () => {
-  const { data: processData = [], isLoading: loadingProcesses, refetch: refetchProcesses } = useProcessData();
+  // Usar queries separadas para procesos propios y compartidos
+  const { data: ownProcessData = [], isLoading: loadingOwnProcesses, refetch: refetchProcesses } = useProcessData();
+  const { data: sharedProcessData = [], isLoading: loadingSharedProcesses } = useSharedProcessData();
   const { data: proponentsData = [], isLoading: loadingProponents } = useProponents();
   const { data: userStats, isLoading: loadingStats } = useUserStats();
   const { setCurrentStep, resetProcess, setProcessData } = useAppStore();
@@ -33,6 +36,9 @@ const UserDashboard = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [processToDelete, setProcessToDelete] = useState<any>(null);
   const navigate = useNavigate();
+
+  // Combinar todos los procesos solo para estadísticas y gráficos
+  const allProcessData = [...ownProcessData, ...sharedProcessData];
 
   const handleNewProcess = () => {
     resetProcess();
@@ -77,8 +83,8 @@ const UserDashboard = () => {
   };
 
   const handleDeleteClick = (process: any) => {
-    // Verificar que el proceso se pueda eliminar antes de mostrar el diálogo
-    if (!process.is_deletable) {
+    // SOLO permitir eliminar procesos propios
+    if (!process.is_own_process || !process.is_deletable) {
       console.warn('⚠️ Attempted to delete non-deletable process:', process.process_number);
       return;
     }
@@ -88,7 +94,7 @@ const UserDashboard = () => {
   };
 
   const handleDeleteConfirm = async () => {
-    if (!processToDelete || !processToDelete.is_deletable) {
+    if (!processToDelete || !processToDelete.is_deletable || !processToDelete.is_own_process) {
       console.error('❌ Cannot delete process - insufficient permissions');
       return;
     }
@@ -111,12 +117,8 @@ const UserDashboard = () => {
     }).format(value);
   };
 
-  // Separar procesos CORRECTAMENTE basado en la propiedad is_deletable
-  const ownProcesses = processData.filter(p => p.is_deletable === true);
-  const sharedProcesses = processData.filter(p => p.is_shared_with_me === true || p.is_deletable === false);
-
-  // Datos para el gráfico de puntajes por proceso
-  const processScoreData = processData.map(process => {
+  // Datos para el gráfico de puntajes por proceso (usando todos los procesos)
+  const processScoreData = allProcessData.map(process => {
     const processProponents = proponentsData.filter(p => p.process_data_id === process.id);
     const avgScore = processProponents.length 
       ? processProponents.reduce((sum, p) => sum + Number(p.total_score), 0) / processProponents.length 
@@ -138,7 +140,7 @@ const UserDashboard = () => {
 
   const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e'];
 
-  if (loadingProcesses || loadingProponents || loadingStats) {
+  if (loadingOwnProcesses || loadingSharedProcesses || loadingProponents || loadingStats) {
     return (
       <Layout>
         <div className="p-6">
@@ -211,14 +213,14 @@ const UserDashboard = () => {
           </Card>
         </div>
 
-        {/* Mis Procesos */}
+        {/* Mis Procesos (SOLO procesos propios) */}
         <Card>
           <CardHeader>
             <CardTitle>Mis Procesos</CardTitle>
-            <CardDescription>Procesos que has creado</CardDescription>
+            <CardDescription>Procesos que has creado y que puedes gestionar</CardDescription>
           </CardHeader>
           <CardContent>
-            {ownProcesses.length === 0 ? (
+            {ownProcessData.length === 0 ? (
               <div className="text-center py-8">
                 <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-muted-foreground mb-2">
@@ -243,7 +245,7 @@ const UserDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {ownProcesses.map((process) => {
+                  {ownProcessData.map((process) => {
                     const processProponents = proponentsData.filter(p => p.process_data_id === process.id);
                     const avgScore = processProponents.length 
                       ? processProponents.reduce((sum, p) => sum + Number(p.total_score), 0) / processProponents.length 
@@ -300,19 +302,17 @@ const UserDashboard = () => {
                               <Eye className="w-4 h-4" />
                               <span>Ver</span>
                             </Button>
-                            {/* Solo mostrar botón de eliminar si el proceso es eliminable */}
-                            {process.is_deletable && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDeleteClick(process)}
-                                disabled={managementLoading}
-                                className="flex items-center space-x-1 text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                <span>Eliminar</span>
-                              </Button>
-                            )}
+                            {/* SOLO mostrar botón de eliminar para procesos propios */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteClick(process)}
+                              disabled={managementLoading}
+                              className="flex items-center space-x-1 text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              <span>Eliminar</span>
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -324,8 +324,8 @@ const UserDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Procesos Compartidos Conmigo */}
-        {sharedProcesses.length > 0 && (
+        {/* Procesos Compartidos Conmigo (SOLO si hay procesos compartidos) */}
+        {sharedProcessData.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -347,7 +347,7 @@ const UserDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sharedProcesses.map((process) => {
+                  {sharedProcessData.map((process) => {
                     const myEvaluations = proponentsData.filter(p => p.process_data_id === process.id);
                     
                     return (
@@ -416,7 +416,7 @@ const UserDashboard = () => {
         )}
 
         {/* Gráficos - solo mostrar si hay datos */}
-        {processData.length > 0 && (
+        {allProcessData.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -489,12 +489,12 @@ const UserDashboard = () => {
               <AlertDialogAction 
                 onClick={handleDeleteConfirm}
                 className="bg-red-600 hover:bg-red-700"
-                disabled={!processToDelete?.is_deletable}
+                disabled={!processToDelete?.is_own_process}
               >
                 Eliminar
               </AlertDialogAction>
             </AlertDialogFooter>
-          </AlertDialogContent>
+          </AlertDialog>
         </AlertDialog>
       </div>
     </Layout>
