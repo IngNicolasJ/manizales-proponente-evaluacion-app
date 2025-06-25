@@ -1,10 +1,12 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trophy, Users, FileText, Calendar, DollarSign, ArrowLeft, Edit } from 'lucide-react';
+import { Trophy, Users, FileText, Calendar, DollarSign, ArrowLeft, Edit, FileExcel, FilePdf2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { Proponent } from '@/types';
+import { exportToExcel, exportToPDF } from '@/utils/exportUtils';
 
 interface ProponentsSummaryProps {
   onBackToEntry?: () => void;
@@ -54,6 +56,18 @@ export const ProponentsSummary: React.FC<ProponentsSummaryProps> = ({
 
   const proponentsNeedingSubsanation = proponents.filter(p => p.needsSubsanation).length;
 
+  const handleExportExcel = () => {
+    if (processData && proponents.length > 0) {
+      exportToExcel(processData, sortedProponents);
+    }
+  };
+
+  const handleExportPDF = () => {
+    if (processData && proponents.length > 0) {
+      exportToPDF(processData, sortedProponents);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -65,6 +79,18 @@ export const ProponentsSummary: React.FC<ProponentsSummaryProps> = ({
           </div>
         </div>
         <div className="flex items-center space-x-2">
+          {proponents.length > 0 && (
+            <>
+              <Button variant="outline" onClick={handleExportExcel}>
+                <FileExcel className="w-4 h-4 mr-2" />
+                Exportar Excel
+              </Button>
+              <Button variant="outline" onClick={handleExportPDF}>
+                <FilePdf2 className="w-4 h-4 mr-2" />
+                Exportar PDF
+              </Button>
+            </>
+          )}
           <Button variant="outline" onClick={() => setCurrentStep(2)}>
             <Edit className="w-4 h-4 mr-2" />
             Editar proponentes
