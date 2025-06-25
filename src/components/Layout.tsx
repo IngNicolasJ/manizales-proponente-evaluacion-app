@@ -7,14 +7,14 @@ import { useAppStore } from '@/store/useAppStore';
 import UserMenu from '@/components/UserMenu';
 import { useProcessSaving } from '@/hooks/useProcessSaving';
 import { useNavigate } from 'react-router-dom';
-import { LayoutDashboard } from 'lucide-react';
+import { LayoutDashboard, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 export const Layout = ({ children }: LayoutProps) => {
-  const { currentStep, processData, proponents } = useAppStore();
+  const { currentStep, processData, proponents, setCurrentStep } = useAppStore();
   const navigate = useNavigate();
   
   // Hook para guardado automático
@@ -47,6 +47,15 @@ export const Layout = ({ children }: LayoutProps) => {
         return 'Revisar puntuaciones y generar resultados finales';
       default:
         return 'Sistema de evaluación de procesos de contratación';
+    }
+  };
+
+  const canGoBack = currentStep > 1;
+  const canGoForward = currentStep < 4;
+
+  const handleStepNavigation = (newStep: number) => {
+    if (newStep >= 1 && newStep <= 4) {
+      setCurrentStep(newStep);
     }
   };
 
@@ -105,7 +114,7 @@ export const Layout = ({ children }: LayoutProps) => {
         </div>
       </header>
 
-      {/* Progress Indicator */}
+      {/* Progress Indicator with Navigation */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -118,21 +127,50 @@ export const Layout = ({ children }: LayoutProps) => {
               </p>
             </div>
             
-            <div className="flex space-x-2">
-              {[1, 2, 3, 4].map((step) => (
-                <div
-                  key={step}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                    step === currentStep
-                      ? 'bg-primary text-white'
-                      : step < currentStep
-                      ? 'bg-green-100 text-green-600'
-                      : 'bg-gray-100 text-gray-400'
-                  }`}
+            <div className="flex items-center space-x-4">
+              {/* Navigation Buttons */}
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStepNavigation(currentStep - 1)}
+                  disabled={!canGoBack}
+                  className="flex items-center space-x-1"
                 >
-                  {step < currentStep ? '✓' : step}
-                </div>
-              ))}
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Anterior</span>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStepNavigation(currentStep + 1)}
+                  disabled={!canGoForward}
+                  className="flex items-center space-x-1"
+                >
+                  <span className="hidden sm:inline">Siguiente</span>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Step Indicators */}
+              <div className="flex space-x-2">
+                {[1, 2, 3, 4].map((step) => (
+                  <button
+                    key={step}
+                    onClick={() => handleStepNavigation(step)}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors hover:bg-gray-100 ${
+                      step === currentStep
+                        ? 'bg-primary text-white hover:bg-primary/90'
+                        : step < currentStep
+                        ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                        : 'bg-gray-100 text-gray-400'
+                    }`}
+                  >
+                    {step < currentStep ? '✓' : step}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>

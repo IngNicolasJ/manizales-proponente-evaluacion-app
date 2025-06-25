@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trophy, Users, FileText, Calendar, DollarSign, ArrowLeft } from 'lucide-react';
+import { Trophy, Users, FileText, Calendar, DollarSign, ArrowLeft, Edit } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { Proponent } from '@/types';
 
@@ -16,7 +15,7 @@ export const ProponentsSummary: React.FC<ProponentsSummaryProps> = ({
   onBackToEntry,
   onAddMoreProponents
 }) => {
-  const { processData, proponents } = useAppStore();
+  const { processData, proponents, setCurrentStep } = useAppStore();
 
   if (!processData) {
     return (
@@ -65,12 +64,16 @@ export const ProponentsSummary: React.FC<ProponentsSummaryProps> = ({
             <p className="text-muted-foreground">Resultados finales del proceso de selección</p>
           </div>
         </div>
-        {onBackToEntry && (
-          <Button variant="outline" onClick={onBackToEntry}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver a entrada de datos
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" onClick={() => setCurrentStep(2)}>
+            <Edit className="w-4 h-4 mr-2" />
+            Editar proponentes
           </Button>
-        )}
+          <Button variant="outline" onClick={() => setCurrentStep(1)}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Editar proceso
+          </Button>
+        </div>
       </div>
 
       {/* Información del Proceso */}
@@ -185,11 +188,9 @@ export const ProponentsSummary: React.FC<ProponentsSummaryProps> = ({
               <p className="text-muted-foreground mb-4">
                 Agrega proponentes para ver el resumen de evaluación
               </p>
-              {onAddMoreProponents && (
-                <Button onClick={onAddMoreProponents}>
-                  Agregar Proponentes
-                </Button>
-              )}
+              <Button onClick={() => setCurrentStep(2)}>
+                Agregar Proponentes
+              </Button>
             </div>
           ) : (
             <div className="space-y-3">
@@ -270,14 +271,12 @@ export const ProponentsSummary: React.FC<ProponentsSummaryProps> = ({
                 </div>
               ))}
               
-              {onAddMoreProponents && (
-                <div className="pt-4 border-t">
-                  <Button variant="outline" onClick={onAddMoreProponents} className="w-full">
-                    <Users className="w-4 h-4 mr-2" />
-                    Agregar más proponentes
-                  </Button>
-                </div>
-              )}
+              <div className="pt-4 border-t">
+                <Button variant="outline" onClick={() => setCurrentStep(2)} className="w-full">
+                  <Users className="w-4 h-4 mr-2" />
+                  Agregar más proponentes
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
