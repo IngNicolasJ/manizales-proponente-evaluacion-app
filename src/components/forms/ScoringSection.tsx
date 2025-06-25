@@ -38,6 +38,9 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
     const isPlural = watchedValues.isPlural;
     const selectedContributor = watchedValues.scoring?.disabilityContributor;
     
+    // Si el valor máximo es 0, no mostrar este criterio
+    if (maxValue === 0) return null;
+    
     const requiresComment = currentValue === 0;
     const customOptions = maxValue > 0 ? [0, maxValue] : [0];
 
@@ -112,6 +115,9 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
   ) => {
     if (key === 'comments' || key === 'disabilityContributor') return null;
     
+    // Si el valor máximo es 0, no mostrar este criterio
+    if (maxValue === 0) return null;
+    
     // Usar el campo especializado para discapacidad
     if (key === 'disabled') {
       return renderDisabledField();
@@ -152,6 +158,33 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
     );
   };
 
+  // Filtrar criterios con valor máximo mayor a 0
+  const availableCriteria = [
+    { key: 'womanEntrepreneurship' as const, label: 'Emprendimiento mujer', maxValue: processData.scoring.womanEntrepreneurship },
+    { key: 'mipyme' as const, label: 'MIPYME', maxValue: processData.scoring.mipyme },
+    { key: 'disabled' as const, label: 'Discapacitado', maxValue: processData.scoring.disabled },
+    { key: 'qualityFactor' as const, label: 'Factor de calidad', maxValue: processData.scoring.qualityFactor },
+    { key: 'environmentalQuality' as const, label: 'Factor de calidad ambiental', maxValue: processData.scoring.environmentalQuality },
+    { key: 'nationalIndustrySupport' as const, label: 'Apoyo a la industria nacional', maxValue: processData.scoring.nationalIndustrySupport }
+  ].filter(criterion => criterion.maxValue > 0);
+
+  // Si no hay criterios disponibles, mostrar mensaje
+  if (availableCriteria.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Puntajes por criterios</CardTitle>
+          <CardDescription>No hay criterios de puntaje configurados para este proceso</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-center py-8">
+            Todos los criterios de puntaje tienen valor 0. No hay puntajes que asignar.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -160,41 +193,13 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {renderScoringField(
-            'womanEntrepreneurship',
-            'Emprendimiento mujer',
-            processData.scoring.womanEntrepreneurship,
-            `Opciones: 0 o ${processData.scoring.womanEntrepreneurship}`
-          )}
-          {renderScoringField(
-            'mipyme',
-            'MIPYME',
-            processData.scoring.mipyme,
-            `Opciones: 0 o ${processData.scoring.mipyme}`
-          )}
-          {renderScoringField(
-            'disabled',
-            'Discapacitado',
-            processData.scoring.disabled,
-            `Opciones: 0 o ${processData.scoring.disabled}`
-          )}
-          {renderScoringField(
-            'qualityFactor',
-            'Factor de calidad',
-            processData.scoring.qualityFactor,
-            `Opciones: 0 o ${processData.scoring.qualityFactor}`
-          )}
-          {renderScoringField(
-            'environmentalQuality',
-            'Factor de calidad ambiental',
-            processData.scoring.environmentalQuality,
-            `Opciones: 0 o ${processData.scoring.environmentalQuality}`
-          )}
-          {renderScoringField(
-            'nationalIndustrySupport',
-            'Apoyo a la industria nacional',
-            processData.scoring.nationalIndustrySupport,
-            `Opciones: 0 o ${processData.scoring.nationalIndustrySupport}`
+          {availableCriteria.map(criterion => 
+            renderScoringField(
+              criterion.key,
+              criterion.label,
+              criterion.maxValue,
+              `Opciones: 0 o ${criterion.maxValue}`
+            )
           )}
         </div>
       </CardContent>
