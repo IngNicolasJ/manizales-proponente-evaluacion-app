@@ -269,27 +269,27 @@ export const ProponentsSummary: React.FC<ProponentsSummaryProps> = ({
                   <div className="mt-3 pt-3 border-t border-gray-200">
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
                       <div className="text-center">
-                        <div className="font-semibold">{proponent.scoring.womanEntrepreneurship}</div>
+                        <div className="font-semibold">{proponent.scoring.womanEntrepreneurship.toFixed(2)}</div>
                         <div className="text-muted-foreground">Mujer</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-semibold">{proponent.scoring.mipyme}</div>
+                        <div className="font-semibold">{proponent.scoring.mipyme.toFixed(2)}</div>
                         <div className="text-muted-foreground">MIPYME</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-semibold">{proponent.scoring.disabled}</div>
+                        <div className="font-semibold">{proponent.scoring.disabled.toFixed(2)}</div>
                         <div className="text-muted-foreground">Discap.</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-semibold">{proponent.scoring.qualityFactor}</div>
+                        <div className="font-semibold">{proponent.scoring.qualityFactor.toFixed(2)}</div>
                         <div className="text-muted-foreground">Calidad</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-semibold">{proponent.scoring.environmentalQuality}</div>
+                        <div className="font-semibold">{proponent.scoring.environmentalQuality.toFixed(2)}</div>
                         <div className="text-muted-foreground">Ambiental</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-semibold">{proponent.scoring.nationalIndustrySupport}</div>
+                        <div className="font-semibold">{proponent.scoring.nationalIndustrySupport.toFixed(2)}</div>
                         <div className="text-muted-foreground">Nacional</div>
                       </div>
                     </div>
