@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { ContractsSection } from './forms/ContractsSection';
 export const RequirementsForm: React.FC = () => {
   const { proponents, updateProponent, processData, setCurrentStep } = useAppStore();
   const [selectedProponentId, setSelectedProponentId] = useState<string>('');
+  const manuallyEditedAmounts = useRef<Set<number>>(new Set());
 
   const selectedProponent = proponents.find(p => p.id === selectedProponentId);
 
@@ -28,10 +29,20 @@ export const RequirementsForm: React.FC = () => {
   const watchedValues = watch();
 
   // Calcular automáticamente las cantidades aportadas basadas en los contratos
+  // SOLO si no han sido editadas manualmente
   const calculateAdditionalSpecificAmounts = () => {
     if (!processData?.experience.additionalSpecific || !Array.isArray(processData.experience.additionalSpecific)) return;
 
     const calculatedAmounts = processData.experience.additionalSpecific.map((criteria, criteriaIndex) => {
+      // Si este índice ha sido editado manualmente, mantener el valor actual
+      if (manuallyEditedAmounts.current.has(criteriaIndex)) {
+        return watchedValues.additionalSpecificAmounts?.[criteriaIndex] || {
+          name: criteria.name,
+          amount: 0,
+          comment: ''
+        };
+      }
+
       const total = watchedValues.contractors?.reduce((sum, contractor) => {
         const contribution = contractor.additionalSpecificExperienceContribution?.[criteriaIndex];
         const adjustedValue = contractor.adjustedAdditionalSpecificValue?.[criteriaIndex];
@@ -46,6 +57,11 @@ export const RequirementsForm: React.FC = () => {
     });
 
     setValue('additionalSpecificAmounts', calculatedAmounts);
+  };
+
+  // Función para marcar un campo como editado manualmente
+  const markAsManuallyEdited = (index: number) => {
+    manuallyEditedAmounts.current.add(index);
   };
 
   useEffect(() => {
@@ -84,6 +100,9 @@ export const RequirementsForm: React.FC = () => {
 
   const handleProponentSelect = (proponentId: string) => {
     setSelectedProponentId(proponentId);
+    // Limpiar el registro de campos editados manualmente al cambiar de proponente
+    manuallyEditedAmounts.current.clear();
+    
     const proponent = proponents.find(p => p.id === proponentId);
     if (proponent && processData) {
       // Ensure additionalSpecific is an array before using it
@@ -262,6 +281,7 @@ export const RequirementsForm: React.FC = () => {
             watchedValues={watchedValues}
             setValue={setValue}
             selectedProponentName={selectedProponent.name}
+            onManualAmountEdit={markAsManuallyEdited}
           />
 
           <ContractsSection

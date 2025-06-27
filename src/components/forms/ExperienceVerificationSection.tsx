@@ -13,13 +13,15 @@ interface ExperienceVerificationSectionProps {
   watchedValues: RequirementsFormData;
   setValue: UseFormSetValue<RequirementsFormData>;
   selectedProponentName: string;
+  onManualAmountEdit?: (index: number) => void;
 }
 
 export const ExperienceVerificationSection: React.FC<ExperienceVerificationSectionProps> = ({
   processData,
   watchedValues,
   setValue,
-  selectedProponentName
+  selectedProponentName,
+  onManualAmountEdit
 }) => {
   const additionalSpecific = Array.isArray(processData?.experience.additionalSpecific) 
     ? processData.experience.additionalSpecific 
@@ -95,6 +97,8 @@ export const ExperienceVerificationSection: React.FC<ExperienceVerificationSecti
                               newAmounts[index] = { name: criteria.name, amount: newAmount, comment: '' };
                             }
                             setValue('additionalSpecificAmounts', newAmounts);
+                            // Marcar como editado manualmente
+                            onManualAmountEdit?.(index);
                           }}
                           className="bg-background"
                         />
