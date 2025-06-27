@@ -86,8 +86,17 @@ export const ExperienceVerificationSection: React.FC<ExperienceVerificationSecti
                           step="0.01"
                           min="0"
                           value={amount?.amount || 0}
-                          readOnly
-                          className="bg-muted"
+                          onChange={(e) => {
+                            const newAmount = parseFloat(e.target.value) || 0;
+                            const newAmounts = [...(watchedValues.additionalSpecificAmounts || [])];
+                            if (newAmounts[index]) {
+                              newAmounts[index] = { ...newAmounts[index], amount: newAmount };
+                            } else {
+                              newAmounts[index] = { name: criteria.name, amount: newAmount, comment: '' };
+                            }
+                            setValue('additionalSpecificAmounts', newAmounts);
+                          }}
+                          className="bg-background"
                         />
                       </div>
                       
