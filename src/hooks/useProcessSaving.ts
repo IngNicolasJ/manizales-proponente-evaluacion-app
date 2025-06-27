@@ -10,7 +10,7 @@ export const useProcessSaving = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const lastSavedProcessRef = useRef<string | null>(null);
-  const lastSavedProponentsRef = useRef<string>('');
+  const lastSavedProponentsRef = useRef<Map<string, string>>(new Map());
 
   // Guardar datos del proceso cuando cambien
   useEffect(() => {
@@ -101,7 +101,105 @@ export const useProcessSaving = () => {
     return () => clearTimeout(timeoutId);
   }, [processData, user, toast]);
 
-  // Función para guardar proponentes
+  // Función para guardar/actualizar un proponente específico
+  const saveProponent = async (proponent: any, specificProcessId: string) => {
+    if (!user || !specificProcessId) {
+      console.log('⏳ No hay usuario o processId para guardar proponente:', proponent.name);
+      return;
+    }
+
+    try {
+      console.log('💾 Guardando proponente específico:', proponent.name);
+
+      // Convertir contractors a JSON compatible
+      const contractorsJson = proponent.contractors?.map(contractor => ({
+        name: contractor.name || '',
+        order: contractor.order || 0,
+        rupConsecutive: contractor.rupConsecutive || '',
+        requiredExperience: contractor.requiredExperience || 'general',
+        contractingEntity: contractor.contractingEntity || '',
+        contractNumber: contractor.contractNumber || '',
+        object: contractor.object || '',
+        servicesCode: contractor.servicesCode || '',
+        executionForm: contractor.executionForm || 'I',
+        participationPercentage: contractor.participationPercentage || 0,
+        experienceContributor: contractor.experienceContributor || '',
+        totalValueSMMLV: contractor.totalValueSMMLV || 0,
+        adjustedValue: contractor.adjustedValue || 0,
+        additionalSpecificExperienceContribution: contractor.additionalSpecificExperienceContribution || [],
+        adjustedAdditionalSpecificValue: contractor.adjustedAdditionalSpecificValue || [],
+        contractType: contractor.contractType || 'public',
+        privateDocumentsComplete: contractor.privateDocumentsComplete || false,
+        contractComplies: contractor.contractComplies || false,
+        nonComplianceReason: contractor.nonComplianceReason || '',
+        selectedClassifierCodes: contractor.selectedClassifierCodes || [],
+        classifierCodesMatch: contractor.classifierCodesMatch || false
+      })) || [];
+
+      // Intentar actualizar primero, si no existe, insertar
+      const { data: existingProponent } = await supabase
+        .from('proponents')
+        .select('id')
+        .eq('id', proponent.id)
+        .eq('user_id', user.id)
+        .eq('process_data_id', specificProcessId)
+        .single();
+
+      if (existingProponent) {
+        // Actualizar proponente existente
+        const { error } = await supabase
+          .from('proponents')
+          .update({
+            name: proponent.name,
+            is_plural: proponent.isPlural || false,
+            partners: proponent.partners || null,
+            rup: proponent.rup || {},
+            contractors: contractorsJson,
+            scoring: proponent.scoring || {},
+            requirements: proponent.requirements || {},
+            total_score: proponent.totalScore || 0,
+            needs_subsanation: proponent.needsSubsanation || false,
+            subsanation_details: proponent.subsanationDetails || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', proponent.id)
+          .eq('user_id', user.id)
+          .eq('process_data_id', specificProcessId);
+
+        if (error) throw error;
+        console.log('✅ Proponente actualizado exitosamente:', proponent.name);
+      } else {
+        // Insertar nuevo proponente
+        const { error } = await supabase
+          .from('proponents')
+          .insert({
+            id: proponent.id,
+            user_id: user.id,
+            process_data_id: specificProcessId,
+            name: proponent.name,
+            is_plural: proponent.isPlural || false,
+            partners: proponent.partners || null,
+            rup: proponent.rup || {},
+            contractors: contractorsJson,
+            scoring: proponent.scoring || {},
+            requirements: proponent.requirements || {},
+            total_score: proponent.totalScore || 0,
+            needs_subsanation: proponent.needsSubsanation || false,
+            subsanation_details: proponent.subsanationDetails || null,
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) throw error;
+        console.log('✅ Proponente insertado exitosamente:', proponent.name);
+      }
+
+    } catch (error) {
+      console.error('❌ Error guardando proponente:', proponent.name, error);
+      throw error;
+    }
+  };
+
+  // Función para guardar proponentes (ahora guarda solo los que han cambiado)
   const saveProponents = async (specificProcessId: string) => {
     if (!proponents.length || !user || !specificProcessId) {
       console.log('⏳ No hay proponentes, usuario o processId para guardar:', { 
@@ -115,69 +213,19 @@ export const useProcessSaving = () => {
     try {
       console.log('💾 Guardando proponentes para proceso específico:', specificProcessId, 'Total proponentes:', proponents.length);
 
-      // IMPORTANTE: Limpiar proponentes existentes de este proceso y usuario antes de insertar
-      const { error: deleteError } = await supabase
-        .from('proponents')
-        .delete()
-        .eq('process_data_id', specificProcessId)
-        .eq('user_id', user.id);
-
-      if (deleteError) {
-        console.warn('⚠️ Error limpiando proponentes previos:', deleteError);
-      }
-
-      // Insertar proponentes uno por uno para mejor control de errores
+      // Guardar cada proponente individualmente (solo si ha cambiado)
       for (const proponent of proponents) {
         try {
-          // Convertir contractors a JSON compatible
-          const contractorsJson = proponent.contractors?.map(contractor => ({
-            name: contractor.name || '',
-            order: contractor.order || 0,
-            rupConsecutive: contractor.rupConsecutive || '',
-            requiredExperience: contractor.requiredExperience || 'general',
-            contractingEntity: contractor.contractingEntity || '',
-            contractNumber: contractor.contractNumber || '',
-            object: contractor.object || '',
-            servicesCode: contractor.servicesCode || '',
-            executionForm: contractor.executionForm || 'I',
-            participationPercentage: contractor.participationPercentage || 0,
-            experienceContributor: contractor.experienceContributor || '',
-            totalValueSMMLV: contractor.totalValueSMMLV || 0,
-            adjustedValue: contractor.adjustedValue || 0,
-            additionalSpecificExperienceContribution: contractor.additionalSpecificExperienceContribution || [],
-            adjustedAdditionalSpecificValue: contractor.adjustedAdditionalSpecificValue || [],
-            contractType: contractor.contractType || 'public',
-            privateDocumentsComplete: contractor.privateDocumentsComplete || false,
-            contractComplies: contractor.contractComplies || false,
-            nonComplianceReason: contractor.nonComplianceReason || '',
-            selectedClassifierCodes: contractor.selectedClassifierCodes || [],
-            classifierCodesMatch: contractor.classifierCodesMatch || false
-          })) || [];
+          // Crear una clave única para este proponente
+          const proponentKey = `${proponent.id}-${JSON.stringify(proponent.contractors)}-${JSON.stringify(proponent.requirements)}`;
+          const lastSavedKey = lastSavedProponentsRef.current.get(proponent.id);
 
-          const { error } = await supabase
-            .from('proponents')
-            .insert({
-              id: proponent.id,
-              user_id: user.id,
-              process_data_id: specificProcessId,
-              name: proponent.name,
-              is_plural: proponent.isPlural || false,
-              partners: proponent.partners || null,
-              rup: proponent.rup || {},
-              contractors: contractorsJson,
-              scoring: proponent.scoring || {},
-              requirements: proponent.requirements || {},
-              total_score: proponent.totalScore || 0,
-              needs_subsanation: proponent.needsSubsanation || false,
-              subsanation_details: proponent.subsanationDetails || null,
-              updated_at: new Date().toISOString()
-            });
-
-          if (error) {
-            console.error('❌ Error guardando proponente:', proponent.name, error);
-            throw error;
+          // Solo guardar si ha cambiado
+          if (lastSavedKey !== proponentKey) {
+            await saveProponent(proponent, specificProcessId);
+            lastSavedProponentsRef.current.set(proponent.id, proponentKey);
           } else {
-            console.log('✅ Proponente guardado exitosamente:', proponent.name);
+            console.log('⏭️ Proponente sin cambios, saltando:', proponent.name);
           }
         } catch (proponentError) {
           console.error('❌ Error en proponente individual:', proponent.name, proponentError);
@@ -200,10 +248,6 @@ export const useProcessSaving = () => {
   // Guardar proponentes cuando cambien
   useEffect(() => {
     if (!proponents.length || !user) return;
-
-    // Crear una clave única para estos proponentes
-    const proponentsKey = proponents.map(p => `${p.id}-${p.name}-${p.totalScore}`).join('|');
-    if (lastSavedProponentsRef.current === proponentsKey) return;
 
     const saveProponentsDelayed = async () => {
       const currentProcessId = localStorage.getItem('current_process_id');
@@ -233,7 +277,6 @@ export const useProcessSaving = () => {
       }
 
       await saveProponents(currentProcessId);
-      lastSavedProponentsRef.current = proponentsKey;
     };
 
     // Debounce para evitar muchas llamadas
