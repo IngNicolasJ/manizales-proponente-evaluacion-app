@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,8 +30,38 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
   initialValues,
   proponents
 }) => {
-  const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<ProponentFormData>({
-    defaultValues: {
+  // Encontrar el proponente actual
+  const currentProponent = editingProponent 
+    ? proponents.find(p => p.id === editingProponent) 
+    : null;
+
+  // Preparar valores iniciales basados en el proponente existente
+  const getInitialValues = (): ProponentFormData => {
+    if (currentProponent) {
+      console.log('🔄 Loading existing proponent data:', currentProponent.name);
+      return {
+        name: currentProponent.name,
+        isPlural: currentProponent.isPlural,
+        partners: currentProponent.partners?.map(partner => ({
+          name: partner.name,
+          percentage: partner.percentage,
+          rupRenewalDate: '' // Los partners no tienen fecha RUP individual en el modelo actual
+        })) || [],
+        rupRenewalDate: currentProponent.rup?.renewalDate || '',
+        scoring: {
+          womanEntrepreneurship: currentProponent.scoring?.womanEntrepreneurship || 0,
+          mipyme: currentProponent.scoring?.mipyme || 0,
+          disabled: currentProponent.scoring?.disabled || 0,
+          qualityFactor: currentProponent.scoring?.qualityFactor || 0,
+          environmentalQuality: currentProponent.scoring?.environmentalQuality || 0,
+          nationalIndustrySupport: currentProponent.scoring?.nationalIndustrySupport || 0,
+          disabilityContributor: currentProponent.scoring?.disabilityContributor || undefined,
+          comments: currentProponent.scoring?.comments || {}
+        }
+      };
+    }
+    
+    return {
       name: initialValues?.name || '',
       isPlural: initialValues?.isPlural || false,
       partners: initialValues?.partners || [],
@@ -46,7 +76,11 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
         disabilityContributor: undefined,
         comments: {}
       }
-    }
+    };
+  };
+
+  const { register, handleSubmit, control, watch, setValue, reset, formState: { errors } } = useForm<ProponentFormData>({
+    defaultValues: getInitialValues()
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -56,10 +90,12 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
 
   const watchedValues = watch();
 
-  // Encontrar el proponente actual para pasar al ScoringSection
-  const currentProponent = editingProponent 
-    ? proponents.find(p => p.id === editingProponent) 
-    : null;
+  // Resetear el formulario cuando cambie el proponente a editar
+  useEffect(() => {
+    const newValues = getInitialValues();
+    console.log('🔄 Resetting form with values:', newValues);
+    reset(newValues);
+  }, [editingProponent, currentProponent]);
 
   return (
     <Card className="mb-6">
@@ -68,7 +104,7 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
           {editingProponent ? 'Editar proponente' : 'Nuevo proponente'}
         </CardTitle>
         <CardDescription>
-          {editingProponent ? 'Modifique los puntajes del proponente' : 'Complete la información del proponente'}
+          {editingProponent ? 'Modifique los datos del proponente' : 'Complete la información del proponente'}
         </CardDescription>
       </CardHeader>
       <CardContent>

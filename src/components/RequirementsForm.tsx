@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
@@ -14,6 +15,53 @@ export const RequirementsForm: React.FC = () => {
   const manuallyEditedAmounts = useRef<Set<number>>(new Set());
 
   const selectedProponent = proponents.find(p => p.id === selectedProponentId);
+
+  const getInitialFormData = (proponent: any): RequirementsFormData => {
+    if (!proponent || !processData) {
+      return {
+        proponentId: '',
+        generalExperience: false,
+        specificExperience: false,
+        professionalCard: false,
+        additionalSpecificAmounts: [],
+        contractors: []
+      };
+    }
+
+    // Ensure additionalSpecific is an array before using it
+    const additionalSpecific = Array.isArray(processData.experience.additionalSpecific) 
+      ? processData.experience.additionalSpecific 
+      : [];
+    
+    // Inicializar amounts basado en processData y datos guardados del proponente
+    const initialAmounts = additionalSpecific.map((criteria, index) => ({
+      name: criteria.name,
+      amount: Array.isArray(proponent.requirements.additionalSpecificExperience) 
+        ? proponent.requirements.additionalSpecificExperience[index]?.amount || 0
+        : 0,
+      comment: Array.isArray(proponent.requirements.additionalSpecificExperience)
+        ? proponent.requirements.additionalSpecificExperience[index]?.comment || ''
+        : ''
+    }));
+
+    console.log('🔄 Initializing form with proponent data:', {
+      proponentName: proponent.name,
+      generalExperience: proponent.requirements.generalExperience,
+      specificExperience: proponent.requirements.specificExperience,
+      professionalCard: proponent.requirements.professionalCard,
+      additionalAmounts: initialAmounts,
+      contractorsCount: proponent.contractors?.length || 0
+    });
+
+    return {
+      proponentId: proponent.id,
+      generalExperience: proponent.requirements.generalExperience || false,
+      specificExperience: proponent.requirements.specificExperience || false,
+      professionalCard: proponent.requirements.professionalCard || false,
+      additionalSpecificAmounts: initialAmounts,
+      contractors: proponent.contractors || []
+    };
+  };
 
   const { register, handleSubmit, control, watch, setValue, reset } = useForm<RequirementsFormData>({
     defaultValues: {
@@ -99,36 +147,16 @@ export const RequirementsForm: React.FC = () => {
   }
 
   const handleProponentSelect = (proponentId: string) => {
+    console.log('🔄 Selecting proponent:', proponentId);
     setSelectedProponentId(proponentId);
     // Limpiar el registro de campos editados manualmente al cambiar de proponente
     manuallyEditedAmounts.current.clear();
     
     const proponent = proponents.find(p => p.id === proponentId);
     if (proponent && processData) {
-      // Ensure additionalSpecific is an array before using it
-      const additionalSpecific = Array.isArray(processData.experience.additionalSpecific) 
-        ? processData.experience.additionalSpecific 
-        : [];
-      
-      // Inicializar amounts basado en processData
-      const initialAmounts = additionalSpecific.map((criteria, index) => ({
-        name: criteria.name,
-        amount: Array.isArray(proponent.requirements.additionalSpecificExperience) 
-          ? proponent.requirements.additionalSpecificExperience[index]?.amount || 0
-          : 0,
-        comment: Array.isArray(proponent.requirements.additionalSpecificExperience)
-          ? proponent.requirements.additionalSpecificExperience[index]?.comment || ''
-          : ''
-      }));
-
-      reset({
-        proponentId,
-        generalExperience: proponent.requirements.generalExperience,
-        specificExperience: proponent.requirements.specificExperience,
-        professionalCard: proponent.requirements.professionalCard,
-        additionalSpecificAmounts: initialAmounts,
-        contractors: proponent.contractors
-      });
+      const initialData = getInitialFormData(proponent);
+      console.log('🔄 Resetting form with initial data:', initialData);
+      reset(initialData);
     }
   };
 
@@ -253,9 +281,11 @@ export const RequirementsForm: React.FC = () => {
       subsanationDetails: subsanationDetails.length > 0 ? subsanationDetails : undefined
     });
 
-    // Limpiar la selección inmediatamente después de guardar
-    setSelectedProponentId('');
-    reset();
+    console.log('✅ Requirements saved for proponent:', selectedProponent.name);
+    
+    // NO limpiar la selección para mantener los datos visibles
+    // setSelectedProponentId('');
+    // reset();
   };
 
   return (
