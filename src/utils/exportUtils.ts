@@ -3,6 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { ProcessData, Proponent } from '@/types';
+import { formatLocalDate } from '@/utils/dateUtils';
 
 export const exportToExcel = (processData: ProcessData, proponents: Proponent[]) => {
   try {
@@ -12,7 +13,7 @@ export const exportToExcel = (processData: ProcessData, proponents: Proponent[])
     const processInfo = [
       ['Número del proceso', processData.processNumber],
       ['Objeto del proceso', processData.processObject],
-      ['Fecha de cierre', processData.closingDate ? new Date(processData.closingDate).toLocaleDateString('es-CO') : 'No definida'],
+      ['Fecha de cierre', processData.closingDate ? formatLocalDate(processData.closingDate) : 'No definida'],
       ['Valor del contrato', new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(processData.totalContractValue)],
       ['Salario mínimo', new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(processData.minimumSalary)]
     ];
@@ -121,7 +122,7 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
     doc.setFontSize(12);
     doc.text(`Proceso: ${processData.processNumber}`, 20, 35);
     doc.text(`Objeto: ${processData.processObject}`, 20, 45);
-    doc.text(`Fecha: ${processData.closingDate ? new Date(processData.closingDate).toLocaleDateString('es-CO') : 'No definida'}`, 20, 55);
+    doc.text(`Fecha: ${processData.closingDate ? formatLocalDate(processData.closingDate) : 'No definida'}`, 20, 55);
     
     const contractValue = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(processData.totalContractValue);
     doc.text(`Valor: ${contractValue}`, 20, 65);

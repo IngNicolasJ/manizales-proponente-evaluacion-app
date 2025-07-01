@@ -22,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { formatLocalDate } from '@/utils/dateUtils';
 
 const UserDashboard = () => {
   const { data: ownProcessData = [], isLoading: loadingOwnProcesses, refetch: refetchProcesses } = useProcessData();
@@ -258,7 +259,7 @@ const UserDashboard = () => {
                         </TableCell>
                         <TableCell>
                           {process.closing_date 
-                            ? new Date(process.closing_date).toLocaleDateString('es-CO')
+                            ? formatLocalDate(process.closing_date)
                             : 'No definida'
                           }
                         </TableCell>
@@ -369,7 +370,7 @@ const UserDashboard = () => {
                         </TableCell>
                         <TableCell>
                           {process.closing_date 
-                            ? new Date(process.closing_date).toLocaleDateString('es-CO')
+                            ? formatLocalDate(process.closing_date)
                             : 'No definida'
                           }
                         </TableCell>

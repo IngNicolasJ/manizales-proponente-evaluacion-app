@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, FileText, DollarSign, Users, Award } from 'lucide-react';
+import { formatLocalDate } from '@/utils/dateUtils';
 
 interface ProcessDetailModalProps {
   process: any;
@@ -66,7 +67,7 @@ export const ProcessDetailModal: React.FC<ProcessDetailModalProps> = ({
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Fecha de Cierre</label>
-                    <p>{new Date(process.closing_date).toLocaleDateString('es-CO')}</p>
+                    <p>{formatLocalDate(process.closing_date)}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">

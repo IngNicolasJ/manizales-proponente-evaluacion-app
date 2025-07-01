@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { formatLocalDate } from '@/utils/dateUtils';
 
 const AdminDashboard = () => {
   const { data: allProcessData = [], isLoading: loadingProcesses, refetch: refetchAllProcesses } = useAllProcessData();
@@ -245,7 +246,7 @@ const AdminDashboard = () => {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>{new Date(process.closing_date).toLocaleDateString()}</TableCell>
+                        <TableCell>{formatLocalDate(process.closing_date)}</TableCell>
                         <TableCell>
                           {formatCurrency(Number(process.total_contract_value) || 0)}
                         </TableCell>
@@ -492,7 +493,7 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{new Date(process.closing_date).toLocaleDateString()}</TableCell>
+                      <TableCell>{formatLocalDate(process.closing_date)}</TableCell>
                       <TableCell>
                         {process.total_contract_value 
                           ? formatCurrency(Number(process.total_contract_value))

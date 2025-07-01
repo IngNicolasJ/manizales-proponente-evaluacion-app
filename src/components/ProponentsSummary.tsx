@@ -7,6 +7,7 @@ import { Trophy, Users, FileText, Calendar, DollarSign, ArrowLeft, Edit, FileSpr
 import { useAppStore } from '@/store/useAppStore';
 import { Proponent } from '@/types';
 import { exportToExcel, exportToPDF } from '@/utils/exportUtils';
+import { formatLocalDate } from '@/utils/dateUtils';
 
 interface ProponentsSummaryProps {
   onBackToEntry?: () => void;
@@ -126,7 +127,7 @@ export const ProponentsSummary: React.FC<ProponentsSummaryProps> = ({
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <p className="font-semibold">
                   {processData.closingDate 
-                    ? new Date(processData.closingDate).toLocaleDateString('es-CO')
+                    ? formatLocalDate(processData.closingDate)
                     : 'No definida'
                   }
                 </p>
