@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { FileText, ArrowRight } from 'lucide-react';
 import { ScoringSelect } from '@/components/ScoringSelect';
 import { ExperienceRequirementsSection } from '@/components/forms/ExperienceRequirementsSection';
+import { DatePicker } from '@/components/ui/date-picker';
 import { ProcessData } from '@/types';
 
 const processTypeOptions = [
@@ -96,10 +97,18 @@ export const ProcessDataForm: React.FC = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="closingDate">Fecha de cierre *</Label>
-                <Input
-                  id="closingDate"
-                  type="date"
-                  {...register('closingDate', { required: 'Fecha de cierre es requerida' })}
+                <DatePicker
+                  value={watchedValues.closingDate ? new Date(watchedValues.closingDate) : undefined}
+                  onChange={(date) => {
+                    if (date) {
+                      // Formatear la fecha en formato ISO (YYYY-MM-DD) para el formulario
+                      const formattedDate = date.toISOString().split('T')[0];
+                      setValue('closingDate', formattedDate);
+                    } else {
+                      setValue('closingDate', '');
+                    }
+                  }}
+                  placeholder="Seleccionar fecha de cierre"
                 />
                 {errors.closingDate && (
                   <p className="text-sm text-destructive">{errors.closingDate.message}</p>
