@@ -1,16 +1,15 @@
 
 import React from 'react';
-import { UseFormRegister, UseFormWatch, FieldErrors, UseFormSetValue } from 'react-hook-form';
+import { UseFormRegister, UseFormWatch, FieldErrors } from 'react-hook-form';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { DatePicker } from '@/components/ui/date-picker';
 import { ProponentFormData } from '@/types/forms';
 import { ProcessData } from '@/types';
 
 interface RupSectionProps {
   register: UseFormRegister<ProponentFormData>;
   watch: UseFormWatch<ProponentFormData>;
-  setValue: UseFormSetValue<ProponentFormData>;
   errors: FieldErrors<ProponentFormData>;
   processData: ProcessData;
   checkRupCompliance: (rupDate: string) => boolean;
@@ -19,7 +18,6 @@ interface RupSectionProps {
 export const RupSection: React.FC<RupSectionProps> = ({
   register,
   watch,
-  setValue,
   errors,
   processData,
   checkRupCompliance
@@ -29,17 +27,10 @@ export const RupSection: React.FC<RupSectionProps> = ({
   return (
     <div className="space-y-2">
       <Label htmlFor="rupRenewalDate">Fecha de renovación del RUP *</Label>
-      <DatePicker
-        value={watchedValues.rupRenewalDate ? new Date(watchedValues.rupRenewalDate) : undefined}
-        onChange={(date) => {
-          if (date) {
-            const formattedDate = date.toISOString().split('T')[0];
-            setValue('rupRenewalDate', formattedDate);
-          } else {
-            setValue('rupRenewalDate', '');
-          }
-        }}
-        placeholder="Seleccionar fecha de renovación RUP"
+      <Input
+        id="rupRenewalDate"
+        type="date"
+        {...register('rupRenewalDate', { required: 'Fecha de renovación es requerida' })}
       />
       {errors.rupRenewalDate && (
         <p className="text-sm text-destructive">{errors.rupRenewalDate.message}</p>

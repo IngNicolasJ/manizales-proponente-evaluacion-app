@@ -132,7 +132,6 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
             <RupSection
               register={register}
               watch={watch}
-              setValue={setValue}
               errors={errors}
               processData={processData}
               checkRupCompliance={checkRupCompliance}
