@@ -39,6 +39,7 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
   const getInitialValues = (): ProponentFormData => {
     if (currentProponent) {
       console.log('🔄 Loading existing proponent data:', currentProponent.name);
+      console.log('🔍 Partners data:', currentProponent.partners);
       return {
         number: currentProponent.number || '',
         name: currentProponent.name,
@@ -96,8 +97,21 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
   useEffect(() => {
     const newValues = getInitialValues();
     console.log('🔄 Resetting form with values:', newValues);
+    console.log('🔍 Partners in reset:', newValues.partners);
     reset(newValues);
-  }, [editingProponent, currentProponent]);
+    
+    // Sincronizar useFieldArray con los partners
+    if (newValues.partners && newValues.partners.length > 0) {
+      // Limpiar fields existentes
+      while (fields.length > 0) {
+        remove(0);
+      }
+      // Agregar los partners uno por uno
+      newValues.partners.forEach(partner => {
+        append(partner);
+      });
+    }
+  }, [editingProponent, currentProponent, reset, fields.length, remove, append]);
 
   return (
     <Card className="mb-6">

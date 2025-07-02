@@ -167,14 +167,15 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
 
     const rankingData = sortedProponents.map((proponent, index) => {
       const position = index + 1;
-      const medal = position === 1 ? '🥇' : position === 2 ? '🥈' : position === 3 ? '🥉' : position.toString();
+      // Reemplazar emojis con texto para evitar problemas de encoding
+      const positionText = position === 1 ? '1º' : position === 2 ? '2º' : position === 3 ? '3º' : `${position}º`;
       
       // Limitar longitud del nombre para evitar desbordamiento
       const proponentName = proponent.number ? `${proponent.number}. ${proponent.name}` : proponent.name;
       const truncatedName = proponentName.length > 45 ? proponentName.substring(0, 42) + '...' : proponentName;
       
       return [
-        medal,
+        positionText,
         truncatedName,
         proponent.isPlural ? `Plural (${proponent.partners?.length || 0} socios)` : 'Singular',
         proponent.totalScore.toFixed(2),
