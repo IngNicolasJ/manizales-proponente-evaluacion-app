@@ -106,7 +106,11 @@ export const useCurrentProcessData = () => {
             number: (p as any).number || '',
             name: p.name,
             isPlural: p.is_plural,
-            partners: (p.partners as any) || null,
+            partners: p.is_plural && p.partners ? (p.partners as any[]).map((partner: any) => ({
+              name: partner.name || '',
+              percentage: partner.percentage || 0,
+              rupRenewalDate: partner.rupRenewalDate || ''
+            })) : null,
             rup: (p.rup as any) || { renewalDate: '', complies: false },
             scoring: (p.scoring as any) || {
               womanEntrepreneurship: 0,
