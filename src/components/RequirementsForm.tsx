@@ -92,7 +92,6 @@ export const RequirementsForm: React.FC = () => {
       }
 
       const total = watchedValues.contractors?.reduce((sum, contractor) => {
-        const contribution = contractor.additionalSpecificExperienceContribution?.[criteriaIndex];
         const adjustedValue = contractor.adjustedAdditionalSpecificValue?.[criteriaIndex];
         return sum + (adjustedValue?.value || 0);
       }, 0) || 0;
