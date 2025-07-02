@@ -198,6 +198,7 @@ export type Database = {
           is_plural: boolean
           name: string
           needs_subsanation: boolean
+          number: string | null
           partners: Json | null
           process_data_id: string
           requirements: Json
@@ -215,6 +216,7 @@ export type Database = {
           is_plural?: boolean
           name: string
           needs_subsanation?: boolean
+          number?: string | null
           partners?: Json | null
           process_data_id: string
           requirements: Json
@@ -232,6 +234,7 @@ export type Database = {
           is_plural?: boolean
           name?: string
           needs_subsanation?: boolean
+          number?: string | null
           partners?: Json | null
           process_data_id?: string
           requirements?: Json

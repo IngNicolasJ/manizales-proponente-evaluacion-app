@@ -309,7 +309,7 @@ export const RequirementsForm: React.FC = () => {
             processData={processData}
             watchedValues={watchedValues}
             setValue={setValue}
-            selectedProponentName={selectedProponent.name}
+            selectedProponentName={selectedProponent.number ? `${selectedProponent.number}. ${selectedProponent.name}` : selectedProponent.name}
             onManualAmountEdit={markAsManuallyEdited}
           />
 

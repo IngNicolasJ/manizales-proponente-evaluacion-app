@@ -113,7 +113,7 @@ export const ContractsSection: React.FC<ContractsSectionProps> = ({
     if (selectedProponent.isPlural && selectedProponent.partners) {
       return selectedProponent.partners.map(partner => partner.name);
     } else {
-      return [selectedProponent.name];
+      return [selectedProponent.number ? `${selectedProponent.number}. ${selectedProponent.name}` : selectedProponent.name];
     }
   };
 
