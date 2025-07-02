@@ -32,7 +32,7 @@ export const ProponentSelector: React.FC<ProponentSelectorProps> = ({
               className="h-auto p-4 text-left justify-start"
             >
               <div>
-                <div className="font-medium">{proponent.name}</div>
+                <div className="font-medium">{proponent.number ? `${proponent.number}. ${proponent.name}` : proponent.name}</div>
                 <div className="text-sm opacity-75">
                   Puntaje: {proponent.totalScore.toFixed(2)}
                 </div>

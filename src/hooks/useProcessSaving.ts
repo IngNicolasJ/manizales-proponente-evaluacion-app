@@ -150,6 +150,7 @@ export const useProcessSaving = () => {
         const { error } = await supabase
           .from('proponents')
           .update({
+            number: proponent.number || '',
             name: proponent.name,
             is_plural: proponent.isPlural || false,
             partners: proponent.partners || null,
@@ -176,6 +177,7 @@ export const useProcessSaving = () => {
             id: proponent.id,
             user_id: user.id,
             process_data_id: specificProcessId,
+            number: proponent.number || '',
             name: proponent.name,
             is_plural: proponent.isPlural || false,
             partners: proponent.partners || null,

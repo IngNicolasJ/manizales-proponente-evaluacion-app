@@ -183,7 +183,7 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
 
       doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
-      doc.text(`${proponentIndex + 1}. ${proponent.name}`, 20, currentY);
+      doc.text(`${proponent.number ? `${proponent.number}. ` : `${proponentIndex + 1}. `}${proponent.name}`, 20, currentY);
       currentY += 10;
 
       if (proponent.contractors && proponent.contractors.length > 0) {
@@ -254,7 +254,7 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
         
         doc.setFontSize(12);
         doc.setFont(undefined, 'bold');
-        doc.text(`${proponent.name}:`, 20, subsanationY);
+        doc.text(`${proponent.number ? `${proponent.number}. ` : ''}${proponent.name}:`, 20, subsanationY);
         subsanationY += 10;
         
         if (Array.isArray(proponent.subsanationDetails)) {

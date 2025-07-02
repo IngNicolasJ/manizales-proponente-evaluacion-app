@@ -29,7 +29,7 @@ export const ProponentsList: React.FC<ProponentsListProps> = ({
           {proponents.map((proponent) => (
             <div key={proponent.id} className="flex items-center justify-between p-4 border rounded-lg">
               <div>
-                <h4 className="font-medium">{proponent.name}</h4>
+                <h4 className="font-medium">{proponent.number ? `${proponent.number}. ${proponent.name}` : proponent.name}</h4>
                 <div className="text-sm text-muted-foreground">
                   Puntaje total: <span className="font-semibold">{proponent.totalScore.toFixed(2)}</span>
                   {proponent.isPlural && (

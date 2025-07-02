@@ -57,6 +57,7 @@ export interface Contractor {
 
 export interface Proponent {
   id: string;
+  number: string;
   name: string;
   isPlural: boolean;
   partners?: Array<{

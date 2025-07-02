@@ -103,6 +103,7 @@ export const useCurrentProcessData = () => {
           // Convertir los datos de los proponentes al formato esperado
           const formattedProponents: Proponent[] = proponentsData.map(p => ({
             id: p.id,
+            number: (p as any).number || '',
             name: p.name,
             isPlural: p.is_plural,
             partners: (p.partners as any) || null,

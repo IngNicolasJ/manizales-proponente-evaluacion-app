@@ -71,6 +71,7 @@ export const ProponentScoringForm: React.FC = () => {
 
     const newProponent: Proponent = {
       id: uuidv4(),
+      number: data.number,
       name: data.name,
       isPlural: data.isPlural,
       partners: data.isPlural ? data.partners.map(partner => ({
@@ -120,6 +121,7 @@ export const ProponentScoringForm: React.FC = () => {
       data.scoring.nationalIndustrySupport;
 
     const updatedProponent: Partial<Proponent> = {
+      number: data.number,
       name: data.name,
       isPlural: data.isPlural,
       partners: data.isPlural ? data.partners.map(partner => ({
@@ -170,7 +172,7 @@ export const ProponentScoringForm: React.FC = () => {
     if (!proponent) return undefined;
 
     return {
-      number: '',
+      number: proponent.number,
       name: proponent.name,
       isPlural: proponent.isPlural,
       rupRenewalDate: proponent.rup.renewalDate,

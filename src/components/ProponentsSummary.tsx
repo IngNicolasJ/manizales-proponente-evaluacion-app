@@ -242,7 +242,7 @@ export const ProponentsSummary: React.FC<ProponentsSummaryProps> = ({
                         {index + 1}
                       </div>
                       <div>
-                        <h4 className="font-semibold">{proponent.name}</h4>
+                        <h4 className="font-semibold">{proponent.number ? `${proponent.number}. ${proponent.name}` : proponent.name}</h4>
                         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                           {proponent.isPlural && (
                             <Badge variant="outline" className="text-xs">

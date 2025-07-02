@@ -197,7 +197,7 @@ export const ProcessDetailModal: React.FC<ProcessDetailModalProps> = ({
                     {processProponents.map((proponent) => (
                       <div key={proponent.id} className="flex justify-between items-center p-2 border rounded">
                         <div>
-                          <span className="font-medium">{proponent.name}</span>
+                          <span className="font-medium">{proponent.number ? `${proponent.number}. ${proponent.name}` : proponent.name}</span>
                           {proponent.is_plural && (
                             <Badge variant="secondary" className="ml-2">Plural</Badge>
                           )}
