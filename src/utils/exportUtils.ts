@@ -145,24 +145,37 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
     doc.text(`Número: ${processData.processNumber}`, 25, 80);
-    doc.text(`Objeto: ${processData.processObject.length > 80 ? processData.processObject.substring(0, 80) + '...' : processData.processObject}`, 25, 88);
-    doc.text(`Fecha de cierre: ${processData.closingDate ? formatLocalDate(processData.closingDate) : 'No definida'}`, 25, 96);
+    
+    // Manejar texto largo del objeto del proceso
+    const objectText = `Objeto: ${processData.processObject}`;
+    const objectLines = doc.splitTextToSize(objectText, 160);
+    let currentObjectY = 88;
+    objectLines.forEach((line: string) => {
+      doc.text(line, 25, currentObjectY);
+      currentObjectY += 6;
+    });
+    
+    doc.text(`Fecha de cierre: ${processData.closingDate ? formatLocalDate(processData.closingDate) : 'No definida'}`, 25, currentObjectY + 2);
     
     const contractValue = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(processData.totalContractValue);
-    doc.text(`Valor del contrato: ${contractValue}`, 25, 104);
+    doc.text(`Valor del contrato: ${contractValue}`, 25, currentObjectY + 10);
 
     // === RANKING DE PROPONENTES ===
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
-    doc.text('RANKING DE PROPONENTES', 20, 125);
+    doc.text('RANKING DE PROPONENTES', 20, currentObjectY + 25);
 
     const rankingData = sortedProponents.map((proponent, index) => {
       const position = index + 1;
       const medal = position === 1 ? '🥇' : position === 2 ? '🥈' : position === 3 ? '🥉' : position.toString();
       
+      // Limitar longitud del nombre para evitar desbordamiento
+      const proponentName = proponent.number ? `${proponent.number}. ${proponent.name}` : proponent.name;
+      const truncatedName = proponentName.length > 45 ? proponentName.substring(0, 42) + '...' : proponentName;
+      
       return [
         medal,
-        proponent.number ? `${proponent.number}. ${proponent.name}` : proponent.name,
+        truncatedName,
         proponent.isPlural ? `Plural (${proponent.partners?.length || 0} socios)` : 'Singular',
         proponent.totalScore.toFixed(2),
         proponent.needsSubsanation ? 'Sí' : 'No'
@@ -172,7 +185,7 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
     autoTable(doc, {
       head: [['Pos.', 'Proponente', 'Tipo', 'Puntaje Total', 'Requiere Subsanación']],
       body: rankingData,
-      startY: 130,
+      startY: currentObjectY + 30,
       styles: { 
         fontSize: 9,
         cellPadding: 3,
@@ -208,17 +221,22 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
     
     doc.setTextColor(0, 0, 0);
 
-    const scoringData = sortedProponents.map((proponent, index) => [
-      `${index + 1}°`,
-      proponent.number ? `${proponent.number}. ${proponent.name}` : proponent.name,
-      proponent.scoring.womanEntrepreneurship.toFixed(2),
-      proponent.scoring.mipyme.toFixed(2),
-      proponent.scoring.disabled.toFixed(2),
-      proponent.scoring.qualityFactor.toFixed(2),
-      proponent.scoring.environmentalQuality.toFixed(2),
-      proponent.scoring.nationalIndustrySupport.toFixed(2),
-      proponent.totalScore.toFixed(2)
-    ]);
+    const scoringData = sortedProponents.map((proponent, index) => {
+      const proponentName = proponent.number ? `${proponent.number}. ${proponent.name}` : proponent.name;
+      const truncatedName = proponentName.length > 35 ? proponentName.substring(0, 32) + '...' : proponentName;
+      
+      return [
+        `${index + 1}°`,
+        truncatedName,
+        proponent.scoring.womanEntrepreneurship.toFixed(2),
+        proponent.scoring.mipyme.toFixed(2),
+        proponent.scoring.disabled.toFixed(2),
+        proponent.scoring.qualityFactor.toFixed(2),
+        proponent.scoring.environmentalQuality.toFixed(2),
+        proponent.scoring.nationalIndustrySupport.toFixed(2),
+        proponent.totalScore.toFixed(2)
+      ];
+    });
 
     autoTable(doc, {
       head: [['Pos.', 'Proponente', 'Mujer Empres.', 'MIPYME', 'Discapacidad', 'Calidad', 'Ambiental', 'Nacional', 'TOTAL']],
@@ -280,17 +298,32 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
       doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(41, 128, 185);
-      doc.text(`${proponentIndex + 1}° LUGAR: ${proponent.number ? `${proponent.number}. ` : ''}${proponent.name}`, 20, currentY + 5);
+      
+      // Manejar nombre largo del proponente
+      const proponentTitle = `${proponentIndex + 1}° LUGAR: ${proponent.number ? `${proponent.number}. ` : ''}${proponent.name}`;
+      const titleLines = doc.splitTextToSize(proponentTitle, 170);
+      let titleY = currentY + 5;
+      titleLines.forEach((line: string) => {
+        doc.text(line, 20, titleY);
+        titleY += 6;
+      });
       
       doc.setFontSize(10);
       doc.setFont(undefined, 'normal');
       doc.setTextColor(0, 0, 0);
-      doc.text(`Tipo: ${proponent.isPlural ? 'Plural' : 'Singular'} | Puntaje: ${proponent.totalScore.toFixed(2)} pts`, 20, currentY + 12);
+      doc.text(`Tipo: ${proponent.isPlural ? 'Plural' : 'Singular'} | Puntaje: ${proponent.totalScore.toFixed(2)} pts`, 20, titleY + 2);
       
       // Mostrar información de socios si es plural
       if (proponent.isPlural && proponent.partners && proponent.partners.length > 0) {
-        doc.text(`Socios: ${proponent.partners.map(p => p.name).join(', ')}`, 20, currentY + 18);
-        currentY += 30;
+        // Manejar lista larga de socios
+        const partnersText = `Socios: ${proponent.partners.map(p => p.name).join(', ')}`;
+        const partnersLines = doc.splitTextToSize(partnersText, 170);
+        let partnersY = titleY + 8;
+        partnersLines.forEach((line: string) => {
+          doc.text(line, 20, partnersY);
+          partnersY += 5;
+        });
+        currentY = partnersY + 5;
         
         // Detalles de RUP de socios
         doc.setFontSize(9);
@@ -298,13 +331,17 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
         currentY += 5;
         proponent.partners.forEach(partner => {
           if (partner.rupRenewalDate) {
-            doc.text(`• ${partner.name}: ${formatLocalDate(partner.rupRenewalDate)}`, 30, currentY);
-            currentY += 4;
+            const rupText = `• ${partner.name}: ${formatLocalDate(partner.rupRenewalDate)}`;
+            const rupLines = doc.splitTextToSize(rupText, 160);
+            rupLines.forEach((line: string) => {
+              doc.text(line, 30, currentY);
+              currentY += 4;
+            });
           }
         });
         currentY += 5;
       } else {
-        currentY += 25;
+        currentY = titleY + 15;
       }
 
       if (proponent.contractors && proponent.contractors.length > 0) {
@@ -366,14 +403,19 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
     
     doc.setTextColor(0, 0, 0);
 
-    const requirementsData = sortedProponents.map((proponent, index) => [
-      `${index + 1}°`,
-      proponent.number ? `${proponent.number}. ${proponent.name}` : proponent.name,
-      proponent.requirements?.generalExperience ? '✓ Sí' : '✗ No',
-      proponent.requirements?.specificExperience ? '✓ Sí' : '✗ No',
-      proponent.requirements?.professionalCard ? '✓ Sí' : '✗ No',
-      proponent.rup?.complies ? '✓ Sí' : '✗ No'
-    ]);
+    const requirementsData = sortedProponents.map((proponent, index) => {
+      const proponentName = proponent.number ? `${proponent.number}. ${proponent.name}` : proponent.name;
+      const truncatedName = proponentName.length > 35 ? proponentName.substring(0, 32) + '...' : proponentName;
+      
+      return [
+        `${index + 1}°`,
+        truncatedName,
+        proponent.requirements?.generalExperience ? '✓ Sí' : '✗ No',
+        proponent.requirements?.specificExperience ? '✓ Sí' : '✗ No',
+        proponent.requirements?.professionalCard ? '✓ Sí' : '✗ No',
+        proponent.rup?.complies ? '✓ Sí' : '✗ No'
+      ];
+    });
 
     autoTable(doc, {
       head: [['Pos.', 'Proponente', 'Exp. General', 'Exp. Específica', 'Tarjeta Prof.', 'RUP Vigente']],
@@ -407,10 +449,17 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
     
     if (proponentsWithSubsanation.length > 0) {
       doc.addPage();
-      doc.setFontSize(14);
-      doc.text('DETALLES DE SUBSANACIÓN', 20, 20);
       
-      let subsanationY = 30;
+      // Header de la página
+      doc.setFillColor(41, 128, 185);
+      doc.rect(0, 0, 210, 30, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text('DETALLES DE SUBSANACIÓN', 105, 20, { align: 'center' });
+      
+      doc.setTextColor(0, 0, 0);
+      let subsanationY = 45;
       
       proponentsWithSubsanation.forEach(proponent => {
         if (subsanationY > 250) {
@@ -418,21 +467,43 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
           subsanationY = 20;
         }
         
+        // Card del proponente
+        doc.setDrawColor(220, 53, 69);
+        doc.setFillColor(254, 242, 242);
+        doc.rect(15, subsanationY - 5, 180, 20, 'FD');
+        
         doc.setFontSize(12);
         doc.setFont(undefined, 'bold');
-        doc.text(`${proponent.number ? `${proponent.number}. ` : ''}${proponent.name}:`, 20, subsanationY);
-        subsanationY += 10;
+        doc.setTextColor(220, 53, 69);
+        
+        // Manejar nombre largo del proponente
+        const proponentTitle = `${proponent.number ? `${proponent.number}. ` : ''}${proponent.name}`;
+        const titleLines = doc.splitTextToSize(proponentTitle, 170);
+        let titleY = subsanationY + 5;
+        titleLines.forEach((line: string) => {
+          doc.text(line, 20, titleY);
+          titleY += 6;
+        });
+        subsanationY = titleY + 10;
         
         if (Array.isArray(proponent.subsanationDetails)) {
           proponent.subsanationDetails.forEach(detail => {
             doc.setFont(undefined, 'normal');
-            doc.setFontSize(10);
-            doc.text(`• ${detail}`, 25, subsanationY);
-            subsanationY += 8;
+            doc.setFontSize(9);
+            doc.setTextColor(0, 0, 0);
+            
+            // Manejar texto largo de subsanación
+            const detailText = `• ${detail}`;
+            const detailLines = doc.splitTextToSize(detailText, 170);
+            detailLines.forEach((line: string) => {
+              doc.text(line, 25, subsanationY);
+              subsanationY += 5;
+            });
+            subsanationY += 2;
           });
         }
         
-        subsanationY += 5;
+        subsanationY += 10;
       });
     }
 
