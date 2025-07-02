@@ -133,7 +133,11 @@ export const ContractsSection: React.FC<ContractsSectionProps> = ({
       <CardContent>
         {fields.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            No hay contratos registrados. Haga clic en "Agregar contrato" para comenzar.
+            <p className="mb-4">No hay contratos registrados.</p>
+            <Button type="button" variant="outline" onClick={addContractor}>
+              <Plus className="w-4 h-4 mr-2" />
+              Agregar primer contrato
+            </Button>
           </div>
         ) : (
           <div className="space-y-6">
@@ -152,6 +156,12 @@ export const ContractsSection: React.FC<ContractsSectionProps> = ({
                 onClassifierCodeChange={(code, checked) => handleClassifierCodeChange(index, code, checked)}
               />
             ))}
+            <div className="flex justify-center pt-4">
+              <Button type="button" variant="outline" onClick={addContractor}>
+                <Plus className="w-4 h-4 mr-2" />
+                Agregar otro contrato
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>
