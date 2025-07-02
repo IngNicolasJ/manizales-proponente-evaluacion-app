@@ -99,19 +99,33 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
     console.log('🔄 Resetting form with values:', newValues);
     console.log('🔍 Partners in reset:', newValues.partners);
     reset(newValues);
-    
-    // Sincronizar useFieldArray con los partners
-    if (newValues.partners && newValues.partners.length > 0) {
-      // Limpiar fields existentes
+  }, [editingProponent, currentProponent?.id]); // Solo usar el ID del proponente como dependencia
+
+  // Separar el efecto para sincronizar useFieldArray 
+  useEffect(() => {
+    if (currentProponent?.partners && currentProponent.partners.length > 0) {
+      // Solo sincronizar si hay cambios reales en los partners
+      if (fields.length !== currentProponent.partners.length) {
+        // Limpiar fields existentes
+        while (fields.length > 0) {
+          remove(0);
+        }
+        // Agregar los partners uno por uno
+        currentProponent.partners.forEach(partner => {
+          append({
+            name: partner.name,
+            percentage: partner.percentage,
+            rupRenewalDate: partner.rupRenewalDate || ''
+          });
+        });
+      }
+    } else if (fields.length > 0) {
+      // Si no hay partners pero hay fields, limpiarlos
       while (fields.length > 0) {
         remove(0);
       }
-      // Agregar los partners uno por uno
-      newValues.partners.forEach(partner => {
-        append(partner);
-      });
     }
-  }, [editingProponent, currentProponent, reset, fields.length, remove, append]);
+  }, [currentProponent?.id, currentProponent?.partners?.length, append, remove]); // Dependencias más específicas
 
   return (
     <Card className="mb-6">
