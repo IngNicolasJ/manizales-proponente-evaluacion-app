@@ -63,6 +63,7 @@ export interface Proponent {
   partners?: Array<{
     name: string;
     percentage: number;
+    rupRenewalDate?: string;
   }>;
   rup: {
     renewalDate: string;

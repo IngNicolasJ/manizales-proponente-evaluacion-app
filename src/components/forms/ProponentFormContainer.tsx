@@ -46,7 +46,7 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
         partners: currentProponent.partners?.map(partner => ({
           name: partner.name,
           percentage: partner.percentage,
-          rupRenewalDate: '' // Los partners no tienen fecha RUP individual en el modelo actual
+          rupRenewalDate: partner.rupRenewalDate || ''
         })) || [],
         rupRenewalDate: currentProponent.rup?.renewalDate || '',
         scoring: {
