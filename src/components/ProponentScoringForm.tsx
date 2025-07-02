@@ -76,7 +76,8 @@ export const ProponentScoringForm: React.FC = () => {
       isPlural: data.isPlural,
       partners: data.isPlural ? data.partners.map(partner => ({
         name: partner.name || '',
-        percentage: partner.percentage || 0
+        percentage: partner.percentage || 0,
+        rupRenewalDate: partner.rupRenewalDate || ''
       })) : undefined,
       rup: {
         renewalDate: data.rupRenewalDate,
@@ -126,7 +127,8 @@ export const ProponentScoringForm: React.FC = () => {
       isPlural: data.isPlural,
       partners: data.isPlural ? data.partners.map(partner => ({
         name: partner.name || '',
-        percentage: partner.percentage || 0
+        percentage: partner.percentage || 0,
+        rupRenewalDate: partner.rupRenewalDate || ''
       })) : undefined,
       rup: {
         renewalDate: data.rupRenewalDate,
@@ -180,7 +182,7 @@ export const ProponentScoringForm: React.FC = () => {
       partners: proponent.isPlural && proponent.partners ? proponent.partners.map(partner => ({
         name: partner.name,
         percentage: partner.percentage,
-        rupRenewalDate: ''
+        rupRenewalDate: partner.rupRenewalDate || ''
       })) : []
     };
   };

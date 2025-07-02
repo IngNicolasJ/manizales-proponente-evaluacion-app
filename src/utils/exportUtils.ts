@@ -114,77 +114,198 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
     const doc = new jsPDF();
     const sortedProponents = [...proponents].sort((a, b) => b.totalScore - a.totalScore);
 
-    // Título principal
-    doc.setFontSize(16);
-    doc.text('RESUMEN DE EVALUACIÓN', 20, 20);
+    // === PORTADA ===
+    // Fondo azul para el header
+    doc.setFillColor(41, 128, 185);
+    doc.rect(0, 0, 210, 50, 'F');
+
+    // Título principal en blanco
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
+    doc.text('RESUMEN DE EVALUACIÓN', 105, 25, { align: 'center' });
     
-    // Información del proceso
     doc.setFontSize(12);
-    doc.text(`Proceso: ${processData.processNumber}`, 20, 35);
-    doc.text(`Objeto: ${processData.processObject}`, 20, 45);
-    doc.text(`Fecha: ${processData.closingDate ? formatLocalDate(processData.closingDate) : 'No definida'}`, 20, 55);
+    doc.setFont(undefined, 'normal');
+    doc.text('Sistema de Evaluación de Proponentes', 105, 35, { align: 'center' });
+
+    // Volver texto a negro
+    doc.setTextColor(0, 0, 0);
+    
+    // === INFORMACIÓN DEL PROCESO ===
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('INFORMACIÓN DEL PROCESO', 20, 65);
+    
+    // Card de información del proceso
+    doc.setDrawColor(200, 200, 200);
+    doc.setFillColor(250, 250, 250);
+    doc.rect(20, 70, 170, 40, 'FD');
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Número: ${processData.processNumber}`, 25, 80);
+    doc.text(`Objeto: ${processData.processObject.length > 80 ? processData.processObject.substring(0, 80) + '...' : processData.processObject}`, 25, 88);
+    doc.text(`Fecha de cierre: ${processData.closingDate ? formatLocalDate(processData.closingDate) : 'No definida'}`, 25, 96);
     
     const contractValue = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(processData.totalContractValue);
-    doc.text(`Valor: ${contractValue}`, 20, 65);
+    doc.text(`Valor del contrato: ${contractValue}`, 25, 104);
 
-    // Tabla de ranking
-    const rankingData = sortedProponents.map((proponent, index) => [
-      (index + 1).toString(),
-      proponent.name,
-      proponent.isPlural ? 'Plural' : 'Singular',
-      proponent.totalScore.toFixed(2),
-      proponent.needsSubsanation ? 'Sí' : 'No'
-    ]);
+    // === RANKING DE PROPONENTES ===
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('RANKING DE PROPONENTES', 20, 125);
 
-    autoTable(doc, {
-      head: [['Pos.', 'Proponente', 'Tipo', 'Puntaje', 'Subsanación']],
-      body: rankingData,
-      startY: 75,
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [41, 128, 185] }
+    const rankingData = sortedProponents.map((proponent, index) => {
+      const position = index + 1;
+      const medal = position === 1 ? '🥇' : position === 2 ? '🥈' : position === 3 ? '🥉' : position.toString();
+      
+      return [
+        medal,
+        proponent.number ? `${proponent.number}. ${proponent.name}` : proponent.name,
+        proponent.isPlural ? `Plural (${proponent.partners?.length || 0} socios)` : 'Singular',
+        proponent.totalScore.toFixed(2),
+        proponent.needsSubsanation ? 'Sí' : 'No'
+      ];
     });
 
-    // Nueva página para desglose de puntajes
-    doc.addPage();
-    doc.setFontSize(14);
-    doc.text('DESGLOSE DE PUNTAJES', 20, 20);
+    autoTable(doc, {
+      head: [['Pos.', 'Proponente', 'Tipo', 'Puntaje Total', 'Requiere Subsanación']],
+      body: rankingData,
+      startY: 130,
+      styles: { 
+        fontSize: 9,
+        cellPadding: 3,
+        lineColor: [200, 200, 200],
+        lineWidth: 0.1
+      },
+      headStyles: { 
+        fillColor: [41, 128, 185],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [248, 249, 250]
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 15 },
+        2: { halign: 'center', cellWidth: 30 },
+        3: { halign: 'center', cellWidth: 25 },
+        4: { halign: 'center', cellWidth: 30 }
+      }
+    });
 
-    const scoringData = sortedProponents.map(proponent => [
-      proponent.name,
+    // === NUEVA PÁGINA: DESGLOSE DE PUNTAJES ===
+    doc.addPage();
+    
+    // Header de la página
+    doc.setFillColor(41, 128, 185);
+    doc.rect(0, 0, 210, 30, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text('DESGLOSE DE PUNTAJES', 105, 20, { align: 'center' });
+    
+    doc.setTextColor(0, 0, 0);
+
+    const scoringData = sortedProponents.map((proponent, index) => [
+      `${index + 1}°`,
+      proponent.number ? `${proponent.number}. ${proponent.name}` : proponent.name,
       proponent.scoring.womanEntrepreneurship.toFixed(2),
       proponent.scoring.mipyme.toFixed(2),
       proponent.scoring.disabled.toFixed(2),
       proponent.scoring.qualityFactor.toFixed(2),
       proponent.scoring.environmentalQuality.toFixed(2),
-      proponent.scoring.nationalIndustrySupport.toFixed(2)
+      proponent.scoring.nationalIndustrySupport.toFixed(2),
+      proponent.totalScore.toFixed(2)
     ]);
 
     autoTable(doc, {
-      head: [['Proponente', 'Mujer', 'MIPYME', 'Discap.', 'Calidad', 'Ambiental', 'Nacional']],
+      head: [['Pos.', 'Proponente', 'Mujer Empres.', 'MIPYME', 'Discapacidad', 'Calidad', 'Ambiental', 'Nacional', 'TOTAL']],
       body: scoringData,
-      startY: 30,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [41, 128, 185] }
+      startY: 40,
+      styles: { 
+        fontSize: 8,
+        cellPadding: 2,
+        lineColor: [200, 200, 200],
+        lineWidth: 0.1
+      },
+      headStyles: { 
+        fillColor: [41, 128, 185],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 7
+      },
+      alternateRowStyles: {
+        fillColor: [248, 249, 250]
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 15 },
+        2: { halign: 'center', cellWidth: 15 },
+        3: { halign: 'center', cellWidth: 15 },
+        4: { halign: 'center', cellWidth: 15 },
+        5: { halign: 'center', cellWidth: 15 },
+        6: { halign: 'center', cellWidth: 15 },
+        7: { halign: 'center', cellWidth: 15 },
+        8: { halign: 'center', cellWidth: 18, fontStyle: 'bold', fillColor: [230, 240, 250] }
+      }
     });
 
-    // Nueva página para contratos detallados
+    // === NUEVA PÁGINA: INFORMACIÓN DETALLADA ===
     doc.addPage();
-    doc.setFontSize(14);
-    doc.text('CONTRATOS APORTADOS POR PROPONENTE', 20, 20);
-
-    let currentY = 30;
+    
+    // Header de la página
+    doc.setFillColor(41, 128, 185);
+    doc.rect(0, 0, 210, 30, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text('INFORMACIÓN DETALLADA DE PROPONENTES', 105, 20, { align: 'center' });
+    
+    doc.setTextColor(0, 0, 0);
+    let currentY = 45;
     
     sortedProponents.forEach((proponent, proponentIndex) => {
       // Verificar si necesitamos nueva página
-      if (currentY > 250) {
+      if (currentY > 240) {
         doc.addPage();
         currentY = 20;
       }
 
+      // Card del proponente
+      doc.setDrawColor(41, 128, 185);
+      doc.setFillColor(245, 248, 252);
+      doc.rect(15, currentY - 5, 180, 25, 'FD');
+
       doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
-      doc.text(`${proponent.number ? `${proponent.number}. ` : `${proponentIndex + 1}. `}${proponent.name}`, 20, currentY);
-      currentY += 10;
+      doc.setTextColor(41, 128, 185);
+      doc.text(`${proponentIndex + 1}° LUGAR: ${proponent.number ? `${proponent.number}. ` : ''}${proponent.name}`, 20, currentY + 5);
+      
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Tipo: ${proponent.isPlural ? 'Plural' : 'Singular'} | Puntaje: ${proponent.totalScore.toFixed(2)} pts`, 20, currentY + 12);
+      
+      // Mostrar información de socios si es plural
+      if (proponent.isPlural && proponent.partners && proponent.partners.length > 0) {
+        doc.text(`Socios: ${proponent.partners.map(p => p.name).join(', ')}`, 20, currentY + 18);
+        currentY += 30;
+        
+        // Detalles de RUP de socios
+        doc.setFontSize(9);
+        doc.text('Fechas renovación RUP socios:', 25, currentY);
+        currentY += 5;
+        proponent.partners.forEach(partner => {
+          if (partner.rupRenewalDate) {
+            doc.text(`• ${partner.name}: ${formatLocalDate(partner.rupRenewalDate)}`, 30, currentY);
+            currentY += 4;
+          }
+        });
+        currentY += 5;
+      } else {
+        currentY += 25;
+      }
 
       if (proponent.contractors && proponent.contractors.length > 0) {
         const contractsData = proponent.contractors.map((contract, index) => [
@@ -198,42 +319,87 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
         ]);
 
         autoTable(doc, {
-          head: [['#', 'Entidad', 'Número', 'Valor SMMLV', 'Participación', 'Cumple', 'Observaciones']],
+          head: [['#', 'Entidad Contratante', 'No. Contrato', 'Valor SMMLV', 'Part. %', 'Cumple', 'Observaciones']],
           body: contractsData,
           startY: currentY,
-          styles: { fontSize: 8 },
-          headStyles: { fillColor: [52, 152, 219] },
-          margin: { left: 25 }
+          styles: { 
+            fontSize: 7,
+            cellPadding: 2,
+            lineColor: [200, 200, 200],
+            lineWidth: 0.1
+          },
+          headStyles: { 
+            fillColor: [52, 152, 219],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold'
+          },
+          margin: { left: 25, right: 25 },
+          tableWidth: 'wrap',
+          columnStyles: {
+            0: { cellWidth: 10 },
+            3: { halign: 'center' },
+            4: { halign: 'center' },
+            5: { halign: 'center' }
+          }
         });
 
-        currentY = (doc as any).lastAutoTable.finalY + 15;
+        currentY = (doc as any).lastAutoTable.finalY + 20;
       } else {
         doc.setFont(undefined, 'normal');
-        doc.setFontSize(10);
-        doc.text('No se registraron contratos para este proponente', 25, currentY);
-        currentY += 15;
+        doc.setFontSize(9);
+        doc.setTextColor(128, 128, 128);
+        doc.text('📋 Sin contratos aportados', 25, currentY);
+        currentY += 20;
       }
     });
 
-    // Nueva página para requisitos habilitantes
+    // === NUEVA PÁGINA: REQUISITOS HABILITANTES ===
     doc.addPage();
-    doc.setFontSize(14);
-    doc.text('REQUISITOS HABILITANTES', 20, 20);
+    
+    // Header de la página
+    doc.setFillColor(41, 128, 185);
+    doc.rect(0, 0, 210, 30, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text('REQUISITOS HABILITANTES', 105, 20, { align: 'center' });
+    
+    doc.setTextColor(0, 0, 0);
 
-    const requirementsData = sortedProponents.map(proponent => [
-      proponent.name,
-      proponent.requirements?.generalExperience ? 'Sí' : 'No',
-      proponent.requirements?.specificExperience ? 'Sí' : 'No',
-      proponent.requirements?.professionalCard ? 'Sí' : 'No',
-      proponent.rup?.complies ? 'Sí' : 'No'
+    const requirementsData = sortedProponents.map((proponent, index) => [
+      `${index + 1}°`,
+      proponent.number ? `${proponent.number}. ${proponent.name}` : proponent.name,
+      proponent.requirements?.generalExperience ? '✓ Sí' : '✗ No',
+      proponent.requirements?.specificExperience ? '✓ Sí' : '✗ No',
+      proponent.requirements?.professionalCard ? '✓ Sí' : '✗ No',
+      proponent.rup?.complies ? '✓ Sí' : '✗ No'
     ]);
 
     autoTable(doc, {
-      head: [['Proponente', 'Exp. General', 'Exp. Específica', 'T. Profesional', 'RUP']],
+      head: [['Pos.', 'Proponente', 'Exp. General', 'Exp. Específica', 'Tarjeta Prof.', 'RUP Vigente']],
       body: requirementsData,
-      startY: 30,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [41, 128, 185] }
+      startY: 40,
+      styles: { 
+        fontSize: 9,
+        cellPadding: 3,
+        lineColor: [200, 200, 200],
+        lineWidth: 0.1
+      },
+      headStyles: { 
+        fillColor: [41, 128, 185],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [248, 249, 250]
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 15 },
+        2: { halign: 'center', cellWidth: 25 },
+        3: { halign: 'center', cellWidth: 25 },
+        4: { halign: 'center', cellWidth: 25 },
+        5: { halign: 'center', cellWidth: 25 }
+      }
     });
 
     // Agregar detalles de subsanación si existen
