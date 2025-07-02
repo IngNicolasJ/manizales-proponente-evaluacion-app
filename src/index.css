@@ -3,99 +3,99 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Diseño profesional - Alcaldía de Manizales */
+/* Paleta oficial Alcaldía de Manizales - Gov.co */
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 220 14% 18%;
+    --background: 0 0% 100%;
+    --foreground: 215 28% 17%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 14% 18%;
+    --card-foreground: 215 28% 17%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 14% 18%;
+    --popover-foreground: 215 28% 17%;
 
-    --primary: 213 94% 40%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 214 56% 54%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 9% 46%;
+    --secondary: 210 10% 93%;
+    --secondary-foreground: 215 28% 17%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 210 15% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 213 94% 40%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 214 56% 54%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 72% 56%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 213 94% 40%;
+    --border: 214 15% 88%;
+    --input: 214 15% 88%;
+    --ring: 214 56% 54%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    --success: 142 70% 45%;
-    --success-foreground: 0 0% 98%;
+    --success: 122 70% 54%;
+    --success-foreground: 0 0% 100%;
     
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 98%;
+    --warning: 35 91% 52%;
+    --warning-foreground: 0 0% 100%;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 14% 18%;
-    --sidebar-primary: 213 94% 40%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 220 9% 46%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 213 94% 40%;
+    --sidebar-foreground: 215 28% 17%;
+    --sidebar-primary: 214 56% 54%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 10% 93%;
+    --sidebar-accent-foreground: 215 28% 17%;
+    --sidebar-border: 214 15% 88%;
+    --sidebar-ring: 214 56% 54%;
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --background: 215 28% 17%;
+    --foreground: 0 0% 100%;
 
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
+    --card: 215 28% 17%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 215 28% 17%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 213 94% 50%;
-    --primary-foreground: 222 47% 11%;
+    --primary: 214 56% 60%;
+    --primary-foreground: 215 28% 17%;
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 215 25% 27%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217 33% 17%;
+    --muted: 215 25% 27%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 213 94% 50%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 214 56% 60%;
+    --accent-foreground: 215 28% 17%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 56%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 213 94% 50%;
+    --border: 215 25% 27%;
+    --input: 215 25% 27%;
+    --ring: 214 56% 60%;
 
-    --success: 142 70% 45%;
-    --success-foreground: 210 40% 98%;
+    --success: 122 70% 54%;
+    --success-foreground: 0 0% 100%;
     
-    --warning: 38 92% 50%;
-    --warning-foreground: 210 40% 98%;
+    --warning: 35 91% 52%;
+    --warning-foreground: 0 0% 100%;
 
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 213 94% 50%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 213 94% 50%;
+    --sidebar-background: 215 28% 17%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 214 56% 60%;
+    --sidebar-primary-foreground: 215 28% 17%;
+    --sidebar-accent: 215 25% 27%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 215 25% 27%;
+    --sidebar-ring: 214 56% 60%;
   }
 }
 
@@ -105,7 +105,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-inter;
   }
 }
 
@@ -132,5 +132,24 @@
   
   .border-warning {
     border-color: hsl(var(--warning));
+  }
+}
+
+/* Estilos adicionales Alcaldía de Manizales */
+@layer components {
+  .gov-header {
+    @apply bg-primary text-primary-foreground;
+  }
+  
+  .gov-card {
+    @apply bg-card border border-border shadow-sm rounded-lg;
+  }
+  
+  .gov-button {
+    @apply bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-md transition-colors;
+  }
+  
+  .gov-input {
+    @apply border-input bg-background placeholder:text-muted-foreground focus:border-primary focus:ring-primary;
   }
 }
