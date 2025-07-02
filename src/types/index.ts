@@ -28,7 +28,6 @@ export interface ProcessData {
 
 export interface Contractor {
   name: string;
-  order: number;
   rupConsecutive: string;
   requiredExperience: 'general' | 'specific' | 'both';
   contractingEntity: string;

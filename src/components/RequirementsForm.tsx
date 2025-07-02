@@ -192,7 +192,7 @@ export const RequirementsForm: React.FC = () => {
     const nonCompliantContracts = data.contractors.filter(contractor => !contractor.contractComplies);
     
     // Validar campos requeridos solo en contratos que deben cumplir
-    const hasIncompleteRequiredContracts = data.contractors.some(contractor => {
+    const hasIncompleteRequiredContracts = data.contractors.some((contractor, index) => {
       // Si el contrato ya está marcado como no cumple, no validar campos individuales
       if (!contractor.contractComplies) return false;
       
@@ -204,7 +204,7 @@ export const RequirementsForm: React.FC = () => {
       const privateContractIncomplete = contractor.contractType === 'private' && 
         !contractor.privateDocumentsComplete;
       
-      console.log(`Contract ${contractor.order} required fields validation:`, {
+      console.log(`Contract ${index + 1} required fields validation:`, {
         contractComplies: contractor.contractComplies,
         contractingEntity: !!contractor.contractingEntity?.trim(),
         contractNumber: !!contractor.contractNumber?.trim(),
@@ -255,11 +255,11 @@ export const RequirementsForm: React.FC = () => {
       subsanationDetails.push(`No cumple ${criteria.name}`);
     });
     
-    nonCompliantContracts.forEach((contractor) => {
+    nonCompliantContracts.forEach((contractor, index) => {
       if (contractor.nonComplianceReason) {
-        subsanationDetails.push(`Contrato #${contractor.order}: ${contractor.nonComplianceReason}`);
+        subsanationDetails.push(`Contrato #${index + 1}: ${contractor.nonComplianceReason}`);
       } else {
-        subsanationDetails.push(`Contrato #${contractor.order}: No cumple requisitos`);
+        subsanationDetails.push(`Contrato #${index + 1}: No cumple requisitos`);
       }
     });
 

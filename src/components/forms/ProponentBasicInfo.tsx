@@ -24,6 +24,18 @@ export const ProponentBasicInfo: React.FC<ProponentBasicInfoProps> = ({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
+        <Label htmlFor="number">Número del proponente *</Label>
+        <Input
+          id="number"
+          {...register('number', { required: 'Número es requerido' })}
+          placeholder="Número del proponente"
+        />
+        {errors.number && (
+          <p className="text-sm text-destructive">{errors.number.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="name">Nombre del proponente *</Label>
         <Input
           id="name"

@@ -58,14 +58,6 @@ export const ContractForm: React.FC<ContractFormProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label>No. de orden</Label>
-          <Input
-            type="number"
-            {...register(`contractors.${index}.order`, { valueAsNumber: true })}
-          />
-        </div>
-
-        <div className="space-y-2">
           <Label>Consecutivo en RUP</Label>
           <Input {...register(`contractors.${index}.rupConsecutive`)} />
         </div>

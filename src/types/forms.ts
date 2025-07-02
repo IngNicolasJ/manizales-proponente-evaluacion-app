@@ -1,5 +1,6 @@
 
 export interface ProponentFormData {
+  number: string;
   name: string;
   isPlural: boolean;
   partners: Array<{
@@ -32,7 +33,6 @@ export interface RequirementsFormData {
   }>;
   contractors: Array<{
     name: string;
-    order: number;
     rupConsecutive: string;
     requiredExperience: 'general' | 'specific' | 'both';
     contractingEntity: string;

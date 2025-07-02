@@ -46,7 +46,6 @@ export const ContractsSection: React.FC<ContractsSectionProps> = ({
 
     append({
       name: '',
-      order: fields.length + 1,
       rupConsecutive: '',
       requiredExperience: 'general',
       contractingEntity: '',

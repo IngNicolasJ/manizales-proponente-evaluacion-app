@@ -57,10 +57,10 @@ export const exportToExcel = (processData: ProcessData, proponents: Proponent[])
     const contractsData = [];
     sortedProponents.forEach(proponent => {
       if (proponent.contractors && proponent.contractors.length > 0) {
-        proponent.contractors.forEach(contract => {
+        proponent.contractors.forEach((contract, index) => {
           contractsData.push([
             proponent.name,
-            contract.order || '',
+            index + 1,
             contract.contractingEntity || '',
             contract.contractNumber || '',
             contract.object || '',
@@ -187,8 +187,8 @@ export const exportToPDF = (processData: ProcessData, proponents: Proponent[]) =
       currentY += 10;
 
       if (proponent.contractors && proponent.contractors.length > 0) {
-        const contractsData = proponent.contractors.map(contract => [
-          contract.order?.toString() || '',
+        const contractsData = proponent.contractors.map((contract, index) => [
+          (index + 1).toString(),
           contract.contractingEntity || '',
           contract.contractNumber || '',
           (contract.totalValueSMMLV || 0).toString(),

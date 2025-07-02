@@ -40,6 +40,7 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
     if (currentProponent) {
       console.log('🔄 Loading existing proponent data:', currentProponent.name);
       return {
+        number: '',
         name: currentProponent.name,
         isPlural: currentProponent.isPlural,
         partners: currentProponent.partners?.map(partner => ({
@@ -62,6 +63,7 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
     }
     
     return {
+      number: initialValues?.number || '',
       name: initialValues?.name || '',
       isPlural: initialValues?.isPlural || false,
       partners: initialValues?.partners || [],

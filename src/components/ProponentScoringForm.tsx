@@ -170,6 +170,7 @@ export const ProponentScoringForm: React.FC = () => {
     if (!proponent) return undefined;
 
     return {
+      number: '',
       name: proponent.name,
       isPlural: proponent.isPlural,
       rupRenewalDate: proponent.rup.renewalDate,
