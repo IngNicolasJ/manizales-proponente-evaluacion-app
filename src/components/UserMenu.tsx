@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,10 +10,38 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, LogOut, Settings, Shield, ChevronDown, RefreshCw } from 'lucide-react';
+import { User, LogOut, Settings, Shield, ChevronDown, RefreshCw, Edit } from 'lucide-react';
+import { ProfileEditModal } from './ProfileEditModal';
+import { supabase } from '@/integrations/supabase/client';
 
 const UserMenu = () => {
   const { user, isAdmin, signOut, forceSignOut } = useAuth();
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState({ full_name: '' });
+
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
+
+  const fetchUserProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      if (!error && data) {
+        setUserProfile(data);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   if (!user) return null;
 
@@ -62,7 +90,9 @@ const UserMenu = () => {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="flex items-center space-x-2 bg-muted hover:bg-muted/80">
             <User className="w-4 h-4" />
-            <span className="hidden md:inline max-w-32 truncate">{user.email}</span>
+            <span className="hidden md:inline max-w-32 truncate">
+              {userProfile.full_name || user.email}
+            </span>
             {isAdmin && <Shield className="w-3 h-3 text-amber-500" />}
             <ChevronDown className="w-3 h-3" />
           </Button>
@@ -70,7 +100,12 @@ const UserMenu = () => {
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel>
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium">{user.email}</p>
+              <p className="text-sm font-medium">
+                {userProfile.full_name || user.email}
+              </p>
+              {userProfile.full_name && (
+                <p className="text-xs text-muted-foreground">{user.email}</p>
+              )}
               {isAdmin && (
                 <p className="text-xs text-amber-600 font-medium flex items-center">
                   <Shield className="w-3 h-3 mr-1" />
@@ -80,9 +115,9 @@ const UserMenu = () => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <Settings className="w-4 h-4 mr-2" />
-            Perfil
+          <DropdownMenuItem onClick={() => setIsProfileModalOpen(true)} className="cursor-pointer">
+            <Edit className="w-4 h-4 mr-2" />
+            Editar Perfil
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleForceSignOut} className="text-orange-600 cursor-pointer focus:bg-orange-50 focus:text-orange-700">
@@ -95,6 +130,12 @@ const UserMenu = () => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <ProfileEditModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        onUpdate={fetchUserProfile}
+      />
     </div>
   );
 };

@@ -114,10 +114,13 @@ const AdminDashboard = () => {
   // Obtener lista única de usuarios
   const uniqueUsers = Array.from(
     new Set(allProcessData.map(p => p.profiles?.email).filter(Boolean))
-  ).map(email => ({
-    email,
-    name: email?.split('@')[0] || 'Usuario desconocido'
-  }));
+  ).map(email => {
+    const process = allProcessData.find(p => p.profiles?.email === email);
+    return {
+      email,
+      name: process?.profiles?.full_name || email?.split('@')[0] || 'Usuario desconocido'
+    };
+  });
 
   // Filtrar procesos según el usuario seleccionado
   const filteredProcesses = selectedUser === 'todos' 
@@ -486,7 +489,7 @@ const AdminDashboard = () => {
                       <TableCell>
                         <div className="text-sm">
                           <div className="font-medium">
-                            {process.profiles?.email?.split('@')[0] || 'N/A'}
+                            {process.profiles?.full_name || process.profiles?.email?.split('@')[0] || 'N/A'}
                           </div>
                           <div className="text-muted-foreground text-xs">
                             {process.profiles?.email || 'N/A'}
