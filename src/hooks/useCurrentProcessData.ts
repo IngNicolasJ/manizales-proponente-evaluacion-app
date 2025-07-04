@@ -52,6 +52,7 @@ export const useCurrentProcessData = () => {
 
         if (processData) {
           console.log('✅ Process data loaded:', processData);
+          console.log('🔍 Raw process_type from DB:', (processData as any).process_type);
           
           // Convertir los datos del proceso al formato esperado
           const formattedProcessData: ProcessData = {
