@@ -60,7 +60,7 @@ export const useCurrentProcessData = () => {
             closingDate: processData.closing_date,
             totalContractValue: Number(processData.total_contract_value) || 0,
             minimumSalary: Number(processData.minimum_salary) || 0,
-            processType: 'licitacion',
+            processType: (processData as any).process_type || 'licitacion',
             scoring: (processData.scoring_criteria as any) || {
               womanEntrepreneurship: 0,
               mipyme: 0,
