@@ -57,6 +57,9 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
           qualityFactor: currentProponent.scoring?.qualityFactor || 0,
           environmentalQuality: currentProponent.scoring?.environmentalQuality || 0,
           nationalIndustrySupport: currentProponent.scoring?.nationalIndustrySupport || 0,
+          equipoTrabajo: currentProponent.scoring?.equipoTrabajo || 0,
+          factorSostenibilidad: currentProponent.scoring?.factorSostenibilidad || 0,
+          experienciaFormacionAcademica: currentProponent.scoring?.experienciaFormacionAcademica || 0,
           disabilityContributor: currentProponent.scoring?.disabilityContributor || undefined,
           comments: currentProponent.scoring?.comments || {}
         }
@@ -76,6 +79,9 @@ export const ProponentFormContainer: React.FC<ProponentFormContainerProps> = ({
         qualityFactor: 0,
         environmentalQuality: 0,
         nationalIndustrySupport: 0,
+        equipoTrabajo: 0,
+        factorSostenibilidad: 0,
+        experienciaFormacionAcademica: 0,
         disabilityContributor: undefined,
         comments: {}
       }

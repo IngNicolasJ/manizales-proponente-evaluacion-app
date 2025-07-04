@@ -16,6 +16,7 @@ export interface ProcessData {
     // Campos específicos para concurso de méritos
     equipoTrabajo?: number;
     factorSostenibilidad?: number;
+    experienciaFormacionAcademica?: number;
   };
   experience: {
     general: string;
@@ -82,6 +83,7 @@ export interface Proponent {
     // Campos específicos para concurso de méritos
     equipoTrabajo?: number;
     factorSostenibilidad?: number;
+    experienciaFormacionAcademica?: number;
     disabilityContributor?: string; // Socio que aporta certificado de discapacidad
     comments: Record<string, string>;
   };

@@ -56,7 +56,10 @@ export const ProponentScoringForm: React.FC = () => {
       data.scoring.disabled +
       data.scoring.qualityFactor +
       data.scoring.environmentalQuality +
-      data.scoring.nationalIndustrySupport;
+      data.scoring.nationalIndustrySupport +
+      (data.scoring.equipoTrabajo || 0) +
+      (data.scoring.factorSostenibilidad || 0) +
+      (data.scoring.experienciaFormacionAcademica || 0);
 
     const additionalSpecificCriteria = Array.isArray(processData.experience?.additionalSpecific) 
       ? processData.experience.additionalSpecific 
@@ -119,7 +122,10 @@ export const ProponentScoringForm: React.FC = () => {
       data.scoring.disabled +
       data.scoring.qualityFactor +
       data.scoring.environmentalQuality +
-      data.scoring.nationalIndustrySupport;
+      data.scoring.nationalIndustrySupport +
+      (data.scoring.equipoTrabajo || 0) +
+      (data.scoring.factorSostenibilidad || 0) +
+      (data.scoring.experienciaFormacionAcademica || 0);
 
     const updatedProponent: Partial<Proponent> = {
       number: data.number,

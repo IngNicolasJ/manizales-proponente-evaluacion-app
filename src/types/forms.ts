@@ -19,6 +19,7 @@ export interface ProponentFormData {
     // Campos específicos para concurso de méritos
     equipoTrabajo?: number;
     factorSostenibilidad?: number;
+    experienciaFormacionAcademica?: number;
     disabilityContributor?: string; // Socio que aporta certificado de discapacidad
     comments: Record<string, string>;
   };

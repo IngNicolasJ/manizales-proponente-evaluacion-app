@@ -169,7 +169,8 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
     // Campos específicos para concurso de méritos
     ...(processData.processType === 'concurso' ? [
       { key: 'equipoTrabajo' as const, label: 'Equipo de trabajo', maxValue: processData.scoring.equipoTrabajo || 0 },
-      { key: 'factorSostenibilidad' as const, label: 'Factor de sostenibilidad', maxValue: processData.scoring.factorSostenibilidad || 0 }
+      { key: 'factorSostenibilidad' as const, label: 'Factor de sostenibilidad', maxValue: processData.scoring.factorSostenibilidad || 0 },
+      { key: 'experienciaFormacionAcademica' as const, label: 'Experiencia y formación académica adicional', maxValue: processData.scoring.experienciaFormacionAcademica || 0 }
     ] : [])
   ].filter(criterion => criterion.maxValue > 0);
 

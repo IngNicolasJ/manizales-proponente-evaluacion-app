@@ -39,6 +39,7 @@ export const ProcessDataForm: React.FC = () => {
         nationalIndustrySupport: 0,
         equipoTrabajo: 0,
         factorSostenibilidad: 0,
+        experienciaFormacionAcademica: 0,
       },
       experience: {
         general: '',
@@ -323,6 +324,18 @@ export const ProcessDataForm: React.FC = () => {
                       placeholder="Seleccionar puntaje"
                     />
                     <p className="text-xs text-muted-foreground">Opciones: 0 o 1</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="experienciaFormacionAcademica">Experiencia y formación académica adicional *</Label>
+                    <ScoringSelect
+                      value={watchedValues.scoring.experienciaFormacionAcademica || 0}
+                      onChange={(value) => setValue('scoring.experienciaFormacionAcademica', value)}
+                      maxValue={10}
+                      customOptions={[0, 10]}
+                      placeholder="Seleccionar puntaje"
+                    />
+                    <p className="text-xs text-muted-foreground">Opciones: 0 o 10</p>
                   </div>
                 </>
               )}
