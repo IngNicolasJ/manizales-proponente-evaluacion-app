@@ -43,6 +43,7 @@ export const useProcessSaving = () => {
               closing_date: processData.closingDate,
               total_contract_value: processData.totalContractValue,
               minimum_salary: processData.minimumSalary,
+              process_type: processData.processType,
               experience: processData.experience || {},
               scoring_criteria: processData.scoring || {},
               updated_at: new Date().toISOString()
@@ -65,6 +66,7 @@ export const useProcessSaving = () => {
               closing_date: processData.closingDate,
               total_contract_value: processData.totalContractValue,
               minimum_salary: processData.minimumSalary,
+              process_type: processData.processType,
               experience: processData.experience || {},
               scoring_criteria: processData.scoring || {},
               updated_at: new Date().toISOString()

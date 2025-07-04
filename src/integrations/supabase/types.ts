@@ -126,6 +126,7 @@ export type Database = {
           minimum_salary: number | null
           process_name: string
           process_number: string
+          process_type: string | null
           scoring_criteria: Json
           total_contract_value: number | null
           updated_at: string
@@ -141,6 +142,7 @@ export type Database = {
           minimum_salary?: number | null
           process_name: string
           process_number: string
+          process_type?: string | null
           scoring_criteria: Json
           total_contract_value?: number | null
           updated_at?: string
@@ -156,6 +158,7 @@ export type Database = {
           minimum_salary?: number | null
           process_name?: string
           process_number?: string
+          process_type?: string | null
           scoring_criteria?: Json
           total_contract_value?: number | null
           updated_at?: string
