@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAppStore } from '@/store/useAppStore';
 import { Button } from '@/components/ui/button';
@@ -22,8 +22,8 @@ const processTypeOptions = [
 export const ProcessDataForm: React.FC = () => {
   const { setProcessData, setCurrentStep, processData } = useAppStore();
   
-  const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm<ProcessData>({
-    defaultValues: processData || {
+  const { register, handleSubmit, watch, setValue, control, formState: { errors }, reset } = useForm<ProcessData>({
+    defaultValues: {
       processNumber: '',
       processObject: '',
       closingDate: '',
@@ -53,6 +53,14 @@ export const ProcessDataForm: React.FC = () => {
       }
     }
   });
+
+  // Actualizar el formulario cuando se carguen los datos del proceso
+  useEffect(() => {
+    if (processData) {
+      console.log('🔄 Updating form with loaded process data:', processData.processType);
+      reset(processData);
+    }
+  }, [processData, reset]);
 
   const watchedValues = watch();
 
