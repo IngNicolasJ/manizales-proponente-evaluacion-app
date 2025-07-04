@@ -37,6 +37,8 @@ export const ProcessDataForm: React.FC = () => {
         qualityFactor: 0,
         environmentalQuality: 0,
         nationalIndustrySupport: 0,
+        equipoTrabajo: 0,
+        factorSostenibilidad: 0,
       },
       experience: {
         general: '',
@@ -295,6 +297,35 @@ export const ProcessDataForm: React.FC = () => {
                   <p className="text-sm text-destructive">{errors.scoring.nationalIndustrySupport.message}</p>
                 )}
               </div>
+
+              {/* Campos específicos para concurso de méritos */}
+              {watchedValues.processType === 'concurso' && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="equipoTrabajo">Equipo de trabajo *</Label>
+                    <ScoringSelect
+                      value={watchedValues.scoring.equipoTrabajo || 0}
+                      onChange={(value) => setValue('scoring.equipoTrabajo', value)}
+                      maxValue={10}
+                      customOptions={[0, 10]}
+                      placeholder="Seleccionar puntaje"
+                    />
+                    <p className="text-xs text-muted-foreground">Opciones: 0 o 10</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="factorSostenibilidad">Factor de sostenibilidad *</Label>
+                    <ScoringSelect
+                      value={watchedValues.scoring.factorSostenibilidad || 0}
+                      onChange={(value) => setValue('scoring.factorSostenibilidad', value)}
+                      maxValue={1}
+                      customOptions={[0, 1]}
+                      placeholder="Seleccionar puntaje"
+                    />
+                    <p className="text-xs text-muted-foreground">Opciones: 0 o 1</p>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

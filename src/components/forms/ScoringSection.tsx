@@ -165,7 +165,12 @@ export const ScoringSection: React.FC<ScoringSectionProps> = ({
     { key: 'disabled' as const, label: 'Discapacitado', maxValue: processData.scoring.disabled },
     { key: 'qualityFactor' as const, label: 'Factor de calidad', maxValue: processData.scoring.qualityFactor },
     { key: 'environmentalQuality' as const, label: 'Factor de calidad ambiental', maxValue: processData.scoring.environmentalQuality },
-    { key: 'nationalIndustrySupport' as const, label: 'Apoyo a la industria nacional', maxValue: processData.scoring.nationalIndustrySupport }
+    { key: 'nationalIndustrySupport' as const, label: 'Apoyo a la industria nacional', maxValue: processData.scoring.nationalIndustrySupport },
+    // Campos específicos para concurso de méritos
+    ...(processData.processType === 'concurso' ? [
+      { key: 'equipoTrabajo' as const, label: 'Equipo de trabajo', maxValue: processData.scoring.equipoTrabajo || 0 },
+      { key: 'factorSostenibilidad' as const, label: 'Factor de sostenibilidad', maxValue: processData.scoring.factorSostenibilidad || 0 }
+    ] : [])
   ].filter(criterion => criterion.maxValue > 0);
 
   // Si no hay criterios disponibles, mostrar mensaje

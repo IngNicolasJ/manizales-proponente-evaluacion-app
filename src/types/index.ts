@@ -13,6 +13,9 @@ export interface ProcessData {
     qualityFactor: number;
     environmentalQuality: number;
     nationalIndustrySupport: number;
+    // Campos específicos para concurso de méritos
+    equipoTrabajo?: number;
+    factorSostenibilidad?: number;
   };
   experience: {
     general: string;
@@ -76,6 +79,9 @@ export interface Proponent {
     qualityFactor: number;
     environmentalQuality: number;
     nationalIndustrySupport: number;
+    // Campos específicos para concurso de méritos
+    equipoTrabajo?: number;
+    factorSostenibilidad?: number;
     disabilityContributor?: string; // Socio que aporta certificado de discapacidad
     comments: Record<string, string>;
   };
